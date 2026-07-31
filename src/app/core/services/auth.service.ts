@@ -7,12 +7,19 @@ import { User, mapRole } from '../models/user.model';
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
 }
 
 interface JwtPayload {
   sub: string;
   userId: number;
   role: string;
+  firstName: string;
+  lastName: string;
   iat: number;
   exp: number;
 }
@@ -49,8 +56,24 @@ export class AuthService {
   handleAuthSuccess(res: AuthResponse) {
     localStorage.setItem('accessToken', res.accessToken);
     localStorage.setItem('refreshToken', res.refreshToken);
-    this.setUserFromToken(res.accessToken);
+    this.setUserFromResponse(res);
     this.router.navigate(['/dashboard']);
+  }
+
+  private setUserFromResponse(res: AuthResponse) {
+    const name = `${res.firstName} ${res.lastName}`.trim();
+    const initials = ((res.firstName?.charAt(0) ?? '') + (res.lastName?.charAt(0) ?? '')).toUpperCase() || '?';
+    this.currentUser.set({
+      id: res.id,
+      firstName: res.firstName,
+      lastName: res.lastName || '',
+      email: res.email,
+      role: mapRole(res.role),
+      enabled: true,
+      name,
+      avatarInitials: initials,
+      createdAt: ''
+    });
   }
 
   logout() {
@@ -90,20 +113,36 @@ export class AuthService {
 
   private setUserFromToken(token: string) {
     const payload = this.decodeToken(token);
-    const firstName = payload.sub.split('@')[0];
-    const name = firstName.charAt(0).toUpperCase() + firstName.slice(1);
-    const initials = firstName.charAt(0).toUpperCase();
+    const firstName = payload.firstName || payload.sub.split('@')[0];
+    const lastName = payload.lastName || '';
+    const name = `${firstName} ${lastName}`.trim();
+    const initials = ((firstName?.charAt(0) ?? '') + (lastName?.charAt(0) ?? '')).toUpperCase() || '?';
 
     this.currentUser.set({
       id: payload.userId,
-      firstName: name,
-      lastName: '',
+      firstName,
+      lastName,
       email: payload.sub,
       role: mapRole(payload.role),
       enabled: true,
       name,
       avatarInitials: initials,
       createdAt: new Date(payload.iat * 1000).toISOString().split('T')[0]
+    });
+  }
+
+  refreshUserInfo(firstName: string, lastName: string, email: string) {
+    const current = this.currentUser();
+    if (!current) return;
+    const name = `${firstName} ${lastName}`.trim();
+    const initials = ((firstName?.charAt(0) ?? '') + (lastName?.charAt(0) ?? '')).toUpperCase() || '?';
+    this.currentUser.set({
+      ...current,
+      firstName,
+      lastName: lastName || '',
+      email,
+      name,
+      avatarInitials: initials,
     });
   }
 

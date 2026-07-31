@@ -14,9 +14,18 @@ export class UserService {
   loading = signal(false);
 
   searchTerm = signal<string>('');
+  private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  setSearchTerm(value: string) {
+    if (this._debounceTimer) clearTimeout(this._debounceTimer);
+    this._debounceTimer = setTimeout(() => {
+      this.searchTerm.set(value.toLowerCase().trim());
+      this._debounceTimer = null;
+    }, 300);
+  }
 
   filteredUsers = computed(() => {
-    const term = this.searchTerm().toLowerCase().trim();
+    const term = this.searchTerm();
     if (!term) return this.users();
     return this.users().filter(u =>
       u.name.toLowerCase().includes(term) ||
@@ -54,5 +63,13 @@ export class UserService {
 
   toggleStatus(id: number): Observable<UserResponse> {
     return this.http.patch<UserResponse>(`${this.apiUrl}/${id}/toggle-status`, {});
+  }
+
+  getProfile(): Observable<UserResponse> {
+    return this.http.get<UserResponse>(`${this.apiUrl}/me`);
+  }
+
+  updateProfile(data: Record<string, unknown>): Observable<UserResponse> {
+    return this.http.put<UserResponse>(`${this.apiUrl}/me`, data);
   }
 }

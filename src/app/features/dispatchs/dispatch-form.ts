@@ -1,27 +1,27 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { DispatchService } from '../../core/services/dispatch.service';
 import { OrderService } from '../../core/services/order.service';
 import { DriverService } from '../../core/services/driver.service';
 import { VehicleService } from '../../core/services/vehicle.service';
-import { UserService } from '../../core/services/user.service';
-import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model';
+import { ProductService } from '../../core/services/product.service';
+import { ChecklistItem, DispatchStatus, DispatchResponse } from '../../core/models/dispatch.model';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-dispatch-form',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <!-- Page Header -->
     <div class="mb-6">
       <div class="flex items-center gap-3 mb-1">
         <span class="module-badge module-badge--green">11.</span>
         <div>
-          <h1 class="text-2xl font-extrabold text-[#071938]">Confirmación de Despacho</h1>
+          <h1 class="text-2xl font-extrabold text-[#071938]">{{ editId ? 'Editar Despacho' : 'Confirmación de Despacho' }}</h1>
           <nav class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
-            <a routerLink="/despachos" class="text-[#0055FF] hover:underline">Confirmar Despacho</a>
+            <a routerLink="/despachos" class="text-[#0055FF] hover:underline">{{ editId ? 'Editar Despacho' : 'Confirmar Despacho' }}</a>
             <span>/</span>
             <span class="text-gray-700 font-semibold">{{ form.dispatchNumber || 'DES-XXXXX' }}</span>
           </nav>
@@ -29,13 +29,12 @@ import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model'
       </div>
     </div>
 
-    <!-- Información del Despacho -->
     <div class="fm-card p-6 mb-5">
       <h3 class="font-bold text-[#071938] text-base mb-5">Información del Despacho</h3>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Pedido</label>
-          <select
+          <label for="select-pedido" class="block text-xs font-semibold text-gray-500 mb-1.5">Pedido</label>
+          <select id="select-pedido"
             [(ngModel)]="selectedOrderId"
             (ngModelChange)="onOrderChange()"
             class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
@@ -50,26 +49,12 @@ import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model'
           }
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Fecha</label>
-          <div class="relative">
-            <input
-              type="date"
-              [(ngModel)]="form.dispatchDate"
-              class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Despachador</label>
-          <select
-            [(ngModel)]="form.approvedBy"
-            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
-          >
-            <option value="">Seleccione despachador</option>
-            @for (u of coordinadores(); track u.id) {
-              <option [value]="u.name">{{ u.name }}</option>
-            }
-          </select>
+          <label for="fecha-despacho" class="block text-xs font-semibold text-gray-500 mb-1.5">Fecha de Despacho</label>
+          <input id="fecha-despacho"
+            type="date"
+            [(ngModel)]="form.dispatchDate"
+            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+          />
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1.5">Estado</label>
@@ -78,7 +63,6 @@ import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model'
       </div>
     </div>
 
-    <!-- Detalle de Productos -->
     <div class="fm-card p-6 mb-5">
       <h3 class="font-bold text-[#071938] text-base mb-5">Detalle de Productos</h3>
       <div class="overflow-x-auto">
@@ -86,35 +70,36 @@ import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model'
           <thead>
             <tr class="bg-gray-50/60">
               <th>Producto</th>
-              <th>Cant. Despachada</th>
-              <th>Lote</th>
+              <th>Cant.</th>
               <th>Observación</th>
             </tr>
           </thead>
           <tbody>
             @if (selectedOrder) {
-              @for (item of selectedOrder.items; track item.item; let i = $index) {
+              @for (item of selectedOrder.items; track item.item) {
+                @let qty = item.bulto || 0;
                 <tr>
                   <td>
-                    <span
-                      class="code-badge"
-                      [class]="productBadgeClass(i)"
-                    >PR-{{ (100 + item.item).toString() }}</span>
+                    <div class="flex flex-col gap-0.5">
+                      <span class="font-semibold text-[#071938] text-sm">{{ item.description }}</span>
+                      <span class="text-xs text-gray-400 font-mono">{{ item.lot || '—' }}</span>
+                    </div>
                   </td>
-                  <td>
-                    <span class="font-semibold text-[#071938]">{{ (item.bulto || 0) * (item.caja || 0) || item.bulto || 0 }}</span>
-                  </td>
-                  <td>
-                    <span class="text-gray-600 text-sm font-mono">{{ getLotCode(item.lot, item.item) }}</span>
-                  </td>
-                  <td>
-                    <span class="text-gray-400 text-sm">{{ item.observation || '-' }}</span>
+                  <td><span class="font-semibold text-[#071938]">{{ qty }}</span></td>
+                  <td class="w-[30rem]">
+                    <input
+                      type="text"
+                      [ngModel]="itemObservations[item.productId] || ''"
+                      (ngModelChange)="itemObservations[item.productId] = $event"
+                      placeholder="Obs..."
+                      class="w-[26rem] mr-auto px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    />
                   </td>
                 </tr>
               }
             } @else {
               <tr>
-                <td colspan="4" class="py-10 text-center">
+                <td colspan="3" class="py-10 text-center">
                   <p class="text-sm text-gray-400">Selecciona un pedido para ver los productos</p>
                 </td>
               </tr>
@@ -124,45 +109,69 @@ import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model'
       </div>
     </div>
 
-    <!-- Footer: Conductor, Vehículo, Peso Bruto, Confirmar -->
+    <div class="fm-card p-6 mb-5">
+      <h3 class="font-bold text-[#071938] text-base mb-5">Observaciones del Despacho</h3>
+      <div>
+        <textarea
+          [(ngModel)]="form.observations"
+          rows="3"
+          placeholder="Escribe aquí cualquier observación sobre el despacho (productos faltantes, daños, novedades, etc.)..."
+          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm resize-y transition-all"
+        ></textarea>
+        <p class="text-xs text-gray-400 mt-1">Estas observaciones se guardarán junto con los detalles del despacho.</p>
+      </div>
+    </div>
+
     <div class="fm-card p-6">
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
+      <div class="grid grid-cols-1 md:grid-cols-5 gap-5 items-end">
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Conductor</label>
-          <select
+          <label for="select-conductor" class="block text-xs font-semibold text-gray-500 mb-1.5">Conductor</label>
+          <select id="select-conductor"
             [(ngModel)]="selectedDriverId"
             (ngModelChange)="onDriverChange()"
             class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
           >
             <option value="">Seleccionar conductor</option>
             @for (dr of driverService.drivers().filter(d => d.active); track dr.id) {
-              <option [value]="dr.id">{{ dr.fullName }}</option>
+              <option [value]="dr.id">{{ dr.name }} — {{ dr.document }}</option>
             }
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Vehículo</label>
-          <select
+          <label for="select-vehiculo" class="block text-xs font-semibold text-gray-500 mb-1.5">Vehículo</label>
+          <select id="select-vehiculo"
             [(ngModel)]="selectedVehicleId"
             (ngModelChange)="onVehicleChange()"
             class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
           >
             <option value="">Seleccionar vehículo</option>
             @for (v of vehicleService.vehicles().filter(veh => veh.active); track v.id) {
-              <option [value]="v.id">{{ v.brand }} {{ v.model }} - {{ v.plate }}</option>
+              <option [value]="v.id">{{ v.brand }} {{ v.model }} — {{ v.plate }}</option>
             }
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Bruto (kg)</label>
+          <label for="peso-bruto" class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Bruto (kg)</label>
           <div class="flex items-center gap-2">
-            <input
+            <input id="peso-bruto"
               type="number"
               [(ngModel)]="pesoBruto"
               placeholder="0.00"
               min="0"
               step="0.01"
               class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+            />
+            <span class="text-sm text-gray-500 font-medium">Kg</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total Cargue</label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [ngModel]="pesoTotalCargue"
+              disabled
+              class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
             />
             <span class="text-sm text-gray-500 font-medium">Kg</span>
           </div>
@@ -175,7 +184,7 @@ import { ChecklistItem, DispatchStatus } from '../../core/models/dispatch.model'
             class="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            Confirmar Despacho
+            {{ editId ? 'Actualizar Despacho' : 'Confirmar Despacho' }}
           </button>
         </div>
       </div>
@@ -187,14 +196,19 @@ export class DispatchFormComponent {
   orderService = inject(OrderService);
   driverService = inject(DriverService);
   vehicleService = inject(VehicleService);
-  userService = inject(UserService);
+  productService = inject(ProductService);
+  authService = inject(AuthService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
 
+  editId: number | null = null;
   selectedOrderId = '';
-  selectedDriverId = '';
-  selectedVehicleId = '';
+  selectedDriverId: number | null = null;
+  selectedVehicleId: number | null = null;
   pesoBruto: number | undefined = undefined;
+  pesoTotalCargue: number = 0;
   selectedOrder: any = null;
+  itemObservations: Record<number, string> = {};
 
   form = {
     dispatchNumber: '',
@@ -213,8 +227,7 @@ export class DispatchFormComponent {
     departureKm: undefined as number | undefined,
     arrivalKm: undefined as number | undefined,
     fuelLiters: undefined as number | undefined,
-    observations: '',
-    approvedBy: ''
+    observations: ''
   };
 
   checklist: ChecklistItem[] = [
@@ -228,25 +241,56 @@ export class DispatchFormComponent {
     { name: 'Kit vial + extintor + botiquín', checked: true }
   ];
 
-  private readonly productBadgeColors = [
-    'bg-blue-50 text-blue-700 border-blue-200',
-    'bg-amber-50 text-amber-700 border-amber-200',
-    'bg-green-50 text-green-700 border-green-200',
-    'bg-purple-50 text-purple-700 border-purple-200',
-    'bg-rose-50 text-rose-700 border-rose-200',
-    'bg-cyan-50 text-cyan-700 border-cyan-200',
-  ];
-
   constructor() {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const hh = String(today.getHours()).padStart(2, '0');
-    const mi = String(today.getMinutes()).padStart(2, '0');
-    this.form.dispatchDate = `${yyyy}-${mm}-${dd}`;
-    this.form.dispatchTime = `${hh}:${mi}`;
-    this.generarNumeroDespacho();
+    this.orderService.loadOrders();
+    this.driverService.loadDrivers();
+    this.vehicleService.loadVehicles();
+    this.productService.loadProducts();
+    this.dispatchService.loadDispatches();
+
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.editId = Number(idParam);
+      this.dispatchService.findById(this.editId).subscribe(resp => this.cargarDespacho(resp));
+    } else {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const dd = String(today.getDate()).padStart(2, '0');
+      this.form.dispatchDate = `${yyyy}-${mm}-${dd}`;
+      this.generarNumeroDespacho();
+    }
+  }
+
+  cargarDespacho(resp: DispatchResponse) {
+    this.form.dispatchNumber = resp.dispatchNumber;
+    this.form.orderNumber = resp.orderNumber;
+    this.form.status = resp.status as DispatchStatus;
+    this.form.observations = resp.notes || '';
+    this.selectedOrderId = String(resp.orderId);
+    this.selectedDriverId = resp.driverId;
+    this.selectedVehicleId = resp.vehicleId;
+
+    if (resp.dispatchDate) {
+      this.form.dispatchDate = resp.dispatchDate.split('T')[0];
+    }
+
+    const order = this.orderService.orders().find(o => o.id === String(resp.orderId));
+    if (order) {
+      this.selectedOrder = order;
+      this.form.route = `${order.city} - ${order.address}`;
+      this.pesoBruto = order.pesoTotalKg;
+      this.pesoTotalCargue = order.pesoTotalKg;
+      this.itemObservations = {};
+      for (const item of order.items) {
+        if (item.observation) {
+          this.itemObservations[item.productId] = item.observation;
+        }
+      }
+    }
+
+    this.onDriverChange();
+    this.onVehicleChange();
   }
 
   getLotCode(itemLot?: string, itemNum?: number): string {
@@ -256,19 +300,14 @@ export class DispatchFormComponent {
     return `L-${dateFormatted}-${numFormatted}`;
   }
 
-  coordinadores() {
-    return this.userService.users().filter(u =>
-      u.role === 'coordinador' || u.role === 'admin' || u.role === 'contador'
-    );
-  }
-
   generarNumeroDespacho() {
-    const n = this.dispatchService.dispatches().length + 1;
-    this.form.dispatchNumber = 'DES-' + String(n).padStart(5, '0');
-  }
-
-  productBadgeClass(index: number): string {
-    return this.productBadgeColors[index % this.productBadgeColors.length];
+    const now = new Date();
+    const ts = now.getFullYear().toString().slice(-2) +
+      String(now.getMonth() + 1).padStart(2, '0') +
+      String(now.getDate()).padStart(2, '0') +
+      String(now.getHours()).padStart(2, '0') +
+      String(now.getMinutes()).padStart(2, '0');
+    this.form.dispatchNumber = 'DES-' + ts;
   }
 
   onOrderChange() {
@@ -280,10 +319,17 @@ export class DispatchFormComponent {
       if (order.dispatchDate) this.form.dispatchDate = order.dispatchDate;
       if (order.dispatchTime) this.form.dispatchTime = order.dispatchTime;
       this.pesoBruto = order.pesoTotalKg;
+      this.pesoTotalCargue = order.pesoTotalKg;
+      this.itemObservations = {};
+      for (const item of order.items) {
+        if (item.observation) {
+          this.itemObservations[item.productId] = item.observation;
+        }
+      }
 
       const driver = this.driverService.drivers().find(d =>
-        d.documentNumber === order.driverDocument ||
-        d.fullName.includes(order.driverName.split(' ')[0])
+        d.document === order.driverDocument ||
+        d.name.includes((order.driverName || '').split(' ')[0])
       );
       if (driver) {
         this.selectedDriverId = driver.id;
@@ -305,67 +351,86 @@ export class DispatchFormComponent {
   }
 
   onDriverChange() {
-    const driver = this.driverService.drivers().find(d => d.id === this.selectedDriverId);
-    if (driver) {
-      this.form.driverName = driver.fullName;
-      this.form.driverDocument = driver.documentNumber;
-      this.form.driverPhone = driver.phone;
-    } else {
+    if (!this.selectedDriverId) {
       this.form.driverName = '';
       this.form.driverDocument = '';
       this.form.driverPhone = '';
+      return;
+    }
+    const driver = this.driverService.drivers().find(d => d.id === this.selectedDriverId);
+    if (driver) {
+      this.form.driverName = driver.name;
+      this.form.driverDocument = driver.document;
+      this.form.driverPhone = driver.phone;
     }
   }
 
   onVehicleChange() {
+    if (!this.selectedVehicleId) {
+      this.form.vehiclePlate = '';
+      this.form.vehicleType = '';
+      return;
+    }
     const vehicle = this.vehicleService.vehicles().find(v => v.id === this.selectedVehicleId);
     if (vehicle) {
       this.form.vehiclePlate = vehicle.plate;
-      this.form.vehicleType = vehicle.vehicleType;
-    } else {
-      this.form.vehiclePlate = '';
-      this.form.vehicleType = '';
     }
   }
 
   esValido(): boolean {
     return (
-      this.form.orderNumber.trim().length > 0 &&
-      this.form.driverName.trim().length > 0 &&
-      this.form.vehiclePlate.trim().length > 0
+      !!this.selectedOrderId &&
+      !!this.selectedDriverId &&
+      !!this.selectedVehicleId
     );
   }
 
   guardar() {
     if (!this.esValido()) return;
 
-    this.dispatchService.addDispatch({
-      dispatchNumber: this.form.dispatchNumber,
-      orderNumber: this.form.orderNumber,
-      dispatchDate: this.form.dispatchDate,
-      dispatchTime: this.form.dispatchTime,
-      driverName: this.form.driverName,
-      driverDocument: this.form.driverDocument,
-      driverPhone: this.form.driverPhone,
-      vehiclePlate: this.form.vehiclePlate,
-      vehicleType: this.form.vehicleType,
-      helperName: this.form.helperName.trim() || undefined,
-      route: this.form.route.trim(),
-      estimatedArrival: this.form.estimatedArrival || '',
-      checklist: this.checklist.map(c => ({
-        name: c.name,
-        checked: c.checked,
-        observations: c.observations && c.observations.trim().length > 0 ? c.observations.trim() : undefined
-      })),
-      status: this.form.status,
-      departureKm: this.form.departureKm,
-      arrivalKm: this.form.arrivalKm,
-      fuelLiters: this.form.fuelLiters,
-      observations: this.form.observations.trim() || undefined,
-      createdBy: 'Usuario actual',
-      approvedBy: this.form.approvedBy.trim() || undefined
-    });
+    const details = (this.selectedOrder?.items || []).map((item: any) => ({
+      productId: item.productId,
+      quantity: item.bulto || 0,
+      delivered: 0,
+      observations: this.itemObservations[item.productId] || ''
+    }));
 
-    this.router.navigate(['/despachos']);
+    const obsParts: string[] = [];
+    if (this.form.observations) obsParts.push(this.form.observations);
+    for (const c of this.checklist) {
+      if (!c.checked) obsParts.push(`Checklist pendiente: ${c.name}`);
+    }
+
+    const dispatchDateStr = this.form.dispatchDate
+      ? `${this.form.dispatchDate}T${this.form.dispatchTime || '00:00'}:00`
+      : new Date().toISOString();
+
+    const payload = {
+      orderId: Number(this.selectedOrderId),
+      driverId: Number(this.selectedDriverId),
+      vehicleId: Number(this.selectedVehicleId),
+      userId: this.authService.currentUser()?.id ?? null,
+      dispatchNumber: this.form.dispatchNumber,
+      dispatchDate: dispatchDateStr,
+      status: this.form.status,
+      notes: obsParts.join(' | '),
+      details
+    };
+
+    const request = this.editId
+      ? this.dispatchService.update(this.editId, payload)
+      : this.dispatchService.create(payload);
+
+    request.subscribe({
+      next: () => {
+        this.dispatchService.loadDispatches();
+        this.router.navigate(['/despachos']);
+      },
+      error: (err) => {
+        const msg = err.error?.message || err.message || 'Error al guardar el despacho. Verifica los datos e intenta de nuevo.';
+        alert(msg);
+      }
+    });
   }
+
 }

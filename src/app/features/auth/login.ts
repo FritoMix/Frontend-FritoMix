@@ -8,7 +8,7 @@ import { AuthService } from '../../core/services/auth.service';
   standalone: true,
   imports: [FormsModule],
   template: `
-    <div class="min-h-screen bg-[#071938] flex flex-col relative overflow-hidden">
+    <div class="min-h-screen bg-[#47679d] flex flex-col relative overflow-hidden">
       <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle, #ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
 
       <div class="flex-1 flex items-center justify-center px-6 relative z-10">

@@ -1,9 +1,9 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DispatchService } from '../../core/services/dispatch.service';
-import { DispatchStatus } from '../../core/models/dispatch.model';
+import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
 
 @Component({
   selector: 'app-dispatch-list',
@@ -25,7 +25,7 @@ import { DispatchStatus } from '../../core/models/dispatch.model';
         <input
           type="text"
           [ngModel]="dispatchService.searchTerm()"
-          (ngModelChange)="dispatchService.searchTerm.set($event)"
+          (ngModelChange)="dispatchService.setSearchTerm($event)"
           placeholder="Buscar despacho por código o producto, conductor..."
           class="w-full border border-gray-300 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
         />
@@ -61,7 +61,7 @@ import { DispatchStatus } from '../../core/models/dispatch.model';
                 </td>
                 <td>
                   <a
-                    [routerLink]="['/pedidos', d.orderNumber]"
+                    [routerLink]="['/pedidos', d.orderId]"
                     class="font-mono text-sm font-semibold text-[#071938] hover:text-[#0055FF] transition-colors"
                   >
                     {{ d.orderNumber }}
@@ -82,7 +82,18 @@ import { DispatchStatus } from '../../core/models/dispatch.model';
                   </span>
                 </td>
                 <td class="text-right !pr-6">
-                  <button class="kebab-btn" title="Acciones">⋮</button>
+                  <div class="flex items-center justify-end gap-2">
+                    <button (click)="editDispatch(d)"
+                      class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
+                      title="Editar">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button (click)="eliminar(d.id)"
+                      class="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+                      title="Eliminar">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
                 </td>
               </tr>
             } @empty {
@@ -117,12 +128,16 @@ import { DispatchStatus } from '../../core/models/dispatch.model';
     </div>
   `
 })
-export class DispatchListComponent {
+export class DispatchListComponent implements OnInit {
   dispatchService = inject(DispatchService);
   router = inject(Router);
 
   currentPage = signal(1);
   pageSize = 5;
+
+  ngOnInit() {
+    this.dispatchService.loadDispatches();
+  }
 
   filtrosAplicados = computed(() => {
     return this.dispatchService.filteredDispatches();
@@ -177,7 +192,13 @@ export class DispatchListComponent {
 
   eliminar(id: string) {
     if (confirm('¿Está seguro de eliminar este despacho?')) {
-      this.dispatchService.dispatches.update(list => list.filter(d => d.id !== id));
+      this.dispatchService.delete(Number(id)).subscribe(() => {
+        this.dispatchService.loadDispatches();
+      });
     }
+  }
+
+  editDispatch(d: Dispatch) {
+    this.router.navigate(['/despachos', d.id, 'editar']);
   }
 }

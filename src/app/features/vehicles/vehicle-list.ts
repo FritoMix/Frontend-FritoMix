@@ -1,4 +1,4 @@
-import { Component, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -9,7 +9,6 @@ import { VehicleService } from '../../core/services/vehicle.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <!-- Page Header -->
     <div class="mb-6">
       <div class="flex items-center gap-3 mb-1">
         <span class="module-badge module-badge--purple">13.</span>
@@ -17,14 +16,13 @@ import { VehicleService } from '../../core/services/vehicle.service';
       </div>
     </div>
 
-    <!-- Search & Action Bar -->
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
       <div class="relative flex-1 max-w-xl">
         <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         <input
           type="text"
           [ngModel]="vehicleService.searchTerm()"
-          (ngModelChange)="vehicleService.searchTerm.set($event)"
+          (ngModelChange)="vehicleService.setSearchTerm($event)"
           placeholder="Buscar por placa, marca, modelo..."
           class="w-full border border-gray-300 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
         />
@@ -38,79 +36,94 @@ import { VehicleService } from '../../core/services/vehicle.service';
       </button>
     </div>
 
-    <!-- Table Card -->
     <div class="fm-card overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="fm-table">
-          <thead>
-            <tr class="bg-gray-50/60">
-              <th class="!pl-6">Placa</th>
-              <th>Vehículo</th>
-              <th>Tipo</th>
-              <th>Capacidad</th>
-              <th>Estado</th>
-              <th class="text-right !pr-6">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (vehicle of paginatedVehicles(); track vehicle.id) {
-              <tr>
-                <td class="!pl-6">
-                  <span class="code-badge bg-gray-900 text-white border-gray-900">{{ vehicle.plate }}</span>
-                </td>
-                <td>
-                  <span class="font-semibold text-[#071938]">{{ vehicle.brand }} {{ vehicle.model }} ({{ vehicle.year }})</span>
-                </td>
-                <td>
-                  <span class="status-badge" [class]="colorTipo(vehicle.vehicleType)">{{ vehicle.vehicleType }}</span>
-                </td>
-                <td>
-                  <span class="text-gray-600 text-sm">{{ vehicle.capacityKg }} kg</span>
-                </td>
-                <td>
-                  @if (vehicle.active) {
-                    <span class="status-badge bg-green-50 text-green-700 border-green-200">Activo</span>
-                  } @else {
-                    <span class="status-badge bg-red-50 text-red-600 border-red-200">Inactivo</span>
-                  }
-                </td>
-                <td class="text-right !pr-6">
-                  <button class="kebab-btn" title="Acciones">⋮</button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="py-16 text-center">
-                  <div class="flex flex-col items-center gap-2">
-                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                    <p class="text-sm font-semibold text-[#071938]">No se encontraron vehículos</p>
-                    <p class="text-xs text-gray-500">Intenta con otro término de búsqueda</p>
-                  </div>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination -->
-      @if (totalPages() > 1) {
-        <div class="fm-pagination border-t border-gray-100">
-          <button class="fm-page-btn" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)">&lt;</button>
-          @for (page of visiblePages(); track page) {
-            @if (page === -1) {
-              <span class="px-1 text-gray-400">...</span>
-            } @else {
-              <button class="fm-page-btn" [class.fm-page-btn--active]="page === currentPage()" (click)="currentPage.set(page)">{{ page }}</button>
-            }
-          }
-          <button class="fm-page-btn" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)">&gt;</button>
+      @if (vehicleService.loading()) {
+        <div class="flex items-center justify-center py-16">
+          <span class="text-gray-500 text-sm">Cargando vehículos...</span>
         </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="fm-table">
+            <thead>
+              <tr class="bg-gray-50/60">
+                <th class="!pl-6">Placa</th>
+                <th>Vehículo</th>
+                <th>Capacidad</th>
+                <th>Estado</th>
+                <th class="text-right !pr-6">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (vehicle of paginatedVehicles(); track vehicle.id) {
+                <tr>
+                  <td class="!pl-6">
+                    <span class="code-badge bg-gray-900 text-white border-gray-900">{{ vehicle.plate }}</span>
+                  </td>
+                  <td>
+                    <span class="font-semibold text-[#071938]">{{ vehicle.brand }} {{ vehicle.model }}</span>
+                  </td>
+                  <td>
+                    <span class="text-gray-600 text-sm">{{ vehicle.capacity }} kg</span>
+                  </td>
+                  <td>
+                    @if (vehicle.active) {
+                      <span class="status-badge bg-green-50 text-green-700 border-green-200">Activo</span>
+                    } @else {
+                      <span class="status-badge bg-red-50 text-red-600 border-red-200">Inactivo</span>
+                    }
+                  </td>
+                  <td class="text-right !pr-6">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        (click)="editVehicle(vehicle.id)"
+                        class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
+                        title="Editar"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button
+                        (click)="deleteVehicle(vehicle.id)"
+                        class="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+                        title="Eliminar"
+                      >
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-16 text-center">
+                    <div class="flex flex-col items-center gap-2">
+                      <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                      <p class="text-sm font-semibold text-[#071938]">No se encontraron vehículos</p>
+                      <p class="text-xs text-gray-500">Intenta con otro término de búsqueda</p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        @if (totalPages() > 1) {
+          <div class="fm-pagination border-t border-gray-100">
+            <button class="fm-page-btn" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)">&lt;</button>
+            @for (page of visiblePages(); track page) {
+              @if (page === -1) {
+                <span class="px-1 text-gray-400">...</span>
+              } @else {
+                <button class="fm-page-btn" [class.fm-page-btn--active]="page === currentPage()" (click)="currentPage.set(page)">{{ page }}</button>
+              }
+            }
+            <button class="fm-page-btn" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)">&gt;</button>
+          </div>
+        }
       }
     </div>
   `
 })
-export class VehicleListComponent {
+export class VehicleListComponent implements OnInit {
   vehicleService = inject(VehicleService);
   router = inject(Router);
 
@@ -141,15 +154,19 @@ export class VehicleListComponent {
     return pages;
   });
 
-  colorTipo(tipo: string): string {
-    const mapa: Record<string, string> = {
-      'CAMIÓN': 'bg-purple-50 text-purple-700 border-purple-200',
-      'FURGÓN': 'bg-blue-50 text-blue-700 border-blue-200',
-      'VAN': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-      'CAMIONETA': 'bg-amber-50 text-amber-700 border-amber-200',
-      'MOTO': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      'VOLQUETA': 'bg-red-50 text-red-700 border-red-200'
-    };
-    return mapa[tipo] || 'bg-gray-100 text-gray-700 border-gray-200';
+  ngOnInit() {
+    this.vehicleService.loadVehicles();
+  }
+
+  editVehicle(id: number) {
+    this.router.navigate(['/vehiculos', id]);
+  }
+
+  deleteVehicle(id: number) {
+    if (confirm('¿Estás seguro de eliminar este vehículo?')) {
+      this.vehicleService.delete(id).subscribe({
+        next: () => this.vehicleService.loadVehicles(),
+      });
+    }
   }
 }

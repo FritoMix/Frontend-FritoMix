@@ -1,21 +1,47 @@
-export type LicenseType = 'B2' | 'B3' | 'C1' | 'C2' | 'C3';
+export interface DriverResponse {
+  id: number;
+  document: string;
+  name: string;
+  phone: string;
+  licenseNumber: string;
+  active: boolean;
+  createdAt: string;
+}
+
+export interface CreateDriverRequest {
+  document: string;
+  name: string;
+  phone?: string;
+  licenseNumber: string;
+  active?: boolean;
+}
+
+export type UpdateDriverRequest = CreateDriverRequest;
 
 export interface Driver {
-  id: string;
-  code: string;
-  fullName: string;
-  documentType: string;
-  documentNumber: string;
-  licenseType: LicenseType;
-  licenseNumber: string;
+  id: number;
+  document: string;
+  name: string;
   phone: string;
-  email: string;
-  address: string;
-  city: string;
-  department: string;
-  birthDate: string;
-  hireDate: string;
+  licenseNumber: string;
   active: boolean;
-  avatarInitials?: string;
-  avatarColor?: string;
+  avatarInitials: string;
+}
+
+export function toDriverDisplay(resp: DriverResponse): Driver {
+  const initials = resp.name
+    .split(' ')
+    .filter(p => p.length > 0)
+    .slice(0, 2)
+    .map(p => p.charAt(0).toUpperCase())
+    .join('');
+  return {
+    id: resp.id,
+    document: resp.document,
+    name: resp.name,
+    phone: resp.phone,
+    licenseNumber: resp.licenseNumber,
+    active: resp.active,
+    avatarInitials: initials,
+  };
 }

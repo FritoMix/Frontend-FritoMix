@@ -1,15 +1,15 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ClientService } from '../../core/services/client.service';
+import { Department, City } from '../../core/models/client.model';
 
 @Component({
   selector: 'app-client-form',
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
-    <!-- Header -->
     <div class="mb-6">
       <div class="flex items-center justify-between mb-2">
         <div>
@@ -18,10 +18,10 @@ import { ClientService } from '../../core/services/client.service';
             <span>/</span>
             <a routerLink="/clientes" class="hover:text-[#0055FF] transition-colors">Clientes</a>
             <span>/</span>
-            <span class="text-[#071938] font-semibold">Nuevo cliente</span>
+            <span class="text-[#071938] font-semibold">{{ isEdit ? 'Editar cliente' : 'Nuevo cliente' }}</span>
           </nav>
-          <h1 class="text-2xl font-extrabold text-[#071938]">Nuevo cliente</h1>
-          <p class="text-sm text-gray-500 mt-0.5">Registra la información de un nuevo cliente</p>
+          <h1 class="text-2xl font-extrabold text-[#071938]">{{ isEdit ? 'Editar cliente' : 'Nuevo cliente' }}</h1>
+          <p class="text-sm text-gray-500 mt-0.5">{{ isEdit ? 'Actualiza los datos del cliente' : 'Registra la información de un nuevo cliente' }}</p>
         </div>
         <button
           (click)="router.navigate(['/clientes'])"
@@ -33,31 +33,9 @@ import { ClientService } from '../../core/services/client.service';
       </div>
     </div>
 
-    <!-- Form Card -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
       <form (ngSubmit)="onSave()" #clientForm="ngForm" class="space-y-6">
-        <!-- Form Fields Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <!-- Código -->
-          <div>
-            <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Código <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="code"
-              [(ngModel)]="form.code"
-              required
-              #codeField="ngModel"
-              placeholder="Ej: C-100"
-              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="codeField.invalid && codeField.touched"
-            />
-            @if (codeField.invalid && codeField.touched) {
-              <p class="mt-1 text-xs text-red-500">El código es requerido</p>
-            }
-          </div>
-
           <!-- NIT/CC -->
           <div>
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
@@ -65,28 +43,42 @@ import { ClientService } from '../../core/services/client.service';
             </label>
             <input
               type="text"
-              name="taxId"
-              [(ngModel)]="form.taxId"
+              name="document"
+              [(ngModel)]="form.document"
               required
-              #taxIdField="ngModel"
+              #documentField="ngModel"
               placeholder="Ej: 1.234.567.890-0"
               class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="taxIdField.invalid && taxIdField.touched"
+              [class.border-red-400]="documentField.invalid && documentField.touched"
             />
-            @if (taxIdField.invalid && taxIdField.touched) {
+            @if (documentField.invalid && documentField.touched) {
               <p class="mt-1 text-xs text-red-500">El NIT/CC es requerido</p>
             }
           </div>
 
-          <!-- Nombre -->
+          <!-- Contacto -->
+          <div>
+            <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+              Nombre de contacto
+            </label>
+            <input
+              type="text"
+              name="contactName"
+              [(ngModel)]="form.contactName"
+              placeholder="Ej: Sandra Saenz"
+              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+
+          <!-- Nombre / Razón social -->
           <div class="md:col-span-2">
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
               Nombre completo / Razón social <span class="text-red-500">*</span>
             </label>
             <input
               type="text"
-              name="name"
-              [(ngModel)]="form.name"
+              name="businessName"
+              [(ngModel)]="form.businessName"
               required
               #nameField="ngModel"
               placeholder="Ej: SUPERMERCADO LA 14"
@@ -103,19 +95,18 @@ import { ClientService } from '../../core/services/client.service';
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
               Departamento <span class="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="department"
-              [(ngModel)]="form.department"
+            <select
+              name="departmentId"
+              [(ngModel)]="selectedDepartmentId"
+              (ngModelChange)="onDepartmentChange()"
               required
-              #departmentField="ngModel"
-              placeholder="Ej: TOLIMA"
-              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="departmentField.invalid && departmentField.touched"
-            />
-            @if (departmentField.invalid && departmentField.touched) {
-              <p class="mt-1 text-xs text-red-500">El departamento es requerido</p>
-            }
+              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
+            >
+              <option value="">Seleccionar departamento</option>
+              @for (dept of departments(); track dept.id) {
+                <option [value]="dept.id">{{ dept.name }}</option>
+              }
+            </select>
           </div>
 
           <!-- Ciudad -->
@@ -123,16 +114,19 @@ import { ClientService } from '../../core/services/client.service';
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
               Ciudad <span class="text-red-500">*</span>
             </label>
-            <input
-              type="text"
-              name="city"
-              [(ngModel)]="form.city"
+            <select
+              name="cityId"
+              [(ngModel)]="form.cityId"
               required
               #cityField="ngModel"
-              placeholder="Ej: IBAGUÉ"
-              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
               [class.border-red-400]="cityField.invalid && cityField.touched"
-            />
+            >
+              <option value="">Seleccionar ciudad</option>
+              @for (city of cities(); track city.id) {
+                <option [value]="city.id">{{ city.name }}</option>
+              }
+            </select>
             @if (cityField.invalid && cityField.touched) {
               <p class="mt-1 text-xs text-red-500">La ciudad es requerida</p>
             }
@@ -141,53 +135,40 @@ import { ClientService } from '../../core/services/client.service';
           <!-- Dirección -->
           <div class="md:col-span-2">
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Dirección <span class="text-red-500">*</span>
+              Dirección
             </label>
             <input
               type="text"
               name="address"
               [(ngModel)]="form.address"
-              required
-              #addressField="ngModel"
               placeholder="Ej: CRA 5 # 21 - 45 B/ CENTRO"
               class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="addressField.invalid && addressField.touched"
             />
-            @if (addressField.invalid && addressField.touched) {
-              <p class="mt-1 text-xs text-red-500">La dirección es requerida</p>
-            }
           </div>
 
           <!-- Teléfono -->
           <div>
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Teléfono <span class="text-red-500">*</span>
+              Teléfono
             </label>
             <input
               type="text"
               name="phone"
               [(ngModel)]="form.phone"
-              required
-              #phoneField="ngModel"
               placeholder="Ej: 300 123 4567"
               class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="phoneField.invalid && phoneField.touched"
             />
-            @if (phoneField.invalid && phoneField.touched) {
-              <p class="mt-1 text-xs text-red-500">El teléfono es requerido</p>
-            }
           </div>
 
           <!-- Email -->
           <div>
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Email <span class="text-red-500">*</span>
+              Email
             </label>
             <input
               type="email"
               name="email"
               [(ngModel)]="form.email"
-              required
               email
               #emailField="ngModel"
               placeholder="Ej: cliente@correo.com"
@@ -196,23 +177,9 @@ import { ClientService } from '../../core/services/client.service';
             />
             @if (emailField.invalid && emailField.touched) {
               <p class="mt-1 text-xs text-red-500">
-                {{ emailField.errors?.['email'] ? 'Ingresa un email válido' : 'El email es requerido' }}
+                {{ emailField.errors?.['email'] ? 'Ingresa un email válido' : '' }}
               </p>
             }
-          </div>
-
-          <!-- Numeral -->
-          <div>
-            <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Numeral
-            </label>
-            <input
-              type="text"
-              name="numeral"
-              [(ngModel)]="form.numeral"
-              placeholder="Ej: C-100 (opcional)"
-              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            />
           </div>
 
           <!-- Activo -->
@@ -243,10 +210,8 @@ import { ClientService } from '../../core/services/client.service';
           </div>
         </div>
 
-        <!-- Divider -->
         <div class="border-t border-gray-100 pt-5"></div>
 
-        <!-- Action Buttons -->
         <div class="flex items-center justify-end gap-3">
           <button
             type="button"
@@ -265,7 +230,7 @@ import { ClientService } from '../../core/services/client.service';
               Guardando...
             } @else {
               <span>💾</span>
-              Guardar cliente
+              {{ isEdit ? 'Actualizar cliente' : 'Guardar cliente' }}
             }
           </button>
         </div>
@@ -273,50 +238,101 @@ import { ClientService } from '../../core/services/client.service';
     </div>
   `
 })
-export class ClientFormComponent {
+export class ClientFormComponent implements OnInit {
   clientService = inject(ClientService);
   router = inject(Router);
+  route = inject(ActivatedRoute);
 
   isSubmitting = false;
+  isEdit = false;
+  editId: number | null = null;
+
+  departments = signal<Department[]>([]);
+  cities = signal<City[]>([]);
+  selectedDepartmentId = signal<string>('');
 
   form = {
-    code: '',
-    name: '',
-    taxId: '',
-    department: '',
-    city: '',
+    document: '',
+    businessName: '',
+    contactName: '',
     address: '',
     phone: '',
     email: '',
+    cityId: null as number | null,
     active: true,
-    numeral: ''
   };
+
+  ngOnInit() {
+    this.clientService.getDepartments().subscribe({
+      next: (res) => this.departments.set(res),
+    });
+
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.isEdit = true;
+      this.editId = Number(id);
+      this.clientService.findById(this.editId).subscribe({
+        next: (res) => {
+          this.form.document = res.document;
+          this.form.businessName = res.businessName;
+          this.form.contactName = res.contactName || '';
+          this.form.address = res.address || '';
+          this.form.phone = res.phone || '';
+          this.form.email = res.email || '';
+          this.form.active = res.active;
+          this.form.cityId = res.cityId;
+          this.selectedDepartmentId.set(String(res.departmentId));
+          this.loadCities(res.departmentId);
+        },
+      });
+    }
+  }
+
+  onDepartmentChange() {
+    const deptId = this.selectedDepartmentId();
+    if (deptId) {
+      this.form.cityId = null;
+      this.loadCities(Number(deptId));
+    } else {
+      this.cities.set([]);
+      this.form.cityId = null;
+    }
+  }
+
+  private loadCities(departmentId: number) {
+    this.clientService.getCitiesByDepartment(departmentId).subscribe({
+      next: (res) => this.cities.set(res),
+    });
+  }
 
   onSave() {
     if (this.isSubmitting) return;
-
     this.isSubmitting = true;
 
-    const avatarInitials = this.form.name.substring(0, 2).toUpperCase();
-
-    const newClient = {
-      code: this.form.code,
-      name: this.form.name,
-      taxId: this.form.taxId,
-      department: this.form.department,
-      city: this.form.city,
-      address: this.form.address,
-      phone: this.form.phone,
-      email: this.form.email,
+    const data = {
+      document: this.form.document,
+      businessName: this.form.businessName,
+      contactName: this.form.contactName || undefined,
+      address: this.form.address || undefined,
+      phone: this.form.phone || undefined,
+      email: this.form.email || undefined,
+      cityId: this.form.cityId!,
       active: this.form.active,
-      ...(this.form.numeral ? { numeral: this.form.numeral } : {})
     };
 
-    this.clientService.addClient(newClient);
+    const request$ = this.isEdit
+      ? this.clientService.update(this.editId!, data)
+      : this.clientService.create(data);
 
-    setTimeout(() => {
-      this.isSubmitting = false;
-      this.router.navigate(['/clientes']);
-    }, 400);
+    request$.subscribe({
+      next: () => {
+        this.clientService.loadClients();
+        this.isSubmitting = false;
+        this.router.navigate(['/clientes']);
+      },
+      error: () => {
+        this.isSubmitting = false;
+      },
+    });
   }
 }

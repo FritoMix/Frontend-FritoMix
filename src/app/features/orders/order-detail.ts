@@ -1,27 +1,9 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
-
-interface OrderItem {
-  item: number;
-  code: string;
-  description: string;
-  presentation: string;
-  bultos: number;
-  cajas: number;
-  units: number;
-  weight: string;
-  status: string;
-  family: string;
-}
-
-interface DispatchGroup {
-  group: string;
-  products: { product: string; quantity: number; lot: string; prodDate: string; expDate: string; location: string; notes: string }[];
-}
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { OrderService } from '../../core/services/order.service';
+import { OrderResponse, OrderDetailResponse } from '../../core/models/order.model';
 
 @Component({
   selector: 'app-order-detail',
@@ -29,456 +11,686 @@ interface DispatchGroup {
   imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="max-w-7xl mx-auto">
-      <!-- Action Bar -->
       <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
         <div>
           <a routerLink="/pedidos" class="text-sm text-blue-600 hover:text-blue-700 font-medium inline-flex items-center gap-1.5">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             Volver a Pedidos
           </a>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
-            Guardar
-          </button>
-          <button class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            Editar
-          </button>
-          <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            Aprobar
-          </button>
-          <button (click)="generatePDF()" class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-            Generar PDF
-          </button>
-          <button (click)="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
-            Imprimir
-          </button>
-          <button class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-            Enviar Correo
-          </button>
-          <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Exportar Excel
+          <button (click)="generatePDF()" [disabled]="pdfGenerating()"
+            class="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+            {{ pdfGenerating() ? 'Generando...' : 'Descargar PDF' }}
           </button>
         </div>
       </div>
 
-      <!-- Document Content for PDF -->
-      <div id="order-document" class="space-y-6">
-        <!-- Header -->
-        <div class="fm-card p-6">
-          <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            <div class="flex items-center gap-5">
-              <div class="w-20 h-20 bg-[#071938] rounded-2xl flex items-center justify-center text-white font-extrabold text-2xl shadow-lg flex-shrink-0">
-                <span class="text-3xl">FM</span>
+      @if (loading()) {
+        <div class="flex items-center justify-center py-16">
+          <div class="flex flex-col items-center gap-3">
+            <div class="w-8 h-8 border-4 border-blue-200 border-t-[#0055FF] rounded-full animate-spin"></div>
+            <span class="text-gray-500 text-sm">Cargando pedido...</span>
+          </div>
+        </div>
+      } @else {
+        @let ord = order()!;
+        @if (ord) {
+        <div class="space-y-5">
+
+          <!-- Header card -->
+          <div class="fm-card p-5">
+            <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-[#ffffff] rounded-xl flex items-center justify-center text-white font-extrabold text-lg shadow flex-shrink-0">
+                <img src="logo-fritomix.png" alt="FritoMix" class="w-30 h-20 object-contain" />
+                </div>
+                <div>
+                  <h1 class="text-2xl font-extrabold text-[#071938]">ORDEN DE PEDIDO Y CARGUE</h1>
+                  <p class="text-base font-bold text-red-600">FRITOMIX S.A.S</p>
+                  <p class="text-xs text-gray-500">Gestión de Ventas y Despachos</p>
+                </div>
               </div>
-              <div>
-                <h1 class="text-3xl font-extrabold text-[#071938] tracking-tight">ORDEN DE PEDIDO Y CARGUE</h1>
-                <p class="text-lg font-bold text-[#1E3A8A] mt-0.5">FRITOMIX S.A.S.</p>
-                <p class="text-sm text-gray-500">Gesti&oacute;n de Ventas y Despachos</p>
+              <div class="border border-gray-200 rounded-lg overflow-hidden text-sm">
+                <table>
+                  <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Código:</td><td class="px-3 py-1.5 font-bold text-[#071938]">FMX-FM-VT-PD-01</td></tr>
+                  <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Versión:</td><td class="px-3 py-1.5 font-bold">1.0</td></tr>
+                  <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Fecha:</td><td class="px-3 py-1.5 font-bold">{{ ord.orderDate | date:'dd/MM/yyyy' }}</td></tr>
+                  <tr><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Página:</td><td class="px-3 py-1.5 font-bold">1 de 1</td></tr>
+                </table>
               </div>
             </div>
-            <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 min-w-[200px]">
-              <table class="text-sm w-full">
-                <tr><td class="font-semibold text-gray-500 pr-4 py-1">C&oacute;digo:</td><td class="font-bold text-[#071938]">FM-OPC-001</td></tr>
-                <tr><td class="font-semibold text-gray-500 pr-4 py-1">Versi&oacute;n:</td><td class="font-bold text-[#071938]">2.0</td></tr>
-                <tr><td class="font-semibold text-gray-500 pr-4 py-1">Fecha:</td><td class="font-bold text-[#071938]">{{ today }}</td></tr>
-                <tr><td class="font-semibold text-gray-500 pr-4 py-1">P&aacute;gina:</td><td class="font-bold text-[#071938]">1 / 1</td></tr>
+          </div>
+
+          <!-- Client + Dispatcher -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="lg:col-span-2 fm-card overflow-hidden">
+              <div class="bg-blue-700 px-4 py-2"><h3 class="text-white font-bold text-sm">CLIENTE</h3></div>
+              <div class="p-4 grid grid-cols-2 gap-x-6 gap-y-1.5 text-sm">
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Cliente:</span><span class="font-semibold text-[#071938]">{{ ord.customerName }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Fecha Pedido:</span><span class="font-semibold">{{ ord.orderDate | date:'dd/MM/yyyy' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Numeral:</span><span class="font-semibold text-[#071938]">{{ ord.customerDocument }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Coordinador:</span><span class="font-semibold">{{ ord.coordinatorName || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Departamento:</span><span class="font-semibold">{{ ord.departmentName || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Teléfono:</span><span class="font-semibold">{{ ord.phone || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Ciudad:</span><span class="font-semibold">{{ ord.cityName || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Dirección:</span><span class="font-semibold">{{ ord.address || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-28">Estado:</span><span class="font-semibold">{{ ord.status }}</span></div>
+              </div>
+            </div>
+            <div class="fm-card overflow-hidden">
+              <div class="bg-blue-700 px-4 py-2"><h3 class="text-white font-bold text-sm">DESPACHADOR / TRANSPORTE</h3></div>
+              <div class="p-4 space-y-1.5 text-sm">
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Despachador:</span><span class="font-semibold">{{ ord.dispatchUserName || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Vehículo:</span><span class="font-semibold">{{ ord.dispatchVehiclePlate || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Fecha Despacho:</span><span class="font-semibold">{{ ord.dispatchDate ? (ord.dispatchDate | date:'dd/MM/yyyy') : '—' }}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Products table -->
+          <div class="fm-card overflow-hidden">
+            <div class="bg-[#071938] px-4 py-2"><h3 class="text-white font-bold text-sm">DETALLE PRODUCTO</h3></div>
+            <div class="overflow-x-auto">
+              <table class="fm-table">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="!pl-5 w-10">#</th>
+                    <th>Descripción</th>
+                    <th class="text-center">Paca</th>
+                    <th class="text-center">Bulto</th>
+                    <th class="text-center !pr-5">Caja</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of ord.details; track item.id; let i = $index) {
+                    <tr [style.background]="groupColor(i)">
+                      <td class="!pl-5 font-mono text-sm whitespace-nowrap">{{ i + 1 }}</td>
+                      <td class="font-medium text-[#071938]">{{ item.productName }}</td>
+                      <td class="text-center font-semibold">{{ item.productType === 'PACA' ? item.quantity : 0 }}</td>
+                      <td class="text-center font-semibold">{{ (item.productType === 'BULT' || item.productType === 'CANA' || !item.productType) ? item.quantity : 0 }}</td>
+                      <td class="text-center font-semibold !pr-5">{{ item.productType === 'CAJA' ? item.quantity : 0 }}</td>
+                    </tr>
+                  }
+                </tbody>
+                <tfoot>
+                  <tr class="bg-[#071938] text-white font-bold">
+                    <td colspan="2" class="!pl-5 !text-white">TOTALES</td>
+                    <td class="text-center !text-white">{{ totalPacas() }}</td>
+                    <td class="text-center !text-white">{{ totalBultos() }}</td>
+                    <td class="text-center !pr-5 !text-white">{{ totalCajas() }}</td>
+                  </tr>
+                </tfoot>
               </table>
             </div>
           </div>
+
+          <!-- Summary + Notes -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="fm-card overflow-hidden">
+              <div class="bg-[#071938] px-4 py-2"><h3 class="text-white font-bold text-sm">RESUMEN GENERAL</h3></div>
+              <div class="p-4 space-y-2 text-sm">
+                <div class="flex justify-between"><span class="text-gray-500">Total Bultos:</span><span class="font-bold text-[#071938]">{{ totalBultos() }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Total Cajas:</span><span class="font-bold">{{ totalCajas() }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Total Pacas:</span><span class="font-bold">{{ totalPacas() }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Total Unidades:</span><span class="font-bold">{{ totalQty() }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Peso Total (kg):</span><span class="font-bold">{{ totalPeso() | number:'1.3-3':'es-CO' }}</span></div>
+                <div class="flex justify-between"><span class="text-gray-500">Dimensión Total:</span><span class="font-bold">{{ totalDimension() | number:'1.1-1':'es-CO' }}</span></div>
+              </div>
+            </div>
+            <div class="fm-card overflow-hidden">
+              <div class="bg-[#071938] px-4 py-2"><h3 class="text-white font-bold text-sm">OBSERVACIONES DEL PEDIDO</h3></div>
+              <div class="p-4 text-sm text-gray-600">{{ ord.notes || '—' }}</div>
+            </div>
+            <div class="fm-card overflow-hidden">
+              <div class="bg-[#071938] px-4 py-2"><h3 class="text-white font-bold text-sm">INFORMACIÓN DE TRANSPORTE</h3></div>
+              <div class="p-4 space-y-1.5 text-sm">
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Conductor:</span><span class="font-semibold">{{ ord.dispatchDriverName || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Documento:</span><span class="font-semibold">{{ ord.dispatchDriverDocument || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Teléfono:</span><span class="font-semibold">{{ ord.dispatchDriverPhone || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Fecha Despacho:</span><span class="font-semibold">{{ (ord.dispatchDate | date:'dd/MM/yyyy') || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Hora Despacho:</span><span class="font-semibold">{{ (ord.dispatchDate | date:'HH:mm') || '—' }}</span></div>
+              </div>
+            </div>
+          </div>
+
         </div>
-
-        <!-- Info Cards Row -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <!-- Cliente -->
-          <div class="fm-card p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938] text-sm">Informaci&oacute;n del Cliente</h3>
-            </div>
-            <div class="space-y-2.5 text-sm">
-              <div class="flex justify-between"><span class="text-gray-500">Cliente:</span><span class="font-semibold text-[#071938] text-right">DISTRIBUCIONES ELITE S.A.S</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">C&oacute;digo:</span><span class="font-semibold text-[#071938]">CLI-0042</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Ciudad:</span><span class="font-semibold text-[#071938]">BOGOT&Aacute; D.C.</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Departamento:</span><span class="font-semibold text-[#071938]">CUNDINAMARCA</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Direcci&oacute;n:</span><span class="font-semibold text-[#071938] text-right">Cra 42 # 15-35 Bodega 7</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Tel&eacute;fono:</span><span class="font-semibold text-[#071938]">(601) 745 6321</span></div>
-            </div>
-          </div>
-
-          <!-- Comercial -->
-          <div class="fm-card p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938] text-sm">Informaci&oacute;n Comercial</h3>
-            </div>
-            <div class="space-y-2.5 text-sm">
-              <div class="flex justify-between"><span class="text-gray-500">Fecha Pedido:</span><span class="font-semibold text-[#071938]">25/07/2026</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Coordinador:</span><span class="font-semibold text-[#071938]">Mar&iacute;a Fernanda L&oacute;pez</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Estado:</span><span class="status-badge bg-amber-50 text-amber-700 border-amber-200 text-xs">EN PREPARACI&Oacute;N</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Prioridad:</span><span class="font-semibold text-[#071938]"><span class="text-amber-500">●●●</span> Alta</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Tipo Venta:</span><span class="font-semibold text-[#071938]">Contado</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Canal:</span><span class="font-semibold text-[#071938]">Mayorista</span></div>
-            </div>
-          </div>
-
-          <!-- Despacho -->
-          <div class="fm-card p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-lg bg-purple-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938] text-sm">Informaci&oacute;n del Despacho</h3>
-            </div>
-            <div class="space-y-2.5 text-sm">
-              <div class="flex justify-between"><span class="text-gray-500">Despachador:</span><span class="font-semibold text-[#071938]">Carlos Andr&eacute;s Mu&ntilde;oz</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Aux. Producci&oacute;n:</span><span class="font-semibold text-[#071938]">Pedro Jim&eacute;nez</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Veh&iacute;culo:</span><span class="font-semibold text-[#071938]">Turbo 3000</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Placa:</span><span class="font-semibold text-[#071938]">ABC-123</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Lote General:</span><span class="font-semibold text-[#071938]">LTE-2026-07-25</span></div>
-              <div class="flex justify-between"><span class="text-gray-500">Estado Despacho:</span><span class="status-badge bg-blue-50 text-blue-700 border-blue-200 text-xs">PREPARANDO</span></div>
-            </div>
-          </div>
+        } @else {
+        <div class="flex items-center justify-center py-16">
+          <span class="text-gray-500 text-sm">No se encontró el pedido.</span>
         </div>
-
-        <!-- Tabla Principal: Pedido -->
-        <div class="fm-card overflow-hidden">
-          <div class="p-5 pb-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938]">Detalle del Pedido</h3>
-            </div>
-            <div class="relative">
-              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input [(ngModel)]="searchTerm" placeholder="Buscar producto..." class="border border-gray-300 rounded-lg py-1.5 pl-9 pr-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none w-56"/>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="fm-table">
-              <thead>
-                <tr class="bg-gray-50/60">
-                  <th class="!pl-6 w-12">Item</th>
-                  <th class="w-20">C&oacute;digo</th>
-                  <th>Descripci&oacute;n del Producto</th>
-                  <th class="text-center w-24">Presentaci&oacute;n</th>
-                  <th class="text-right w-16">Bultos</th>
-                  <th class="text-right w-16">Cajas</th>
-                  <th class="text-right w-20">Unidades</th>
-                  <th class="text-right w-20">Peso</th>
-                  <th class="text-center w-24">Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of filteredItems(); track item.item; let i = $index) {
-                  <tr [class]="getRowClass(item.family, i)">
-                    <td class="!pl-6 font-mono text-sm">{{ item.item }}</td>
-                    <td class="font-mono text-sm font-semibold text-[#071938]">{{ item.code }}</td>
-                    <td><span class="font-medium text-[#071938]">{{ item.description }}</span></td>
-                    <td class="text-center text-sm text-gray-600">{{ item.presentation }}</td>
-                    <td class="text-right font-semibold">{{ item.bultos }}</td>
-                    <td class="text-right font-semibold">{{ item.cajas }}</td>
-                    <td class="text-right font-semibold">{{ item.units }}</td>
-                    <td class="text-right text-sm text-gray-600">{{ item.weight }}</td>
-                    <td class="text-center">
-                      <span class="inline-block w-2 h-2 rounded-full" [class]="item.status === 'Disponible' ? 'bg-green-500' : item.status === 'Pendiente' ? 'bg-amber-500' : 'bg-red-500'" [title]="item.status"></span>
-                      <span class="text-xs ml-1.5 text-gray-500">{{ item.status }}</span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-          <div class="flex items-center justify-between px-6 py-3 border-t border-gray-100 text-sm text-gray-500">
-            <span>{{ filteredItems().length }} productos</span>
-          </div>
-        </div>
-
-        <!-- Tabla Despacho -->
-        <div class="fm-card overflow-hidden">
-          <div class="p-5 pb-3 border-b border-gray-100">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938]">Despacho por Grupos</h3>
-            </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="fm-table">
-              <thead>
-                <tr class="bg-gray-50/60">
-                  <th class="!pl-6">Grupo</th>
-                  <th>Producto</th>
-                  <th class="text-right w-20">Cantidad</th>
-                  <th class="w-28">Lote</th>
-                  <th class="w-28">Fecha Producci&oacute;n</th>
-                  <th class="w-28">Fecha Vencimiento</th>
-                  <th class="w-32">Ubicaci&oacute;n Bodega</th>
-                  <th class="!pr-6">Observaciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (group of dispatchGroups; track group.group) {
-                  @for (prod of group.products; track prod.lot; let first = $first) {
-                    <tr class="hover:bg-gray-50/50">
-                      @if (first) {
-                        <td class="!pl-6 font-bold text-[#071938]" [attr.rowspan]="group.products.length">{{ group.group }}</td>
-                      }
-                      <td><span class="font-medium text-[#071938]">{{ prod.product }}</span></td>
-                      <td class="text-right font-semibold">{{ prod.quantity }}</td>
-                      <td class="font-mono text-sm">{{ prod.lot }}</td>
-                      <td class="text-sm">{{ prod.prodDate }}</td>
-                      <td class="text-sm">{{ prod.expDate }}</td>
-                      <td class="text-sm">{{ prod.location }}</td>
-                      <td class="!pr-6 text-sm text-gray-500">{{ prod.notes }}</td>
-                    </tr>
-                  }
-                }
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- KPI Summary -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div class="fm-card p-4 text-center">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-blue-100 flex items-center justify-center mb-2">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-            </div>
-            <p class="text-2xl font-extrabold text-[#071938]">12</p>
-            <p class="text-xs text-gray-500 mt-0.5">Productos</p>
-          </div>
-          <div class="fm-card p-4 text-center">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
-              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-            </div>
-            <p class="text-2xl font-extrabold text-[#071938]">45</p>
-            <p class="text-xs text-gray-500 mt-0.5">Bultos</p>
-          </div>
-          <div class="fm-card p-4 text-center">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-amber-100 flex items-center justify-center mb-2">
-              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-            </div>
-            <p class="text-2xl font-extrabold text-[#071938]">180</p>
-            <p class="text-xs text-gray-500 mt-0.5">Cajas</p>
-          </div>
-          <div class="fm-card p-4 text-center">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-purple-100 flex items-center justify-center mb-2">
-              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-            </div>
-            <p class="text-2xl font-extrabold text-[#071938]">3,600</p>
-            <p class="text-xs text-gray-500 mt-0.5">Unidades</p>
-          </div>
-          <div class="fm-card p-4 text-center">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-rose-100 flex items-center justify-center mb-2">
-              <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg>
-            </div>
-            <p class="text-2xl font-extrabold text-[#071938]">2,850</p>
-            <p class="text-xs text-gray-500 mt-0.5">Peso Total (Kg)</p>
-          </div>
-          <div class="fm-card p-4 text-center border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
-            <div class="w-10 h-10 mx-auto rounded-xl bg-emerald-100 flex items-center justify-center mb-2">
-              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            </div>
-            <p class="text-2xl font-extrabold text-[#071938]">$ 18,450,000</p>
-            <p class="text-xs text-gray-500 mt-0.5">Valor Total</p>
-          </div>
-        </div>
-
-        <!-- Observaciones -->
-        <div class="fm-card p-5">
-          <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-            <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-              <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-            </div>
-            <h3 class="font-bold text-[#071938] text-sm">Observaciones del Pedido</h3>
-          </div>
-          <textarea
-            class="w-full border border-gray-200 rounded-xl p-4 text-sm text-gray-700 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-            rows="4"
-            placeholder="Agregar observaciones..."
-          >{{ 'Producto delicado, manejar con cuidado.\\nEntrega antes de las 2:00 PM.\\nFacturar a nombre de la empresa.' }}</textarea>
-        </div>
-
-        <!-- Transporte y Firmas -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <!-- Transporte -->
-          <div class="fm-card p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-lg bg-cyan-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h8M8 17a2 2 0 11-4 0 2 2 0 014 0zm8 0a2 2 0 104 0 2 2 0 01-4 0zM3 9h1l2-4h8l2 4h5v4h-1m-16 0h16"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938] text-sm">Informaci&oacute;n del Transporte</h3>
-            </div>
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div><span class="text-gray-500 block text-xs">Conductor</span><span class="font-semibold text-[#071938]">Jhon Jairo Rojas</span></div>
-              <div><span class="text-gray-500 block text-xs">Documento</span><span class="font-semibold text-[#071938]">CC 79.543.210</span></div>
-              <div><span class="text-gray-500 block text-xs">Tel&eacute;fono</span><span class="font-semibold text-[#071938]">310 245 7890</span></div>
-              <div><span class="text-gray-500 block text-xs">Veh&iacute;culo / Placa</span><span class="font-semibold text-[#071938]">Turbo 3000 - ABC-123</span></div>
-              <div><span class="text-gray-500 block text-xs">Fecha Despacho</span><span class="font-semibold text-[#071938]">25/07/2026</span></div>
-              <div><span class="text-gray-500 block text-xs">Hora Salida</span><span class="font-semibold text-[#071938]">14:30</span></div>
-              <div><span class="text-gray-500 block text-xs">Hora Est. Entrega</span><span class="font-semibold text-[#071938]">16:45</span></div>
-              <div><span class="text-gray-500 block text-xs">Ruta</span><span class="font-semibold text-[#071938]">Bogot&aacute; - Soacha</span></div>
-              <div class="col-span-2"><span class="text-gray-500 block text-xs">Ciudad Destino</span><span class="font-semibold text-[#071938]">Soacha - Cundinamarca</span></div>
-            </div>
-          </div>
-
-          <!-- Firmas -->
-          <div class="fm-card p-5">
-            <div class="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
-              <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-              </div>
-              <h3 class="font-bold text-[#071938] text-sm">Firmas</h3>
-            </div>
-            <div class="space-y-5">
-              <div>
-                <p class="text-xs font-semibold text-gray-500 mb-1">Elabor&oacute; (Coordinador)</p>
-                <div class="border-b border-gray-300 pb-2"></div>
-                <div class="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>Firma</span><span>Mar&iacute;a Fernanda L&oacute;pez</span><span>Coordinadora</span>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs font-semibold text-gray-500 mb-1">Revis&oacute; (Despachador)</p>
-                <div class="border-b border-gray-300 pb-2"></div>
-                <div class="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>Firma</span><span>Carlos Andr&eacute;s Mu&ntilde;oz</span><span>Despachador</span>
-                </div>
-              </div>
-              <div>
-                <p class="text-xs font-semibold text-gray-500 mb-1">Recibi&oacute; (Conductor)</p>
-                <div class="border-b border-gray-300 pb-2"></div>
-                <div class="flex justify-between text-xs text-gray-400 mt-1">
-                  <span>Firma</span><span>Jhon Jairo Rojas</span><span>Conductor</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        }
+      }
     </div>
-  `,
-  styles: [`
-    :host ::ng-deep .row-tradicional { background-color: #F8FAFC; }
-    :host ::ng-deep .row-granos { background-color: #FFFBEB; }
-    :host ::ng-deep .row-frutos { background-color: #ECFDF5; }
-    :host ::ng-deep .row-maiz { background-color: #FAF5FF; }
-    :host ::ng-deep .row-mani { background-color: #FFF7ED; }
-    :host ::ng-deep .row-nacho { background-color: #FEF2F2; }
-  `]
+  `
 })
-export class OrderDetailComponent {
-  window = window;
-  searchTerm = signal('');
-  today = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: '2-digit', day: '2-digit' });
+export class OrderDetailComponent implements OnInit {
+  private orderService = inject(OrderService);
+  private route       = inject(ActivatedRoute);
 
-  orderItems = signal<OrderItem[]>([
-    { item: 1, code: 'PR-101', description: 'TRADICIONAL SURT MIX X 250 UND', presentation: '12 UND', bultos: 8, cajas: 32, units: 384, weight: '96 Kg', status: 'Disponible', family: 'Tradicional' },
-    { item: 2, code: 'PR-102', description: 'LENTEJA CRIOLLA 500 G Bx24', presentation: '24 UND', bultos: 5, cajas: 20, units: 480, weight: '240 Kg', status: 'Disponible', family: 'Granos & Snacks' },
-    { item: 3, code: 'PR-103', description: 'ALMENDRA HOLLADA 250 G Bx30', presentation: '30 UND', bultos: 6, cajas: 24, units: 720, weight: '180 Kg', status: 'Disponible', family: 'Frutos Secos' },
-    { item: 4, code: 'PR-104', description: 'MAÍZ PIRA TOSTADO 250 G Bx40', presentation: '40 UND', bultos: 7, cajas: 28, units: 1120, weight: '280 Kg', status: 'Pendiente', family: 'Maíz' },
-    { item: 5, code: 'PR-105', description: 'MANÍ SALADO JUMBO 150 G Bx50', presentation: '50 UND', bultos: 10, cajas: 40, units: 2000, weight: '300 Kg', status: 'Disponible', family: 'Maní' },
-    { item: 6, code: 'PR-106', description: 'NACHO PICANTE 200G X30 UND', presentation: '30 UND', bultos: 4, cajas: 16, units: 480, weight: '96 Kg', status: 'Disponible', family: 'Nachos & Totopos' },
-    { item: 7, code: 'PR-107', description: 'TOZIMIEL TOCINO 20G 12UD 16DIS', presentation: '12 UND', bultos: 3, cajas: 12, units: 144, weight: '28.8 Kg', status: 'Disponible', family: 'Tradicional' },
-    { item: 8, code: 'PR-108', description: 'KIKITOS SURTIDO LS 33G 12 UD 10DIS', presentation: '12 UND', bultos: 2, cajas: 8, units: 96, weight: '31.68 Kg', status: 'Pendiente', family: 'Maíz' },
-  ]);
+  loading       = signal(true);
+  pdfGenerating  = signal(false);
+  order         = signal<OrderResponse | null>(null);
 
-  filteredItems = () => {
-    const term = this.searchTerm().toLowerCase();
-    if (!term) return this.orderItems();
-    return this.orderItems().filter(i =>
-      i.description.toLowerCase().includes(term) ||
-      i.code.toLowerCase().includes(term)
-    );
-  };
-
-  getRowClass(family: string, index: number): string {
-    const base = index % 2 === 0 ? 'bg-white' : 'bg-gray-50/30';
-    const familyMap: Record<string, string> = {
-      'Tradicional': 'hover:bg-blue-50/50',
-      'Granos & Snacks': 'hover:bg-amber-50/50',
-      'Frutos Secos': 'hover:bg-emerald-50/50',
-      'Maíz': 'hover:bg-purple-50/50',
-      'Maní': 'hover:bg-orange-50/50',
-      'Nachos & Totopos': 'hover:bg-red-50/50',
-    };
-    return `${base} ${familyMap[family] || 'hover:bg-gray-50/50'}`;
-  }
-
-  dispatchGroups: DispatchGroup[] = [
-    {
-      group: 'Grupo A',
-      products: [
-        { product: 'TRADICIONAL SURT MIX X 250 UND', quantity: 384, lot: 'LTE-2026-07-A01', prodDate: '20/07/2026', expDate: '20/10/2026', location: 'Bodega 1 - Est. A1', notes: 'Pallet 1' },
-        { product: 'LENTEJA CRIOLLA 500 G Bx24', quantity: 480, lot: 'LTE-2026-07-A02', prodDate: '18/07/2026', expDate: '18/01/2027', location: 'Bodega 1 - Est. B2', notes: '' },
-      ]
-    },
-    {
-      group: 'Grupo B',
-      products: [
-        { product: 'ALMENDRA HOLLADA 250 G Bx30', quantity: 720, lot: 'LTE-2026-07-B01', prodDate: '22/07/2026', expDate: '22/01/2027', location: 'Bodega 2 - Est. C3', notes: 'Pallet 2' },
-        { product: 'MAÍZ PIRA TOSTADO 250 G Bx40', quantity: 1120, lot: 'LTE-2026-07-B02', prodDate: '19/07/2026', expDate: '19/10/2026', location: 'Bodega 2 - Est. D4', notes: 'Pendiente producción' },
-      ]
-    },
-    {
-      group: 'Grupo C',
-      products: [
-        { product: 'MANÍ SALADO JUMBO 150 G Bx50', quantity: 2000, lot: 'LTE-2026-07-C01', prodDate: '21/07/2026', expDate: '21/10/2026', location: 'Bodega 1 - Est. E5', notes: 'Pallet 3' },
-        { product: 'NACHO PICANTE 200G X30 UND', quantity: 480, lot: 'LTE-2026-07-C02', prodDate: '20/07/2026', expDate: '20/10/2026', location: 'Bodega 3 - Est. F6', notes: '' },
-        { product: 'TOZIMIEL TOCINO 20G 12UD 16DIS', quantity: 144, lot: 'LTE-2026-07-C03', prodDate: '23/07/2026', expDate: '23/10/2026', location: 'Bodega 1 - Est. G7', notes: 'Caja sellada' },
-      ]
-    },
-    {
-      group: 'Grupo D',
-      products: [
-        { product: 'KIKITOS SURTIDO LS 33G 12 UD 10DIS', quantity: 96, lot: 'LTE-2026-07-D01', prodDate: '24/07/2026', expDate: '24/10/2026', location: 'Bodega 3 - Est. H8', notes: 'Pendiente' },
-      ]
-    }
+  // Colour palette for product groups (6 alternating colours)
+  private readonly GROUP_COLORS = [
+    '#D6EAF8',  // light blue  – group 1
+    '#FFF9C4',  // light yellow – group 2
+    '#FFE6C1',  // light orange – group 3
+    '#F8F8F8',  // near white  – group 4
+    '#EDD8FF',  // light purple – group 5
+    '#D2F8DE',  // light green – group 6
   ];
 
-  generatePDF() {
-    const element = document.getElementById('order-document');
-    if (!element) return;
+  private readonly GROUP_SIZE = 5;   // products per group
 
-    html2canvas(element, {
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      backgroundColor: '#FFFFFF'
-    }).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 190;
-      const pageHeight = 297;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 10;
+  ngOnInit() {
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.orderService.findById(Number(id)).subscribe({
+        next : (res) => { this.order.set(res); this.loading.set(false); },
+        error: ()    => { this.loading.set(false); },
+      });
+    }
+  }
 
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight - 20;
+  totalQty(): number {
+    return this.order()?.details.reduce((s, d) => s + d.quantity, 0) ?? 0;
+  }
 
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight + 10;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight - 20;
+  totalBultos(): number {
+    return this.order()?.details
+      .filter(d => d.productType === 'BULT' || d.productType === 'CANA' || !d.productType)
+      .reduce((s, d) => s + d.quantity, 0) ?? 0;
+  }
+
+  totalCajas(): number {
+    return this.order()?.details
+      .filter(d => d.productType === 'CAJA')
+      .reduce((s, d) => s + d.quantity, 0) ?? 0;
+  }
+
+  totalPacas(): number {
+    return this.order()?.details
+      .filter(d => d.productType === 'PACA')
+      .reduce((s, d) => s + d.quantity, 0) ?? 0;
+  }
+
+  totalPeso(): number {
+    return this.order()?.details
+      .reduce((s, d) => s + ((d.pesoUnidad ?? 0) * d.quantity), 0) ?? 0;
+  }
+
+  totalDimension(): number {
+    return this.order()?.details
+      .reduce((s, d) => s + ((d.dimension ?? 0) * d.quantity), 0) ?? 0;
+  }
+
+  groupColor(idx: number): string {
+    return this.GROUP_COLORS[Math.floor(idx / this.GROUP_SIZE) % this.GROUP_COLORS.length];
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  //  PDF GENERATOR – reproduces the "ORDEN DE PEDIDO Y CARGUE" format exactly
+  // ─────────────────────────────────────────────────────────────────────────
+  private loadImageAsBase64(url: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = reject;
+      img.src = url;
+    });
+  }
+
+  async generatePDF() {
+    if (!this.order() || this.pdfGenerating()) return;
+    this.pdfGenerating.set(true);
+
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const logoDataUrl = await this.loadImageAsBase64('logo-fritomix.png');
+
+      const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const order = this.order()!;
+      const items = order.details;
+
+      // ── Page constants ───────────────────────────────────────────
+      const PW = 297, PH = 210;
+      const ML = 7, MR = 7, MT = 7;
+      const CW = PW - ML - MR;   // 283 mm
+
+      // ── Colour aliases ───────────────────────────────────────────
+      type RGB = [number, number, number];
+      const NAVY:  RGB = [7,   25,  56];
+      const BLUE:  RGB = [30,  58, 138];
+      const RED:   RGB = [196, 30,  30];
+      const WHITE: RGB = [255, 255, 255];
+      const LGRAY: RGB = [240, 242, 246];
+      const HGRAY: RGB = [209, 213, 219];
+      const BLK:   RGB = [20,  20,  20];
+      const DGR:   RGB = [80,  90, 105];
+      const LBLU:  RGB = [219, 234, 254];  // light-blue for section headers
+
+      // Row group colours  (same order as UI)
+      const GCLR: RGB[] = [
+        [214, 234, 248],
+        [255, 249, 196],
+        [255, 230, 193],
+        [248, 248, 248],
+        [237, 222, 255],
+        [210, 248, 222],
+      ];
+
+      // ── Short helpers ────────────────────────────────────────────
+      const F  = (c: RGB) => doc.setFillColor(c[0], c[1], c[2]);
+      const D  = (c: RGB, lw = 0.2) => { doc.setDrawColor(c[0], c[1], c[2]); doc.setLineWidth(lw); };
+      const TC = (c: RGB) => doc.setTextColor(c[0], c[1], c[2]);
+      const B  = (s: number) => { doc.setFont('helvetica', 'bold');   doc.setFontSize(s); };
+      const N  = (s: number) => { doc.setFont('helvetica', 'normal'); doc.setFontSize(s); };
+      const FR = (x: number, y: number, w: number, h: number) => doc.rect(x, y, w, h, 'F');
+      const SR = (x: number, y: number, w: number, h: number) => doc.rect(x, y, w, h, 'S');
+      const TX = (t: string, x: number, y: number, o?: { align?: 'center' | 'right' | 'left' }) =>
+        doc.text(t, x, y, o as any);
+      const LN = (x1: number, y1: number, x2: number, y2: number) => doc.line(x1, y1, x2, y2);
+
+      const fmtDate = (iso: string) => {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        return isNaN(d.getTime()) ? iso
+          : `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+      };
+
+      const clip = (text: string, maxW: number) =>
+        doc.splitTextToSize(text, maxW)[0] as string;
+
+      let y = MT;
+
+      // ═════════════════════════════════════════════════════════════
+      //  SECTION 1 — MAIN HEADER
+      // ═════════════════════════════════════════════════════════════
+      const HDR_H  = 16;
+      const LOGO_W = 32;
+      const CODE_W = 55;
+      const TTL_W  = CW - LOGO_W - CODE_W;
+
+      // outer box
+      D(HGRAY, 0.3); SR(ML, y, CW, HDR_H);
+
+      // ── Logo box ──────────────────────────────────────────────
+      F(WHITE); FR(ML, y, LOGO_W, HDR_H);
+      D(HGRAY, 0.2); SR(ML, y, LOGO_W, HDR_H);
+
+      // Actual logo image
+      try {
+        doc.addImage(logoDataUrl, 'PNG', ML + 1, y + 0.5, LOGO_W - 2, HDR_H - 1);
+      } catch {
+        // fallback: draw name text if image fails
+        doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
+        doc.circle(ML + LOGO_W / 2, y + HDR_H / 2, 7, 'F');
+        TC(WHITE); B(5);
+        TX('FRITO', ML + LOGO_W / 2, y + HDR_H / 2 - 1, { align: 'center' });
+        TX('MIX',   ML + LOGO_W / 2, y + HDR_H / 2 + 3.5, { align: 'center' });
       }
 
-      pdf.save(`ORDEN-PEDIDO-FM-OPC-001-${this.today.replace(/\//g, '-')}.pdf`);
-    });
+      // ── Title ──────────────────────────────────────────────
+      const tlx = ML + LOGO_W;
+      TC(NAVY);  B(14);
+      TX('ORDEN DE PEDIDO Y CARGUE', tlx + TTL_W / 2, y + 6.5, { align: 'center' });
+      TC(RED);   B(10);
+      TX('FRITOMIX S.A.S', tlx + TTL_W / 2, y + 11, { align: 'center' });
+      TC(DGR);   N(6.5);
+      TX('Gestión de Ventas y Despachos', tlx + TTL_W / 2, y + 14.8, { align: 'center' });
+
+      // ── Code box ──────────────────────────────────────────────
+      const cx = ML + LOGO_W + TTL_W;
+      F(WHITE); FR(cx, y, CODE_W, HDR_H);
+      D(HGRAY, 0.2); SR(cx, y, CODE_W, HDR_H);
+
+      const codeRows: [string, string][] = [
+        ['Código:',  'FMX-FM-VT-PD-01'],
+        ['Versión:', '1.0'],
+        ['Fecha:',   fmtDate(order.orderDate)],
+        ['Página:',  '1 de 1'],
+      ];
+      const rowH4 = HDR_H / 4;
+      codeRows.forEach(([lbl, val], i) => {
+        if (i > 0) { D(HGRAY, 0.15); LN(cx, y + i * rowH4, cx + CODE_W, y + i * rowH4); }
+        TC(DGR);  B(6.5); TX(lbl, cx + 2,  y + i * rowH4 + rowH4 * 0.7);
+        TC(BLK);  N(6.5); TX(val, cx + 19, y + i * rowH4 + rowH4 * 0.7);
+      });
+      D(HGRAY, 0.1); LN(cx + 18, y, cx + 18, y + HDR_H);
+
+      y += HDR_H;
+
+      // ═════════════════════════════════════════════════════════════
+      //  SECTION 2 — CLIENT + DISPATCHER INFO
+      // ═════════════════════════════════════════════════════════════
+      const INFO_H = 21;
+      const CLI_W  = CW * 0.67;
+      const DSP_W  = CW - CLI_W;
+      const CLI_H  = 5;   // header strip height
+
+      // — CLIENT panel —
+      F(LBLU); FR(ML, y, CLI_W, CLI_H);
+      D(HGRAY, 0.2); SR(ML, y, CLI_W, INFO_H);
+      TC(NAVY); B(7); TX('CLIENTE', ML + CLI_W / 2, y + 3.6, { align: 'center' });
+
+      // Three column sections in client
+      const C3 = CLI_W / 3;
+      const clientData: [string, string][][] = [
+        [['Cliente:',      order.customerName],                 ['Fecha Pedido:', fmtDate(order.orderDate)], ['Departamento:', order.departmentName || '—']],
+        [['Numeral:',      order.customerDocument],             ['Coordinador:', order.coordinatorName || '—'], ['Teléfono:',     order.phone || '—']],
+        [['Ciudad:',       order.cityName || '—'],              ['Estado:', order.status],                          ['Dirección:',    order.address || '—']],
+      ];
+      let ry = y + CLI_H + 3.5;
+      clientData.forEach(row => {
+        row.forEach(([lbl, val], ci) => {
+          TC(DGR); B(6); TX(lbl, ML + C3 * ci + 2, ry);
+          TC(BLK); N(6);
+          TX(clip(val, C3 - 18), ML + C3 * ci + 19, ry);
+        });
+        ry += 4.5;
+      });
+      // column dividers
+      D(HGRAY, 0.1);
+      LN(ML + C3,     y + CLI_H, ML + C3,     y + INFO_H);
+      LN(ML + C3 * 2, y + CLI_H, ML + C3 * 2, y + INFO_H);
+
+      // — DISPATCHER panel —
+      const DX = ML + CLI_W;
+      F(LBLU); FR(DX, y, DSP_W, CLI_H);
+      D(HGRAY, 0.2); SR(DX, y, DSP_W, INFO_H);
+      TC(NAVY); B(6.5); TX('DESPACHADOR / TRANSPORTE', DX + DSP_W / 2, y + 3.6, { align: 'center' });
+
+      const dspRows: [string, string][] = [
+        ['Despachador:',    order.dispatchUserName || '—'],
+        ['Vehículo:',       order.dispatchVehiclePlate || '—'],
+        ['Fecha Despacho:', order.dispatchDate ? order.dispatchDate.split('T')[0].replace(/-/g, '/') : '—'],
+      ];
+      let dr = y + CLI_H + 3.5;
+      dspRows.forEach(([lbl, val]) => {
+        TC(DGR); B(6); TX(lbl, DX + 2, dr);
+        TC(BLK); N(6); TX(val, DX + 26, dr);
+        dr += 3.6;
+      });
+
+      y += INFO_H;
+
+      // ═════════════════════════════════════════════════════════════
+      //  SECTION 3 — PRODUCT TABLE  (left) + DISPATCH TABLE (right)
+      // ═════════════════════════════════════════════════════════════
+
+      // — Column widths —
+      const LW = Math.round(CW * 0.50);  // left panel
+      const RW = CW - LW;                  // right panel
+      const LX = ML;
+      const RX = ML + LW;
+
+      // Left columns: ITEM | DESC | PACA | BULTO | CAJA
+      const LC_ITEM = 10;
+      const LC_PAC  = 13;
+      const LC_BLT  = 13;
+      const LC_CAJ  = 13;
+      const LC_DESC = LW - LC_ITEM - LC_PAC - LC_BLT - LC_CAJ;
+
+      // Right columns: GRUPO | DESC | CANT | LOTE | OBS
+      const RC_GRP  = 13;
+      const RC_CNT  = 13;
+      const RC_LOT  = 20;
+      const RC_OBS  = 30;
+      const RC_DESC = RW - RC_GRP - RC_CNT - RC_LOT - RC_OBS;
+
+      // — Section title bars —
+      F(NAVY); FR(LX, y, LW, 5); FR(RX, y, RW, 5);
+      TC(WHITE); B(7.5);
+      TX('DETALLE PRODUCTO', LX + LW / 2, y + 3.5, { align: 'center' });
+      TX('DESPACHO',         RX + RW / 2, y + 3.5, { align: 'center' });
+      y += 5;
+
+      // — Column header row (9 mm tall) —
+      const SHDR = 9;
+      F(LGRAY); FR(LX, y, LW, SHDR); FR(RX, y, RW, SHDR);
+      D(HGRAY, 0.2); SR(LX, y, LW, SHDR); SR(RX, y, RW, SHDR);
+
+      // "CANTIDADES" super-header (top half, over PACA+BULTO+CAJA)
+      const cantX = LX + LC_ITEM + LC_DESC;
+      const cantW = LC_PAC + LC_BLT + LC_CAJ;
+      F([185, 215, 240]); FR(cantX, y, cantW, SHDR / 2);
+      D(HGRAY, 0.15); SR(cantX, y, cantW, SHDR / 2);
+      TC(NAVY); B(5.5);
+      TX('CANTIDADES', cantX + cantW / 2, y + SHDR / 4 + 1.2, { align: 'center' });
+
+      // Left column labels
+      TC(NAVY); B(6.5);
+      TX('ITEM',         LX + LC_ITEM / 2,                               y + SHDR * 0.74 + 1.8, { align: 'center' });
+      TX('DESCRIPCIÓN',  LX + LC_ITEM + LC_DESC / 2,                     y + SHDR * 0.74 + 1.8, { align: 'center' });
+      TX('PACA',         cantX + LC_PAC / 2,                             y + SHDR * 0.74 + 1.8, { align: 'center' });
+      TX('BULTO',        cantX + LC_PAC + LC_BLT / 2,                    y + SHDR * 0.74 + 1.8, { align: 'center' });
+      TX('CAJA',         cantX + LC_PAC + LC_BLT + LC_CAJ / 2,           y + SHDR * 0.74 + 1.8, { align: 'center' });
+
+      // Left column dividers
+      D(HGRAY, 0.1);
+      LN(LX + LC_ITEM, y, LX + LC_ITEM, y + SHDR);
+      LN(cantX,           y + SHDR / 2, cantX,           y + SHDR);
+      LN(cantX + LC_PAC,  y,            cantX + LC_PAC,  y + SHDR);
+      LN(cantX + LC_PAC + LC_BLT, y, cantX + LC_PAC + LC_BLT, y + SHDR);
+
+      // Right column labels
+      TC(NAVY); B(6);
+      const rcHdrs: [string, number][] = [
+        ['GRUPO',            RC_GRP],
+        ['DETALLE PRODUCTO', RC_DESC],
+        ['CANT.',            RC_CNT],
+        ['LOTE',             RC_LOT],
+        ['OBSERVACIÓN',      RC_OBS],
+      ];
+      let rhx = RX;
+      rcHdrs.forEach(([lbl, w], i) => {
+        TC(NAVY); B(6);
+        TX(lbl, rhx + w / 2, y + SHDR / 2 + 1.5, { align: 'center' });
+        if (i > 0) { D(HGRAY, 0.1); LN(rhx, y, rhx, y + SHDR); }
+        rhx += w;
+      });
+
+      y += SHDR;
+
+      // ── Product rows ─────────────────────────────────────────
+      const ROW_H = 4.0;
+      const GS    = this.GROUP_SIZE;   // 5
+
+      // We might need multiple pages; compute available height
+      // Available for rows = PH - current_y - totals_row - gap - footer - sig - margin
+      const FOOT_NEEDED = 5 + 2 + 28 + 3 + 14;   // totals + gap + summary + gap + sig
+
+      const drawPageHeaders = () => {
+        // Called when starting a new page; re-draws section title + col headers
+        doc.addPage();
+        y = MT;
+        F(NAVY); FR(LX, y, LW, 5); FR(RX, y, RW, 5);
+        TC(WHITE); B(7.5);
+        TX('DETALLE PRODUCTO', LX + LW / 2, y + 3.5, { align: 'center' });
+        TX('DESPACHO',         RX + RW / 2, y + 3.5, { align: 'center' });
+        y += 5;
+        F(LGRAY); FR(LX, y, LW, SHDR); FR(RX, y, RW, SHDR);
+        D(HGRAY, 0.2); SR(LX, y, LW, SHDR); SR(RX, y, RW, SHDR);
+        F([185, 215, 240]); FR(cantX, y, cantW, SHDR / 2);
+        D(HGRAY, 0.15); SR(cantX, y, cantW, SHDR / 2);
+        TC(NAVY); B(5.5); TX('CANTIDADES', cantX + cantW / 2, y + SHDR / 4 + 1.2, { align: 'center' });
+        TC(NAVY); B(6.5);
+        TX('ITEM',         LX + LC_ITEM / 2,                  y + SHDR * 0.74 + 1.8, { align: 'center' });
+        TX('DESCRIPCIÓN',  LX + LC_ITEM + LC_DESC / 2,        y + SHDR * 0.74 + 1.8, { align: 'center' });
+        TX('PACA',         cantX + LC_PAC / 2,                y + SHDR * 0.74 + 1.8, { align: 'center' });
+        TX('BULTO',        cantX + LC_PAC + LC_BLT / 2,       y + SHDR * 0.74 + 1.8, { align: 'center' });
+        TX('CAJA',         cantX + LC_PAC + LC_BLT + LC_CAJ / 2, y + SHDR * 0.74 + 1.8, { align: 'center' });
+        D(HGRAY, 0.1);
+        LN(LX + LC_ITEM, y, LX + LC_ITEM, y + SHDR);
+        LN(cantX, y + SHDR / 2, cantX, y + SHDR);
+        LN(cantX + LC_PAC, y, cantX + LC_PAC, y + SHDR);
+        LN(cantX + LC_PAC + LC_BLT, y, cantX + LC_PAC + LC_BLT, y + SHDR);
+        TC(NAVY); B(6);
+        let rx2 = RX;
+        rcHdrs.forEach(([lbl, w], i) => {
+          TX(lbl, rx2 + w / 2, y + SHDR / 2 + 1.5, { align: 'center' });
+          if (i > 0) { D(HGRAY, 0.1); LN(rx2, y, rx2, y + SHDR); }
+          rx2 += w;
+        });
+        y += SHDR;
+      };
+
+      const dateRaw = order.orderDate ? order.orderDate.split('T')[0].replace(/-/g, '') : '';
+
+      items.forEach((item: OrderDetailResponse, idx: number) => {
+        // Page break check
+        if (y + ROW_H > PH - MR - FOOT_NEEDED) {
+          drawPageHeaders();
+        }
+
+        const gIdx   = Math.floor(idx / GS);
+        const gColor = GCLR[gIdx % GCLR.length];
+        const isFirst = idx % GS === 0;
+        const gNo    = gIdx + 1;
+        const ty     = y + ROW_H - 1.1;  // text baseline within row
+        const numQty = Number(item.quantity);
+
+        // LEFT row
+        F(gColor); FR(LX, y, LW, ROW_H);
+        D(HGRAY, 0.08); SR(LX, y, LW, ROW_H);
+        D(HGRAY, 0.08);
+        LN(LX + LC_ITEM,                          y, LX + LC_ITEM,                         y + ROW_H);
+        LN(LX + LC_ITEM + LC_DESC,                y, LX + LC_ITEM + LC_DESC,               y + ROW_H);
+        LN(cantX + LC_PAC,                        y, cantX + LC_PAC,                       y + ROW_H);
+        LN(cantX + LC_PAC + LC_BLT,               y, cantX + LC_PAC + LC_BLT,              y + ROW_H);
+
+        const isPaca  = item.productType === 'PACA';
+        const isBulto = !item.productType || item.productType === 'BULT' || item.productType === 'CANA';
+        const isCaja  = item.productType === 'CAJA';
+        TC(BLK); N(6);
+        TX(String(idx + 1),         LX + LC_ITEM / 2,                                  ty, { align: 'center' });
+        TX(clip(item.productName, LC_DESC - 2), LX + LC_ITEM + 1.5,                    ty);
+        TX(isPaca  ? String(numQty) : '0',   cantX + LC_PAC / 2,                       ty, { align: 'center' });
+        TX(isBulto ? String(numQty) : '0',   cantX + LC_PAC + LC_BLT / 2,              ty, { align: 'center' });
+        TX(isCaja  ? String(numQty) : '0',   cantX + LC_PAC + LC_BLT + LC_CAJ / 2,     ty, { align: 'center' });
+
+        // RIGHT row (DESPACHO)
+        F([248, 248, 248]); FR(RX, y, RW, ROW_H);
+        D(HGRAY, 0.08); SR(RX, y, RW, ROW_H);
+        D(HGRAY, 0.08);
+        LN(RX + RC_GRP,                   y, RX + RC_GRP,                   y + ROW_H);
+        LN(RX + RC_GRP + RC_DESC,         y, RX + RC_GRP + RC_DESC,         y + ROW_H);
+        LN(RX + RC_GRP + RC_DESC + RC_CNT, y, RX + RC_GRP + RC_DESC + RC_CNT, y + ROW_H);
+        LN(RX + RC_GRP + RC_DESC + RC_CNT + RC_LOT, y, RX + RC_GRP + RC_DESC + RC_CNT + RC_LOT, y + ROW_H);
+
+        // LEFT EMPTY FOR MANUAL FILL
+
+        y += ROW_H;
+      });
+
+      // ── TOTALS ROW ──────────────────────────────────────────
+      const totalPacasPDF  = items.filter(d => d.productType === 'PACA').reduce((s, d) => s + Number(d.quantity), 0);
+      const totalBultosPDF = items.filter(d => !d.productType || d.productType === 'BULT' || d.productType === 'CANA').reduce((s, d) => s + Number(d.quantity), 0);
+      const totalCajasPDF  = items.filter(d => d.productType === 'CAJA').reduce((s, d) => s + Number(d.quantity), 0);
+      const TR_H = ROW_H + 1;
+      F(NAVY); FR(LX, y, LW, TR_H); FR(RX, y, RW, TR_H);
+      D(HGRAY, 0.15); SR(LX, y, LW, TR_H); SR(RX, y, RW, TR_H);
+      TC(WHITE); B(7);
+      const tty = y + TR_H - 1.2;
+      TX('TOTALES',          LX + (LC_ITEM + LC_DESC) / 2,               tty, { align: 'center' });
+      TX(String(totalPacasPDF),  cantX + LC_PAC / 2,                    tty, { align: 'center' });
+      TX(String(totalBultosPDF), cantX + LC_PAC + LC_BLT / 2,           tty, { align: 'center' });
+      TX(String(totalCajasPDF),  cantX + LC_PAC + LC_BLT + LC_CAJ / 2,  tty, { align: 'center' });
+
+      y += TR_H + 2;
+
+      // ═════════════════════════════════════════════════════════════
+      //  SECTION 4 — SUMMARY  |  OBSERVATIONS  |  TRANSPORT
+      // ═════════════════════════════════════════════════════════════
+      const FOOT_H = 28;
+      const S3W    = CW / 3;
+
+      const makePanel = (px: number, title: string) => {
+        F(LGRAY); FR(px, y, S3W, FOOT_H);
+        D(HGRAY, 0.2); SR(px, y, S3W, FOOT_H);
+        F(NAVY); FR(px, y, S3W, 5);
+        TC(WHITE); B(6.5); TX(title, px + S3W / 2, y + 3.5, { align: 'center' });
+      };
+
+      // 1 – Resumen General
+      makePanel(ML, 'RESUMEN GENERAL');
+      const totalPesoKG  = items.reduce((s, d) => s + Number(d.pesoUnidad ?? 0) * Number(d.quantity), 0);
+      const totalDimKG   = items.reduce((s, d) => s + Number(d.dimension ?? 0) * Number(d.quantity), 0);
+      const totalUnidades  = items.reduce((s, d) => s + Number(d.quantity), 0);
+      const sumData: [string, string][] = [
+        ['TOTAL BULTOS:',    String(totalBultosPDF)],
+        ['TOTAL CAJAS:',     String(totalCajasPDF)],
+        ['TOTAL PACAS:',     String(totalPacasPDF)],
+        ['TOTAL UNIDADES:',  String(totalUnidades)],
+        ['PESO TOTAL (KG):', totalPesoKG.toFixed(3)],
+        ['DIMENSIÓN TOTAL:', totalDimKG.toFixed(1)],
+      ];
+      let sy = y + 8.5;
+      sumData.forEach(([lbl, val]) => {
+        TC(BLK); B(6.5); TX(lbl, ML + 3, sy);
+        B(7);           TX(val, ML + S3W - 4, sy, { align: 'right' });
+        sy += 3.8;
+      });
+
+      // 2 – Observaciones
+      makePanel(ML + S3W, 'OBSERVACIONES DEL PEDIDO');
+      TC(BLK); N(6.5);
+      const obsLines = doc.splitTextToSize(order.notes || '—', S3W - 6) as string[];
+      doc.text(obsLines, ML + S3W + 3, y + 9);
+
+      // 3 – Transporte
+      makePanel(ML + S3W * 2, 'INFORMACIÓN DE TRANSPORTE');
+      const dispatchDt = order.dispatchDate ? new Date(order.dispatchDate) : null;
+      const trnData: [string, string][] = [
+        ['CONDUCTOR:',      order.dispatchDriverName || '—'],
+        ['DOCUMENTO:',      order.dispatchDriverDocument || '—'],
+        ['TELÉFONO:',       order.dispatchDriverPhone || '—'],
+        ['FECHA DESPACHO:', dispatchDt ? fmtDate(dispatchDt.toISOString()) : '—'],
+        ['HORA DESPACHO:',  dispatchDt ? `${String(dispatchDt.getHours()).padStart(2, '0')}:${String(dispatchDt.getMinutes()).padStart(2, '0')}` : '—'],
+      ];
+      let tny = y + 8.5;
+      trnData.forEach(([lbl, val]) => {
+        TC(DGR); B(6); TX(lbl, ML + S3W * 2 + 3, tny);
+        TC(BLK); N(6); TX(val, ML + S3W * 2 + 30, tny);
+        tny += 3.1;
+      });
+
+      y += FOOT_H + 3;
+
+      // ═════════════════════════════════════════════════════════════
+      //  SECTION 5 — SIGNATURE FOOTER
+      // ═════════════════════════════════════════════════════════════
+      const SW = CW / 3;
+      const sigTitles = ['ELABORÓ (COORDINADOR)', 'REVISÓ (DESPACHADOR)', 'RECIBIÓ (CONDUCTOR)'];
+
+      D(HGRAY, 0.35);
+      sigTitles.forEach((title, i) => {
+        const sx = ML + SW * i;
+        LN(sx + 5, y + 3, sx + SW - 5, y + 3);
+        TC(NAVY); B(6.5); TX(title, sx + SW / 2, y + 7.5, { align: 'center' });
+        TC(BLK);  N(6);   TX('—',    sx + SW / 2, y + 11.5, { align: 'center' });
+      });
+
+      // ── Save ──────────────────────────────────────────────────
+      const fn = `ORDEN-PEDIDO-CARGUE-${order.orderNumber || order.id}-${fmtDate(order.orderDate).replace(/\//g, '-')}.pdf`;
+      doc.save(fn);
+    } catch {
+      // PDF generation error — reset flag so user can retry
+    }
+    this.pdfGenerating.set(false);
   }
 }

@@ -1,193 +1,31 @@
-import { Injectable, signal, computed } from '@angular/core';
-import { Dispatch } from '../models/dispatch.model';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Dispatch, DispatchResponse, CreateDispatchRequest, UpdateDispatchRequest, toDispatchDisplay } from '../models/dispatch.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class DispatchService {
-  dispatches = signal<Dispatch[]>([
-    {
-      id: '1',
-      dispatchNumber: 'DESP-0001',
-      orderNumber: 'PED-00010',
-      dispatchDate: '2026-07-15',
-      dispatchTime: '08:20',
-      driverName: 'Carlos Alberto Ramírez Pérez',
-      driverDocument: '1.234.567.890',
-      driverPhone: '310 987 6543',
-      vehiclePlate: 'ABC-123',
-      vehicleType: 'CAMIÓN',
-      helperName: 'Wilson Andrés Salas',
-      route: 'Ibagué - Centro',
-      estimatedArrival: '2026-07-15 09:30',
-      checklist: [
-        { name: 'Documentos OK', checked: true },
-        { name: 'Combustible', checked: true, observations: 'Tanque full' },
-        { name: 'Luces', checked: true },
-        { name: 'Frenos', checked: true },
-        { name: 'Neumáticos', checked: true },
-        { name: 'Carga asegurada', checked: true },
-        { name: 'GPS', checked: true },
-        { name: 'Extintor', checked: true }
-      ],
-      status: 'FINALIZADO',
-      departureKm: 125480,
-      arrivalKm: 125532,
-      fuelLiters: 12,
-      createdBy: 'Diana Despacho',
-      approvedBy: 'Luis Coordinador',
-      observations: 'Entrega realizada sin novedades'
-    },
-    {
-      id: '2',
-      dispatchNumber: 'DESP-0002',
-      orderNumber: 'PED-00011',
-      dispatchDate: '2026-07-16',
-      dispatchTime: '09:00',
-      driverName: 'José Hernán Patiño Córdoba',
-      driverDocument: '2.345.678.901',
-      driverPhone: '311 876 5432',
-      vehiclePlate: 'AAB-456',
-      vehicleType: 'FURGÓN',
-      helperName: 'Johan Sebastián Ortiz',
-      route: 'Ibagué - Norte',
-      estimatedArrival: '2026-07-16 10:00',
-      checklist: [
-        { name: 'Documentos OK', checked: true },
-        { name: 'Combustible', checked: true },
-        { name: 'Luces', checked: true },
-        { name: 'Frenos', checked: true },
-        { name: 'Neumáticos', checked: true },
-        { name: 'Carga asegurada', checked: true },
-        { name: 'GPS', checked: true },
-        { name: 'Extintor', checked: true }
-      ],
-      status: 'EN RUTA',
-      departureKm: 98234,
-      fuelLiters: 8,
-      createdBy: 'Diana Despacho',
-      approvedBy: 'Luis Coordinador'
-    },
-    {
-      id: '3',
-      dispatchNumber: 'DESP-0003',
-      orderNumber: 'PED-00012',
-      dispatchDate: '2026-07-17',
-      dispatchTime: '07:30',
-      driverName: 'Edison Stiven Muñoz López',
-      driverDocument: '3.456.789.012',
-      driverPhone: '312 765 4321',
-      vehiclePlate: 'AAC-789',
-      vehicleType: 'CAMIONETA',
-      route: 'Ibagué - Sur',
-      estimatedArrival: '2026-07-17 08:30',
-      checklist: [
-        { name: 'Documentos OK', checked: true },
-        { name: 'Combustible', checked: true },
-        { name: 'Luces', checked: true },
-        { name: 'Frenos', checked: false, observations: 'Revisar frenos traseros' },
-        { name: 'Neumáticos', checked: true },
-        { name: 'Carga asegurada', checked: false },
-        { name: 'GPS', checked: true },
-        { name: 'Extintor', checked: true }
-      ],
-      status: 'EN REVISIÓN',
-      createdBy: 'Sofía Pedidos',
-      observations: 'Pendiente aprobar checklist de seguridad'
-    },
-    {
-      id: '4',
-      dispatchNumber: 'DESP-0004',
-      orderNumber: 'PED-00013',
-      dispatchDate: '2026-07-18',
-      dispatchTime: '05:45',
-      driverName: 'Juan David Gutiérrez Salinas',
-      driverDocument: '4.567.890.123',
-      driverPhone: '313 654 3210',
-      vehiclePlate: 'AAD-234',
-      vehicleType: 'CAMIÓN',
-      helperName: 'Carlos Felipe Montaño',
-      route: 'Ibagué - Cali',
-      estimatedArrival: '2026-07-18 11:00',
-      checklist: [
-        { name: 'Documentos OK', checked: false },
-        { name: 'Combustible', checked: false },
-        { name: 'Luces', checked: false },
-        { name: 'Frenos', checked: false },
-        { name: 'Neumáticos', checked: false },
-        { name: 'Carga asegurada', checked: false },
-        { name: 'GPS', checked: false },
-        { name: 'Extintor', checked: false }
-      ],
-      status: 'PENDIENTE',
-      createdBy: 'Diana Despacho'
-    },
-    {
-      id: '5',
-      dispatchNumber: 'DESP-0005',
-      orderNumber: 'PED-00015',
-      dispatchDate: '2026-07-20',
-      dispatchTime: '07:50',
-      driverName: 'Carlos Alberto Ramírez Pérez',
-      driverDocument: '1.234.567.890',
-      driverPhone: '310 987 6543',
-      vehiclePlate: 'AAF-890',
-      vehicleType: 'FURGÓN',
-      helperName: 'Wilson Andrés Salas',
-      route: 'Ibagué - Centro',
-      estimatedArrival: '2026-07-20 09:00',
-      checklist: [
-        { name: 'Documentos OK', checked: true },
-        { name: 'Combustible', checked: true, observations: 'Tanque al 80%' },
-        { name: 'Luces', checked: true },
-        { name: 'Frenos', checked: true },
-        { name: 'Neumáticos', checked: true },
-        { name: 'Carga asegurada', checked: true },
-        { name: 'GPS', checked: true },
-        { name: 'Extintor', checked: true }
-      ],
-      status: 'FINALIZADO',
-      departureKm: 126200,
-      arrivalKm: 126258,
-      fuelLiters: 10,
-      createdBy: 'Diana Despacho',
-      approvedBy: 'Luis Coordinador',
-      observations: 'Entrega exitosa, cliente satisfecho'
-    },
-    {
-      id: '6',
-      dispatchNumber: 'DESP-0006',
-      orderNumber: 'PED-00014',
-      dispatchDate: '2026-07-19',
-      dispatchTime: '05:15',
-      driverName: 'Fernando Andrés Torres Rodríguez',
-      driverDocument: '5.678.901.234',
-      driverPhone: '314 543 2109',
-      vehiclePlate: 'AAE-567',
-      vehicleType: 'FURGÓN',
-      route: 'Ibagué - Bogotá',
-      estimatedArrival: '2026-07-19 13:00',
-      checklist: [
-        { name: 'Documentos OK', checked: true },
-        { name: 'Combustible', checked: true },
-        { name: 'Luces', checked: true },
-        { name: 'Frenos', checked: true },
-        { name: 'Neumáticos', checked: true },
-        { name: 'Carga asegurada', checked: true },
-        { name: 'GPS', checked: true },
-        { name: 'Extintor', checked: true }
-      ],
-      status: 'CANCELADO',
-      createdBy: 'Diana Despacho',
-      approvedBy: 'Luis Coordinador',
-      observations: 'Cancelado por cancelación del pedido asociado'
-    }
-  ]);
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/api/v1/dispatches`;
+
+  private dispatchesSignal = signal<Dispatch[]>([]);
+  readonly dispatches = this.dispatchesSignal.asReadonly();
+  loading = signal(false);
 
   searchTerm = signal<string>('');
+  private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  setSearchTerm(value: string) {
+    if (this._debounceTimer) clearTimeout(this._debounceTimer);
+    this._debounceTimer = setTimeout(() => {
+      this.searchTerm.set(value.toLowerCase().trim());
+      this._debounceTimer = null;
+    }, 300);
+  }
 
   filteredDispatches = computed(() => {
-    const term = this.searchTerm().toLowerCase().trim();
+    const term = this.searchTerm();
     if (!term) return this.dispatches();
     return this.dispatches().filter(d =>
       d.dispatchNumber.toLowerCase().includes(term) ||
@@ -198,8 +36,34 @@ export class DispatchService {
     );
   });
 
-  addDispatch(newDispatch: Omit<Dispatch, 'id'>) {
-    const id = (this.dispatches().length + 1).toString();
-    this.dispatches.update(list => [{ ...newDispatch, id }, ...list]);
+  loadDispatches(): void {
+    this.loading.set(true);
+    this.http.get<DispatchResponse[]>(this.apiUrl).subscribe({
+      next: (res) => {
+        this.dispatchesSignal.set(res.map(toDispatchDisplay));
+        this.loading.set(false);
+      },
+      error: () => this.loading.set(false),
+    });
+  }
+
+  findById(id: number): Observable<DispatchResponse> {
+    return this.http.get<DispatchResponse>(`${this.apiUrl}/${id}`);
+  }
+
+  create(data: CreateDispatchRequest): Observable<DispatchResponse> {
+    return this.http.post<DispatchResponse>(this.apiUrl, data);
+  }
+
+  update(id: number, data: UpdateDispatchRequest): Observable<DispatchResponse> {
+    return this.http.put<DispatchResponse>(`${this.apiUrl}/${id}`, data);
+  }
+
+  delete(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  updateStatus(id: number, status: string): Observable<DispatchResponse> {
+    return this.http.patch<DispatchResponse>(`${this.apiUrl}/${id}/status`, null, { params: { status } });
   }
 }

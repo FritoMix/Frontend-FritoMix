@@ -1,21 +1,39 @@
-export type VehicleType = 'CAMIÓN' | 'FURGÓN' | 'CAMIONETA' | 'VOLQUETA' | 'VAN';
-
-export interface Vehicle {
-  id: string;
-  code: string;
+export interface VehicleResponse {
+  id: number;
   plate: string;
   brand: string;
   model: string;
-  year: number;
-  vehicleType: VehicleType;
-  color: string;
-  chassisNumber: string;
-  engineNumber: string;
-  capacityKg: number;
-  capacityUnits: number;
-  soatExpiration: string;
-  tecnomecanicaExpiration: string;
-  insuranceCompany: string;
-  policyNumber: string;
+  capacity: number;
   active: boolean;
+  createdAt: string;
+}
+
+export interface CreateVehicleRequest {
+  plate: string;
+  brand: string;
+  model: string;
+  capacity: number;
+  active?: boolean;
+}
+
+export type UpdateVehicleRequest = CreateVehicleRequest;
+
+export interface Vehicle {
+  id: number;
+  plate: string;
+  brand: string;
+  model: string;
+  capacity: number;
+  active: boolean;
+}
+
+export function toVehicleDisplay(resp: VehicleResponse): Vehicle {
+  return {
+    id: resp.id,
+    plate: resp.plate,
+    brand: resp.brand,
+    model: resp.model,
+    capacity: resp.capacity,
+    active: resp.active,
+  };
 }
