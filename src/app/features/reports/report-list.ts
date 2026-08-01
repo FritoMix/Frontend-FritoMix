@@ -8,7 +8,7 @@ import { environment } from '../../../environments/environment';
 
 interface KPIResponse { totalSales: number; completedOrders: number; dispatchedUnits: number; }
 interface TopProduct { rank: number; name: string; code: string; units: number; amount: number; }
-interface TopClient { name: string; orders: number; amount: number; }
+interface TopClient { name: string; orders: number; lastOrderDate: string; }
 
 @Component({
   selector: 'app-report-list',
@@ -136,7 +136,7 @@ interface TopClient { name: string; orders: number; amount: number; }
               <tr class="bg-gray-50/60">
                 <th>Cliente</th>
                 <th class="text-right">Pedidos</th>
-                <th class="text-right">Monto Total</th>
+                <th class="text-right">Fecha del Pedido</th>
               </tr>
             </thead>
             <tbody>
@@ -144,7 +144,7 @@ interface TopClient { name: string; orders: number; amount: number; }
                 <tr>
                   <td class="font-semibold text-[#071938] text-xs">{{ c.name }}</td>
                   <td class="text-right font-bold text-xs text-gray-800">{{ c.orders | number:'1.0-0':'es-CO' }}</td>
-                  <td class="text-right font-extrabold text-xs text-[#071938]">{{ c.amount | currency:'COP':'symbol-narrow':'1.0-0':'es-CO' }}</td>
+                  <td class="text-right font-extrabold text-xs text-[#071938]">{{ c.lastOrderDate ? (c.lastOrderDate | date:'dd/MM/yyyy') : '—' }}</td>
                 </tr>
               } @empty {
                 <tr><td colspan="3" class="text-center text-gray-400 text-sm py-8">Sin datos para el período</td></tr>

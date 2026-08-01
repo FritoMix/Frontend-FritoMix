@@ -26,3 +26,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Entorno de producción generado en el build (scripts/set-env.js)
+src/environments/environment.prod.ts

@@ -58,7 +58,7 @@ import { OrderResponse, OrderDetailResponse } from '../../core/models/order.mode
               <div class="border border-gray-200 rounded-lg overflow-hidden text-sm">
                 <table>
                   <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Código:</td><td class="px-3 py-1.5 font-bold text-[#071938]">FMX-FM-VT-PD-01</td></tr>
-                  <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Versión:</td><td class="px-3 py-1.5 font-bold">1.0</td></tr>
+                  <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">#_Pedido:</td><td class="px-3 py-1.5 font-bold">{{ ord.id }}</td></tr>
                   <tr class="border-b border-gray-200"><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Fecha:</td><td class="px-3 py-1.5 font-bold">{{ ord.orderDate | date:'dd/MM/yyyy' }}</td></tr>
                   <tr><td class="px-3 py-1.5 text-gray-500 font-semibold bg-gray-50 border-r border-gray-200">Página:</td><td class="px-3 py-1.5 font-bold">1 de 1</td></tr>
                 </table>
@@ -254,13 +254,34 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
+  private async clipToCircle(dataUrl: string): Promise<string> {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image();
+      i.crossOrigin = 'anonymous';
+      i.onload = () => resolve(i);
+      i.onerror = reject;
+      i.src = dataUrl;
+    });
+    const size = Math.min(img.width, img.height);
+    const canvas = document.createElement('canvas');
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    ctx.closePath();
+    ctx.clip();
+    ctx.drawImage(img, (img.width - size) / -2, (img.height - size) / -2);
+    return canvas.toDataURL('image/png');
+  }
+
   async generatePDF() {
     if (!this.order() || this.pdfGenerating()) return;
     this.pdfGenerating.set(true);
 
     try {
       const { default: jsPDF } = await import('jspdf');
-      const logoDataUrl = await this.loadImageAsBase64('logo-fritomix.png');
+      const logoDataUrl = await this.clipToCircle(await this.loadImageAsBase64('logo-fritomix.png'));
 
       const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const order = this.order()!;
@@ -329,12 +350,13 @@ export class OrderDetailComponent implements OnInit {
       D(HGRAY, 0.3); SR(ML, y, CW, HDR_H);
 
       // ── Logo box ──────────────────────────────────────────────
-      F(WHITE); FR(ML, y, LOGO_W, HDR_H);
-      D(HGRAY, 0.2); SR(ML, y, LOGO_W, HDR_H);
+      const logoSize = HDR_H - 2;
+      const lcx = ML + LOGO_W / 2;
+      const lcy = y + HDR_H / 2;
 
-      // Actual logo image
+      // Actual logo image (circular)
       try {
-        doc.addImage(logoDataUrl, 'PNG', ML + 1, y + 0.5, LOGO_W - 2, HDR_H - 1);
+        doc.addImage(logoDataUrl, 'PNG', lcx - logoSize / 2, lcy - logoSize / 2, logoSize, logoSize);
       } catch {
         // fallback: draw name text if image fails
         doc.setFillColor(NAVY[0], NAVY[1], NAVY[2]);
@@ -359,10 +381,10 @@ export class OrderDetailComponent implements OnInit {
       D(HGRAY, 0.2); SR(cx, y, CODE_W, HDR_H);
 
       const codeRows: [string, string][] = [
-        ['Código:',  'FMX-FM-VT-PD-01'],
-        ['Versión:', '1.0'],
-        ['Fecha:',   fmtDate(order.orderDate)],
-        ['Página:',  '1 de 1'],
+        ['Código:',   'FMX-FM-VT-PD-01'],
+        ['ID Pedido:', String(order.id)],
+        ['Fecha:',    fmtDate(order.orderDate)],
+        ['Página:',   '1 de 1'],
       ];
       const rowH4 = HDR_H / 4;
       codeRows.forEach(([lbl, val], i) => {

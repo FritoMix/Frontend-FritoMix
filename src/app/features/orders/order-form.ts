@@ -55,9 +55,9 @@ import { forkJoin } from 'rxjs';
           <label class="block text-sm font-semibold text-[#071938] mb-1.5">Estado</label>
           <select [(ngModel)]="status"
             class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
-            <option value="PENDIENTE">PENDIENTE</option>
-            <option value="ENTREGADO">APROBADO</option>
+            <option value="APROBADO">APROBADO</option>
             <option value="CANCELADO">CANCELADO</option>
+            <option value="PENDIENTE">PENDIENTE</option>
           </select>
         </div>
       </div>
