@@ -30,10 +30,10 @@ export class ClientService {
     const term = this.searchTerm();
     if (!term) return this.clients();
     return this.clients().filter(c =>
-      c.businessName.toLowerCase().includes(term) ||
-      c.code.toLowerCase().includes(term) ||
-      c.document.includes(term) ||
-      c.cityName.toLowerCase().includes(term)
+      (c.businessName?.toLowerCase().includes(term) ?? false) ||
+      (c.code?.toLowerCase().includes(term) ?? false) ||
+      (c.document?.toLowerCase().includes(term) ?? false) ||
+      (c.cityName?.toLowerCase().includes(term) ?? false)
     );
   });
 

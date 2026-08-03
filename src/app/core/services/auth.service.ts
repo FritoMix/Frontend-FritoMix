@@ -1,12 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, mapRole } from '../models/user.model';
+import { TokenStore } from './token-store.service';
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   id: number;
   firstName: string;
   lastName: string;
@@ -29,33 +30,34 @@ export class AuthService {
   private readonly apiUrl = `${environment.apiUrl}/api/v1/auth`;
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
 
   currentUser = signal<User | null>(null);
 
+  private restoredPromise: Promise<void>;
+
   constructor() {
-    this.loadFromStorage();
+    this.restoredPromise = this.tryRestoreSession();
   }
 
-  login(email: string, password: string) {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, { email, password });
+  login(email: string, password: string): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/login`,
+      { email, password },
+      { withCredentials: true }
+    );
   }
 
-  refreshToken() {
-    const refresh = localStorage.getItem('refreshToken');
-    if (!refresh) return;
-    this.http.post<AuthResponse>(`${this.apiUrl}/refresh`, { refreshToken: refresh })
-      .subscribe({
-        next: (res) => {
-          localStorage.setItem('accessToken', res.accessToken);
-          localStorage.setItem('refreshToken', res.refreshToken);
-        },
-        error: () => this.logout()
-      });
+  refreshToken(): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(
+      `${this.apiUrl}/refresh`,
+      {},
+      { withCredentials: true }
+    );
   }
 
   handleAuthSuccess(res: AuthResponse) {
-    localStorage.setItem('accessToken', res.accessToken);
-    localStorage.setItem('refreshToken', res.refreshToken);
+    this.tokenStore.setAccessToken(res.accessToken);
     this.setUserFromResponse(res);
     this.router.navigate(['/dashboard']);
   }
@@ -77,14 +79,21 @@ export class AuthService {
   }
 
   logout() {
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    this.http.post<void>(`${this.apiUrl}/logout`, {}, { withCredentials: true })
+      .subscribe({
+        next: () => this.clearLocalSession(),
+        error: () => this.clearLocalSession(),
+      });
+  }
+
+  clearLocalSession() {
+    this.tokenStore.clear();
     this.currentUser.set(null);
     this.router.navigate(['/login']);
   }
 
   isAuthenticated(): boolean {
-    const token = localStorage.getItem('accessToken');
+    const token = this.tokenStore.accessToken();
     if (!token) return false;
 
     try {
@@ -95,39 +104,24 @@ export class AuthService {
     }
   }
 
-  private loadFromStorage() {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      try {
-        const payload = this.decodeToken(token);
-        if (payload.exp * 1000 > Date.now()) {
-          this.setUserFromToken(token);
-        } else {
-          this.logout();
-        }
-      } catch {
-        this.logout();
-      }
-    }
+  whenRestored(): Promise<void> {
+    return this.restoredPromise;
   }
 
-  private setUserFromToken(token: string) {
-    const payload = this.decodeToken(token);
-    const firstName = payload.firstName || payload.sub.split('@')[0];
-    const lastName = payload.lastName || '';
-    const name = `${firstName} ${lastName}`.trim();
-    const initials = ((firstName?.charAt(0) ?? '') + (lastName?.charAt(0) ?? '')).toUpperCase() || '?';
-
-    this.currentUser.set({
-      id: payload.userId,
-      firstName,
-      lastName,
-      email: payload.sub,
-      role: mapRole(payload.role),
-      enabled: true,
-      name,
-      avatarInitials: initials,
-      createdAt: new Date(payload.iat * 1000).toISOString().split('T')[0]
+  private tryRestoreSession(): Promise<void> {
+    return new Promise((resolve) => {
+      this.refreshToken().subscribe({
+        next: (res) => {
+          this.tokenStore.setAccessToken(res.accessToken);
+          this.setUserFromResponse(res);
+          resolve();
+        },
+        error: () => {
+          this.tokenStore.clear();
+          this.currentUser.set(null);
+          resolve();
+        },
+      });
     });
   }
 
@@ -152,5 +146,3 @@ export class AuthService {
     return JSON.parse(atob(parts[1]));
   }
 }
-
-

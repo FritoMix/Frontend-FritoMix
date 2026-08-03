@@ -3,13 +3,13 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Notification, UnreadCountResponse } from '../models/notification.model';
 import { Observable } from 'rxjs';
-import { Router } from '@angular/router';
+import { AuthService } from './auth.service';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
   private readonly apiUrl = `${environment.apiUrl}/api/v1/notifications`;
   private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
 
   unreadCount = signal(0);
@@ -25,9 +25,7 @@ export class NotificationService implements OnDestroy {
         this.unreadCount.set(0);
         if (err.status === 401) {
           this.stopPolling();
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          this.router.navigate(['/login']);
+          this.auth.clearLocalSession();
         }
       }
     });

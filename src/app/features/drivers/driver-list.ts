@@ -1,32 +1,23 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DriverService } from '../../core/services/driver.service';
+import { PageHeaderComponent } from '../../shared/components/page-header';
+import { SearchInputComponent } from '../../shared/components/search-input';
+import { PaginationComponent } from '../../shared/components/pagination';
 
 @Component({
   selector: 'app-driver-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent],
   template: `
-    <div class="mb-6">
-      <div class="flex items-center gap-3 mb-1">
-        <span class="module-badge module-badge--green">14.</span>
-        <h1 class="text-2xl font-extrabold text-[#071938]">Conductores</h1>
-      </div>
-    </div>
+<app-page-header badge="14." color="green" title="Conductores"></app-page-header>
 
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
-      <div class="relative flex-1 max-w-xl">
-        <svg class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        <input
-          type="text"
-          [ngModel]="driverService.searchTerm()"
-          (ngModelChange)="driverService.setSearchTerm($event)"
-          placeholder="Buscar conductor por nombre o documento..."
-          class="w-full border border-gray-300 rounded-lg py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all bg-white"
-        />
-      </div>
+      <app-search-input
+        (valueChange)="driverService.setSearchTerm($event)"
+        placeholder="Buscar conductor por nombre o documento..."
+      ></app-search-input>
       <button
         routerLink="/conductores/nuevo"
         class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
@@ -116,17 +107,7 @@ import { DriverService } from '../../core/services/driver.service';
         </div>
 
         @if (totalPages() > 1) {
-          <div class="fm-pagination border-t border-gray-100">
-            <button class="fm-page-btn" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)">&lt;</button>
-            @for (page of visiblePages(); track page) {
-              @if (page === -1) {
-                <span class="px-1 text-gray-400">...</span>
-              } @else {
-                <button class="fm-page-btn" [class.fm-page-btn--active]="page === currentPage()" (click)="currentPage.set(page)">{{ page }}</button>
-              }
-            }
-            <button class="fm-page-btn" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)">&gt;</button>
-          </div>
+          <app-pagination [totalPages]="totalPages()" [(currentPage)]="currentPage"></app-pagination>
         }
       }
     </div>
@@ -147,24 +128,14 @@ export class DriverListComponent implements OnInit {
     return this.driversFiltered().slice(start, start + this.pageSize);
   });
 
-  visiblePages = computed(() => {
-    const total = this.totalPages();
-    const current = this.currentPage();
-    const pages: number[] = [];
-    if (total <= 7) {
-      for (let i = 1; i <= total; i++) pages.push(i);
-    } else {
-      pages.push(1);
-      if (current > 3) pages.push(-1);
-      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
-      if (current < total - 2) pages.push(-1);
-      pages.push(total);
-    }
-    return pages;
-  });
 
   ngOnInit() {
     this.driverService.loadDrivers();
+  }
+
+  onSearchChange(value: string) {
+    this.currentPage.set(1);
+    this.driverService.setSearchTerm(value);
   }
 
   formatDocument(doc: string): string {
