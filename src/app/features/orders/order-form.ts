@@ -7,6 +7,7 @@ import { OrderService } from '../../core/services/order.service';
 import { ClientService } from '../../core/services/client.service';
 import { ProductService } from '../../core/services/product.service';
 import { OrderItem, OrderStatus } from '../../core/models/order.model';
+import { Client } from '../../core/models/client.model';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -38,27 +39,48 @@ import { forkJoin } from 'rxjs';
       <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
         <div>
           <label class="block text-sm font-semibold text-[#071938] mb-1.5">Cliente</label>
-          <select [(ngModel)]="selectedClientId"
-            class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
-            <option value="">Seleccionar cliente</option>
-            @for (c of clientService.clients(); track c.id) {
-              <option [value]="c.id">{{ c.businessName }} ({{ c.document }})</option>
+          <div class="relative">
+            <input
+              type="text"
+              [value]="clientQuery()"
+              (input)="onClientSearch($event)"
+              (focus)="clientDropdownOpen = true"
+              (blur)="closeClientDropdown()"
+              (keydown.escape)="clientDropdownOpen = false"
+              placeholder="Escribe el nombre del cliente..."
+              autocomplete="off"
+              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white"
+            />
+            @if (clientDropdownOpen) {
+              <div class="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+                @for (c of filteredClients(); track c.id; let last = $last) {
+                  <button type="button" (mousedown)="selectClient(c)"
+                    class="w-full text-left px-3.5 py-2.5 text-sm hover:bg-blue-50 transition-colors"
+                    [class.border-b]="!last" [class.border-gray-100]="!last">
+                    <span class="font-semibold text-[#071938] block">{{ c.businessName }}</span>
+                    <span class="text-xs text-gray-500">{{ c.document }} · {{ c.cityName }}</span>
+                  </button>
+                } @empty {
+                  <div class="px-3.5 py-3 text-sm text-gray-400">No se encontraron clientes</div>
+                }
+              </div>
             }
-          </select>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-semibold text-[#071938] mb-1.5">N° Pedido</label>
-          <input type="text" [(ngModel)]="orderNumber" placeholder="Ej: PED-00001"
-            class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+          <div class="flex items-center">
+            <input type="text" [ngModel]="orderNumber" readonly
+              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm bg-gray-100 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+            @if (loadingNumber()) {
+              <span class="ml-2 text-xs text-gray-400">...</span>
+            }
+          </div>
+          <p class="text-[11px] text-gray-400 mt-1">Consecutivo automático</p>
         </div>
         <div>
           <label class="block text-sm font-semibold text-[#071938] mb-1.5">Estado</label>
-          <select [(ngModel)]="status"
-            class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none bg-white">
-            <option value="APROBADO">APROBADO</option>
-            <option value="CANCELADO">CANCELADO</option>
-            <option value="PENDIENTE">PENDIENTE</option>
-          </select>
+          <span class="status-badge" [class]="badgeClass(status)">{{ status }}</span>
         </div>
       </div>
 
@@ -135,14 +157,44 @@ export class OrderFormComponent implements OnInit {
   editId: number | null = null;
   selectedClientId: number | null = null;
   orderNumber = '';
+  loadingNumber = signal(false);
   status: OrderStatus = 'PENDIENTE';
   notes = '';
+
+  clientQuery = signal('');
+  clientDropdownOpen = false;
 
   items = signal<{ productId: number | null; quantity: number }[]>([]);
 
   total = computed(() => 0);
 
+  filteredClients = computed(() => {
+    const term = this.clientQuery().toLowerCase().trim();
+    if (!term) return this.clientService.clients();
+    return this.clientService.clients().filter(c =>
+      c.businessName?.toLowerCase().includes(term) ||
+      c.code?.toLowerCase().includes(term) ||
+      c.document?.toLowerCase().includes(term) ||
+      c.cityName?.toLowerCase().includes(term)
+    );
+  });
+
   get isEdit(): boolean { return this.editId !== null; }
+
+  onClientSearch(event: Event) {
+    this.clientQuery.set((event.target as HTMLInputElement).value);
+    this.clientDropdownOpen = true;
+  }
+
+  selectClient(c: Client) {
+    this.selectedClientId = c.id;
+    this.clientQuery.set(c.businessName);
+    this.clientDropdownOpen = false;
+  }
+
+  closeClientDropdown() {
+    setTimeout(() => { this.clientDropdownOpen = false; }, 150);
+  }
 
   ngOnInit() {
     forkJoin([
@@ -156,6 +208,7 @@ export class OrderFormComponent implements OnInit {
       this.editId = Number(idParam);
       this.orderService.findById(this.editId).subscribe(resp => {
         this.selectedClientId = resp.customerId;
+        this.clientQuery.set(resp.customerName || '');
         this.orderNumber = resp.orderNumber;
         this.status = resp.status as OrderStatus;
         this.notes = resp.notes || '';
@@ -163,6 +216,15 @@ export class OrderFormComponent implements OnInit {
           productId: d.productId,
           quantity: d.quantity,
         })));
+      });
+    } else {
+      this.loadingNumber.set(true);
+      this.orderService.getNextOrderNumber().subscribe({
+        next: (num) => {
+          this.orderNumber = num;
+          this.loadingNumber.set(false);
+        },
+        error: () => this.loadingNumber.set(false),
       });
     }
   }
@@ -176,6 +238,15 @@ export class OrderFormComponent implements OnInit {
   }
 
   updateItem(index: number) {}
+
+  badgeClass(status: string): string {
+    const map: Record<string, string> = {
+      'PENDIENTE': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+      'APROBADO': 'bg-green-50 text-green-700 border-green-200',
+      'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
+    };
+    return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+  }
 
   onSave() {
     if (this.saving || !this.selectedClientId || !this.orderNumber) return;

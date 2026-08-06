@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'contador' | 'coordinador' | 'despachador';
+export type UserRole = 'admin' | 'cartera' | 'coordinador' | 'despachador';
 
 export interface UserResponse {
   id: number;
@@ -64,7 +64,7 @@ export function toUserDisplay(r: UserResponse): User {
 export function mapRole(role: string): UserRole {
   const map: Record<string, UserRole> = {
     'ADMIN': 'admin',
-    'CONTADOR': 'contador',
+    'CARTERA': 'cartera',
     'COORDINADOR': 'coordinador',
     'DESPACHADOR': 'despachador',
   };

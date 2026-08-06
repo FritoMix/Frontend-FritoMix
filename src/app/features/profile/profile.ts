@@ -174,7 +174,7 @@ export class ProfileComponent implements OnInit {
   roleLabel(): string {
     const labels: Record<string, string> = {
       admin: 'Administrador',
-      contador: 'Contador',
+      cartera: 'Cartera',
       coordinador: 'Coordinador',
       despachador: 'Despachador',
     };
@@ -184,7 +184,7 @@ export class ProfileComponent implements OnInit {
   roleBadge(): string {
     const classes: Record<string, string> = {
       admin: 'bg-red-100 text-red-700',
-      contador: 'bg-purple-100 text-purple-700',
+      cartera: 'bg-purple-100 text-purple-700',
       coordinador: 'bg-amber-100 text-amber-700',
       despachador: 'bg-rose-100 text-rose-700',
     };

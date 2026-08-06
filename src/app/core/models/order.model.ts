@@ -10,6 +10,8 @@ export interface OrderItem {
   group: number;
   lot?: string;
   observation?: string;
+  dimension?: number;
+  pesoUnidad?: number;
 }
 
 export interface Order {
@@ -80,6 +82,10 @@ export interface OrderDetailResponse {
   pesoUnidad?: number;
   dimension?: number;
   quantity: number;
+  delivered?: number | null;
+  observations?: string | null;
+  detalleProducto?: string | null;
+  lote?: string | null;
 }
 
 export interface CreateOrderRequest {
@@ -134,6 +140,8 @@ export function toOrderDisplay(resp: OrderResponse): Order {
       dcho: 0,
       group: 1,
       lot: d.productCode,
+      dimension: d.dimension,
+      pesoUnidad: d.pesoUnidad,
     })),
     totalBultos: Math.floor(resp.total),
     totalCajas: 0,
