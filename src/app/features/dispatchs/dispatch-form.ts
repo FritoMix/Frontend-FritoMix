@@ -7,7 +7,7 @@ import { OrderService } from '../../core/services/order.service';
 import { DriverService } from '../../core/services/driver.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ProductService } from '../../core/services/product.service';
-import { ChecklistItem, DispatchStatus, DispatchResponse } from '../../core/models/dispatch.model';
+import { ChecklistItem, DispatchStatus, DispatchResponse, CreateArrumeRequest } from '../../core/models/dispatch.model';
 import { Order } from '../../core/models/order.model';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -198,15 +198,13 @@ interface PreviewItem {
 
     <div class="fm-card p-6 mb-5 border-t-4 border-t-[#0055FF]">
       <h3 class="font-bold text-[#071938] text-base mb-1">Detalle del Despacho</h3>
-      <p class="text-xs text-gray-500 mb-5">Registra la cantidad total despachada, los lotes, el detalle de producto (arrume) y la observación por producto.</p>
+      <p class="text-xs text-gray-500 mb-5">Registra la cantidad total despachada y la observación por producto.</p>
       <div class="overflow-x-auto">
         <table class="fm-table">
           <thead>
             <tr class="bg-gray-50/60">
               <th>Producto</th>
               <th>Despachar</th>
-              <th>Lotes</th>
-              <th>Detalle de Producto</th>
               <th>Observación</th>
             </tr>
           </thead>
@@ -230,39 +228,99 @@ interface PreviewItem {
                       class="w-28 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
                     />
                   </td>
-                  <td class="w-[12rem]">
-                    <input
-                      type="text"
-                      [ngModel]="itemLotes[item.productId] || ''"
-                      (ngModelChange)="itemLotes[item.productId] = $event"
-                      placeholder="Lotes..."
-                      class="w-[10rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                    />
-                  </td>
-                  <td class="w-[18rem]">
-                    <input
-                      type="text"
-                      [ngModel]="itemDetalleProducto[item.productId] || ''"
-                      (ngModelChange)="itemDetalleProducto[item.productId] = $event"
-                      placeholder="Cómo se arruma el pedido..."
-                      class="w-[15rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                    />
-                  </td>
-                  <td class="w-[14rem]">
+                  <td class="w-[20rem]">
                     <input
                       type="text"
                       [ngModel]="itemObservations[item.productId] || ''"
                       (ngModelChange)="itemObservations[item.productId] = $event"
                       placeholder="Obs..."
-                      class="w-[11rem] mr-auto px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                      class="w-[15rem] mr-auto px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                     />
                   </td>
                 </tr>
               }
             } @else {
               <tr>
-                <td colspan="5" class="py-10 text-center">
+                <td colspan="3" class="py-10 text-center">
                   <p class="text-sm text-gray-400">{{ isUnico() ? 'Selecciona un pedido para ver los productos' : 'Selecciona al menos un pedido para ver los productos' }}</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="fm-card p-6 mb-5 border-t-4 border-t-green-600">
+      <div class="flex items-center justify-between mb-1">
+        <h3 class="font-bold text-[#071938] text-base">Detalle de Arrumes</h3>
+        <button type="button" (click)="addArrume()"
+          class="text-sm font-semibold text-[#0055FF] hover:text-[#0044DD] inline-flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Agregar arrume
+        </button>
+      </div>
+      <p class="text-xs text-gray-500 mb-5">Registra cada arrume del despacho con su número, producto, cantidad y lote.</p>
+      <div class="overflow-x-auto">
+        <table class="fm-table">
+          <thead>
+            <tr class="bg-gray-50/60">
+              <th>Nº Arrume</th>
+              <th>Arrume Producto</th>
+              <th>Cantidad</th>
+              <th>Lote</th>
+              <th class="text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (a of arrumes(); track $index; let i = $index) {
+              <tr>
+                <td>
+                  <input
+                    type="number"
+                    [(ngModel)]="a.numArrume"
+                    min="1"
+                    placeholder="Nº"
+                    class="w-24 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
+                  />
+                </td>
+                <td class="w-[20rem]">
+                  <input
+                    type="text"
+                    [(ngModel)]="a.arrumeProducto"
+                    placeholder="Producto del arrume..."
+                    class="w-[16rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                  />
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    [(ngModel)]="a.cantidad"
+                    min="0"
+                    placeholder="0"
+                    class="w-28 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
+                  />
+                </td>
+                <td class="w-[12rem]">
+                  <input
+                    type="text"
+                    [(ngModel)]="a.lote"
+                    placeholder="Lote..."
+                    class="w-[10rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                  />
+                </td>
+                <td class="text-right">
+                  <button type="button" (click)="removeArrume(i)"
+                    class="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                    title="Quitar arrume">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="py-10 text-center">
+                  <p class="text-sm text-gray-400">No hay arrumes registrados. Haz clic en "Agregar arrume" para empezar.</p>
                 </td>
               </tr>
             }
@@ -308,23 +366,9 @@ interface PreviewItem {
           >
             <option value="">Seleccionar vehículo</option>
             @for (v of vehicleService.vehicles().filter(veh => veh.active); track v.id) {
-              <option [value]="v.id">{{ v.brand }} {{ v.model }} — {{ v.plate }}</option>
+              <option [value]="v.id">{{ v.type }} — {{ v.vehicleNumber }}</option>
             }
           </select>
-        </div>
-        <div>
-          <label for="peso-bruto" class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Bruto (kg)</label>
-          <div class="flex items-center gap-2">
-            <input id="peso-bruto"
-              type="number"
-              [(ngModel)]="pesoBruto"
-              placeholder="0.00"
-              min="0"
-              step="0.01"
-              class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-            />
-            <span class="text-sm text-gray-500 font-medium">Kg</span>
-          </div>
         </div>
         <div>
           <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total</label>
@@ -381,14 +425,20 @@ export class DispatchFormComponent {
   selectedOrderIds: string[] = [];
   selectedDriverId: number | null = null;
   selectedVehicleId: number | null = null;
-  pesoBruto: number | undefined = undefined;
   pesoTotalCargue: number = 0;
   totalDimension: number = 0;
   selectedOrder: Order | null = null;
   itemObservations: Record<number, string> = {};
   itemDelivered: Record<number, number> = {};
-  itemDetalleProducto: Record<number, string> = {};
-  itemLotes: Record<number, string> = {};
+  arrumes = signal<CreateArrumeRequest[]>([]);
+
+  addArrume() {
+    this.arrumes.update(list => [...list, { numArrume: null, arrumeProducto: '', cantidad: null, lote: '' }]);
+  }
+
+  removeArrume(i: number) {
+    this.arrumes.update(list => list.filter((_, idx) => idx !== i));
+  }
 
   form = {
     dispatchNumber: '',
@@ -398,7 +448,7 @@ export class DispatchFormComponent {
     driverName: '',
     driverDocument: '',
     driverPhone: '',
-    vehiclePlate: '',
+    vehicleNumber: '',
     vehicleType: '',
     helperName: '',
     route: '',
@@ -552,17 +602,20 @@ export class DispatchFormComponent {
     this.onVehicleChange();
 
     if (resp.details) {
-      this.itemDetalleProducto = {};
       this.itemDelivered = {};
       this.itemObservations = {};
-      this.itemLotes = {};
       for (const d of resp.details) {
-        if (d.detalleProducto) this.itemDetalleProducto[d.productId] = d.detalleProducto;
         if (d.delivered != null) this.itemDelivered[d.productId] = d.delivered;
         if (d.observations) this.itemObservations[d.productId] = d.observations;
-        if (d.lote) this.itemLotes[d.productId] = d.lote;
       }
     }
+
+    this.arrumes.set((resp.arrumes ?? []).map(a => ({
+      numArrume: a.numArrume ?? null,
+      arrumeProducto: a.arrumeProducto ?? '',
+      cantidad: a.cantidad ?? null,
+      lote: a.lote ?? ''
+    })));
   }
 
   getLotCode(itemLot?: string, itemNum?: number): string {
@@ -591,8 +644,6 @@ export class DispatchFormComponent {
       if (order.dispatchDate) this.form.dispatchDate = order.dispatchDate;
       if (order.dispatchTime) this.form.dispatchTime = order.dispatchTime;
       this.itemObservations = {};
-      this.itemDetalleProducto = {};
-      this.itemLotes = {};
       this.recalcWeight();
 
       const driver = this.driverService.drivers().find(d =>
@@ -603,7 +654,7 @@ export class DispatchFormComponent {
         this.selectedDriverId = driver.id;
         this.onDriverChange();
       }
-      const vehicle = this.vehicleService.vehicles().find(v => v.plate === order.vehicle);
+      const vehicle = this.vehicleService.vehicles().find(v => v.vehicleNumber === order.vehicle);
       if (vehicle) {
         this.selectedVehicleId = vehicle.id;
         this.onVehicleChange();
@@ -616,13 +667,11 @@ export class DispatchFormComponent {
 
   recalcWeight() {
     if (this.isUnico() && this.selectedOrder) {
-      this.pesoBruto = this.orderWeight(this.selectedOrder);
       this.pesoTotalCargue = this.orderWeight(this.selectedOrder);
       this.totalDimension = this.orderDimension(this.selectedOrder);
     } else if (this.isMulti()) {
       const orders = this.previewRows();
       this.pesoTotalCargue = this.round2(orders.reduce((s, o) => s + this.orderWeight(o), 0));
-      this.pesoBruto = this.pesoTotalCargue;
       this.totalDimension = this.round2(orders.reduce((s, o) => s + this.orderDimension(o), 0));
     }
   }
@@ -660,13 +709,14 @@ export class DispatchFormComponent {
 
   onVehicleChange() {
     if (!this.selectedVehicleId) {
-      this.form.vehiclePlate = '';
+      this.form.vehicleNumber = '';
       this.form.vehicleType = '';
       return;
     }
     const vehicle = this.vehicleService.vehicles().find(v => v.id === this.selectedVehicleId);
     if (vehicle) {
-      this.form.vehiclePlate = vehicle.plate;
+      this.form.vehicleNumber = vehicle.vehicleNumber;
+      this.form.vehicleType = vehicle.type;
     }
   }
 
@@ -694,9 +744,7 @@ export class DispatchFormComponent {
       productId: item.productId,
       quantity: item.qty,
       delivered: this.itemDelivered[item.productId] ?? item.qty,
-      observations: this.itemObservations[item.productId] || '',
-      detalleProducto: this.itemDetalleProducto[item.productId] || '',
-      lote: this.itemLotes[item.productId] || ''
+      observations: this.itemObservations[item.productId] || ''
     }));
 
     const obsParts: string[] = [];
@@ -713,6 +761,15 @@ export class DispatchFormComponent {
       ? this.selectedOrderIds.map(Number)
       : [Number(this.selectedOrderId)];
 
+    const arrumes = this.arrumes()
+      .filter(a => a.arrumeProducto || a.numArrume || a.cantidad != null || a.lote)
+      .map(a => ({
+        numArrume: a.numArrume ?? null,
+        arrumeProducto: a.arrumeProducto || '',
+        cantidad: a.cantidad ?? null,
+        lote: a.lote || ''
+      }));
+
     const payload = {
       tipoPedido: this.tipoPedido,
       orderIds,
@@ -723,7 +780,8 @@ export class DispatchFormComponent {
       dispatchDate: dispatchDateStr,
       status: this.form.status,
       notes: obsParts.join(' | '),
-      details
+      details,
+      arrumes
     };
 
     const request = this.editId

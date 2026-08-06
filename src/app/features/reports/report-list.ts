@@ -25,7 +25,7 @@ interface DispatchReport {
   address?: string;
   dispatchDate: string;
   driverName?: string;
-  vehiclePlate?: string;
+  vehicleNumber?: string;
   status: string;
   pesoTotal: number;
 }
@@ -57,7 +57,7 @@ const TABS: ReportTab[] = [
         <span class="module-badge module-badge--blue">11.</span>
         <h1 class="text-2xl font-extrabold text-[#071938]">Reportes</h1>
       </div>
-      <p class="text-sm text-gray-500">Visualiza y descarga los pedidos por estado y los despachos listos para despacho.</p>
+      <p class="text-sm text-gray-500">Visualiza y descarga los pedidos por estado y los despachos realizados.</p>
     </div>
 
     <div class="fm-card p-5 mb-6">
@@ -123,7 +123,7 @@ const TABS: ReportTab[] = [
                     <td class="text-xs text-gray-600">{{ row.orderNumbers?.join(', ') ?? '—' }}</td>
                     <td class="font-semibold text-xs text-gray-800">{{ row.customerNames?.join(', ') ?? '—' }}</td>
                     <td class="text-xs text-gray-500">{{ row.driverName ?? '—' }}</td>
-                    <td class="text-xs text-gray-500">{{ row.vehiclePlate ?? '—' }}</td>
+                    <td class="text-xs text-gray-500">{{ row.vehicleNumber ?? '—' }}</td>
                     <td class="text-xs text-gray-600">{{ row.dispatchDate ? (row.dispatchDate | date:'dd/MM/yyyy') : '—' }}</td>
                     <td class="text-right font-bold text-xs text-gray-700">{{ (row.pesoTotal ?? 0) | number:'1.0-0':'es-CO' }}</td>
                     <td>
@@ -131,7 +131,7 @@ const TABS: ReportTab[] = [
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="8" class="text-center text-gray-400 text-sm py-8">Sin despachos listos para despacho</td></tr>
+                  <tr><td colspan="8" class="text-center text-gray-400 text-sm py-8">Sin despachos realizados</td></tr>
                 }
               </tbody>
             </table>
@@ -233,7 +233,7 @@ export class ReportListComponent implements OnInit {
       case 'aprobados': return 'Pedidos Aprobados';
       case 'pendientes': return 'Pedidos Pendientes';
       case 'cancelados': return 'Pedidos Cancelados';
-      default: return 'Logística — Despachos Listos para Despacho';
+      default: return 'Logística — Despachos Realizados';
     }
   }
 

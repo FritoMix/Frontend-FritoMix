@@ -80,8 +80,8 @@ import { DispatchResponse, DispatchStatus, nextDispatchStatus } from '../../core
           <div class="p-4 space-y-1.5 text-sm">
             <div class="flex gap-2"><span class="text-gray-500 w-32">Conductor:</span><span class="font-semibold">{{ d.driverName || '—' }}</span></div>
             <div class="flex gap-2"><span class="text-gray-500 w-32">Documento:</span><span class="font-semibold">{{ d.driverDocument || '—' }}</span></div>
-            <div class="flex gap-2"><span class="text-gray-500 w-32">Vehículo:</span><span class="font-semibold">{{ d.vehicleBrand || '—' }} {{ d.vehicleModel || '' }}</span></div>
-            <div class="flex gap-2"><span class="text-gray-500 w-32">Placa:</span><span class="font-semibold font-mono">{{ d.vehiclePlate || '—' }}</span></div>
+            <div class="flex gap-2"><span class="text-gray-500 w-32">Vehículo:</span><span class="font-semibold capitalize">{{ d.vehicleType || '—' }}</span></div>
+            <div class="flex gap-2"><span class="text-gray-500 w-32">Nº Vehículo:</span><span class="font-semibold font-mono">{{ d.vehicleNumber || '—' }}</span></div>
           </div>
         </div>
 
@@ -141,6 +141,38 @@ import { DispatchResponse, DispatchStatus, nextDispatchStatus } from '../../core
         </div>
       </div>
 
+      <div class="fm-card overflow-hidden mb-5">
+        <div class="bg-[#071938] px-4 py-2"><h3 class="text-white font-bold text-sm">DETALLE DE ARRUMES</h3></div>
+        <div class="overflow-x-auto">
+          <table class="fm-table">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="!pl-5 w-10">#</th>
+                <th class="text-center">Nº Arrume</th>
+                <th>Arrume Producto</th>
+                <th class="text-center">Cantidad</th>
+                <th>Lote</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (a of d.arrumes ?? []; track a.id; let i = $index) {
+                <tr>
+                  <td class="!pl-5 font-mono text-sm">{{ i + 1 }}</td>
+                  <td class="text-center font-mono font-semibold">{{ a.numArrume ?? '—' }}</td>
+                  <td class="font-medium text-[#071938]">{{ a.arrumeProducto || '—' }}</td>
+                  <td class="text-center font-semibold">{{ a.cantidad ?? '—' }}</td>
+                  <td class="text-xs text-gray-600">{{ a.lote || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="py-10 text-center text-sm text-gray-400">Sin arrumes registrados</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="fm-card p-5">
         <h3 class="font-bold text-[#071938] text-sm mb-2">OBSERVACIONES DEL DESPACHO</h3>
         <p class="text-sm text-gray-600 whitespace-pre-wrap">{{ d.notes || '—' }}</p>
@@ -175,7 +207,7 @@ export class DispatchDetailComponent implements OnInit {
 
   puedeAvanzar(): boolean {
     const role = this.authService.currentUser()?.role;
-    return role === 'cartera' || role === 'admin';
+    return role === 'despachador' || role === 'admin';
   }
 
   nextStatus(): DispatchStatus | null {
