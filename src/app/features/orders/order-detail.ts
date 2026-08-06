@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { OrderService } from '../../core/services/order.service';
+import { AuthService } from '../../core/services/auth.service';
 import { OrderResponse, OrderDetailResponse } from '../../core/models/order.model';
 
 @Component({
@@ -19,6 +20,18 @@ import { OrderResponse, OrderDetailResponse } from '../../core/models/order.mode
           </a>
         </div>
         <div class="flex flex-wrap gap-2">
+          @if (isCartera() && order()?.status === 'PENDIENTE') {
+            <button (click)="changeStatus('APROBADO')"
+              class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Aprobar
+            </button>
+            <button (click)="changeStatus('CANCELADO')"
+              class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Cancelar
+            </button>
+          }
           <button (click)="generatePDF()" [disabled]="pdfGenerating()"
             class="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,7 +123,18 @@ import { OrderResponse, OrderDetailResponse } from '../../core/models/order.mode
                   @for (item of ord.details; track item.id; let i = $index) {
                     <tr [style.background]="groupColor(i)">
                       <td class="!pl-5 font-mono text-sm whitespace-nowrap">{{ i + 1 }}</td>
-                      <td class="font-medium text-[#071938]">{{ item.productName }}</td>
+                      <td class="font-medium text-[#071938]">
+                        {{ item.productName }}
+                        @if (item.lote) {
+                          <span class="block text-xs text-gray-500 mt-0.5">Lote: {{ item.lote }}</span>
+                        }
+                        @if (item.detalleProducto) {
+                          <span class="block text-xs text-gray-500 mt-0.5">Arrume: {{ item.detalleProducto }}</span>
+                        }
+                        @if (item.observations) {
+                          <span class="block text-xs text-gray-500 mt-0.5">Obs: {{ item.observations }}</span>
+                        }
+                      </td>
                       <td class="text-center font-semibold">{{ item.productType === 'PACA' ? item.quantity : 0 }}</td>
                       <td class="text-center font-semibold">{{ (item.productType === 'BULT' || item.productType === 'CANA' || !item.productType) ? item.quantity : 0 }}</td>
                       <td class="text-center font-semibold !pr-5">{{ item.productType === 'CAJA' ? item.quantity : 0 }}</td>
@@ -171,10 +195,28 @@ import { OrderResponse, OrderDetailResponse } from '../../core/models/order.mode
 export class OrderDetailComponent implements OnInit {
   private orderService = inject(OrderService);
   private route       = inject(ActivatedRoute);
+  private authService = inject(AuthService);
 
   loading       = signal(true);
   pdfGenerating  = signal(false);
   order         = signal<OrderResponse | null>(null);
+
+  isCartera(): boolean {
+    return this.authService.currentUser()?.role === 'cartera';
+  }
+
+  changeStatus(status: 'APROBADO' | 'CANCELADO') {
+    const id = this.order()?.id;
+    if (!id) return;
+    const message = status === 'APROBADO'
+      ? '¿Está seguro de aprobar este pedido?'
+      : '¿Está seguro de cancelar este pedido?';
+    if (!confirm(message)) return;
+    this.orderService.updateStatus(id, status).subscribe({
+      next: (res) => this.order.set(res),
+      error: () => alert('Error al cambiar el estado del pedido.')
+    });
+  }
 
   // Colour palette for product groups (6 alternating colours)
   private readonly GROUP_COLORS = [
@@ -615,6 +657,42 @@ export class OrderDetailComponent implements OnInit {
         LN(RX + RC_GRP + RC_DESC + RC_CNT + RC_LOT, y, RX + RC_GRP + RC_DESC + RC_CNT + RC_LOT, y + ROW_H);
 
         // LEFT EMPTY FOR MANUAL FILL
+
+        // RIGHT: detalle de producto (cómo se arruma el pedido)
+        TC(BLK); N(6);
+        const detalleArrume = (item as any).detalleProducto;
+        if (detalleArrume) {
+          const arrumeLines = doc.splitTextToSize(detalleArrume, RC_DESC - 2);
+          const maxLines = Math.max(1, Math.floor(ROW_H / 3.4));
+          arrumeLines.slice(0, maxLines).forEach((ln: string, li: number) => {
+            TX(clip(ln, RC_DESC - 2), RX + RC_GRP + 1.5, y + 2.8 + li * 3.2);
+          });
+        }
+
+        // RIGHT: cantidad despachada (columna CANT.)
+        const despachado = (item as any).delivered;
+        if (despachado != null && despachado !== 0) {
+          TC(BLK); B(6.5);
+          TX(String(despachado), RX + RC_GRP + RC_DESC + RC_CNT / 2, ty, { align: 'center' });
+        }
+
+        // RIGHT: lote del producto (columna LOTE)
+        const loteProducto = (item as any).lote;
+        if (loteProducto) {
+          TC(BLK); N(6);
+          TX(clip(loteProducto, RC_LOT - 2), RX + RC_GRP + RC_DESC + RC_CNT + 1.5, ty);
+        }
+
+        // RIGHT: observaciones del despacho (columna OBSERVACIÓN)
+        const obsDespacho = (item as any).observations;
+        if (obsDespacho) {
+          TC(BLK); N(5.5);
+          const obsLines = doc.splitTextToSize(obsDespacho, RC_OBS - 2);
+          const obsMaxLines = Math.max(1, Math.floor(ROW_H / 3.0));
+          obsLines.slice(0, obsMaxLines).forEach((ln: string, li: number) => {
+            TX(clip(ln, RC_OBS - 2), RX + RC_GRP + RC_DESC + RC_CNT + RC_LOT + 1, y + 2.6 + li * 2.9);
+          });
+        }
 
         y += ROW_H;
       });

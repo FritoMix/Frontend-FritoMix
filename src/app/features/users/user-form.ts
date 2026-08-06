@@ -134,7 +134,7 @@ import { UserRole } from '../../core/models/user.model';
                   >
                     <option value="" disabled>Selecciona un rol</option>
                     <option value="admin">Administrador</option>
-                    <option value="contador">Contador</option>
+                    <option value="cartera">Cartera</option>
                     <option value="coordinador">Coordinador</option>
                     <option value="despachador">Despachador</option>
                   </select>
@@ -254,7 +254,7 @@ export class UserFormComponent implements OnInit {
   roleLabel(role: UserRole | string): string {
     const labels: Record<string, string> = {
       admin: 'Administrador',
-      contador: 'Contador',
+      cartera: 'Cartera',
       coordinador: 'Coordinador',
       despachador: 'Despachador',
     };
@@ -264,7 +264,7 @@ export class UserFormComponent implements OnInit {
   getRoleBadgeClass(role: UserRole | string): string {
     const classes: Record<string, string> = {
       admin: 'bg-red-100 text-red-700',
-      contador: 'bg-purple-100 text-purple-700',
+      cartera: 'bg-purple-100 text-purple-700',
       coordinador: 'bg-amber-100 text-amber-700',
       despachador: 'bg-rose-100 text-rose-700',
     };
@@ -324,7 +324,7 @@ export class UserFormComponent implements OnInit {
 function mapFormRole(role: string): UserRole {
   const map: Record<string, UserRole> = {
     'ADMIN': 'admin',
-    'CONTADOR': 'contador',
+    'CARTERA': 'cartera',
     'COORDINADOR': 'coordinador',
     'DESPACHADOR': 'despachador',
   };

@@ -2,10 +2,11 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DispatchService } from '../../core/services/dispatch.service';
+import { AuthService } from '../../core/services/auth.service';
 import { PageHeaderComponent } from '../../shared/components/page-header';
 import { SearchInputComponent } from '../../shared/components/search-input';
 import { PaginationComponent } from '../../shared/components/pagination';
-import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
+import { Dispatch, DispatchStatus, nextDispatchStatus } from '../../core/models/dispatch.model';
 
 @Component({
   selector: 'app-dispatch-list',
@@ -19,15 +20,17 @@ import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
       <app-search-input
         (valueChange)="dispatchService.setSearchTerm($event)"
-        placeholder="Buscar despacho por código o producto, conductor..."
+        placeholder="Buscar por código, cliente, conductor, placa..."
       ></app-search-input>
-      <button
-        [routerLink]="['/despachos/nuevo']"
-        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-        Nuevo Despacho
-      </button>
+      @if (!isCartera()) {
+        <button
+          [routerLink]="['/despachos/nuevo']"
+          class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Nuevo Despacho
+        </button>
+      }
     </div>
 
     <!-- Table Card -->
@@ -38,6 +41,10 @@ import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
             <tr class="bg-gray-50/60">
               <th class="!pl-6">Código</th>
               <th>Pedido</th>
+              <th>Cliente(s)</th>
+              <th>Tipo</th>
+              <th class="text-right">Peso Total</th>
+              <th class="text-right">Dimensión</th>
               <th>Fecha</th>
               <th>Conductor</th>
               <th>Estado</th>
@@ -51,12 +58,36 @@ import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
                   <span class="font-mono text-sm font-semibold text-[#071938]">{{ d.dispatchNumber }}</span>
                 </td>
                 <td>
-                  <a
-                    [routerLink]="['/pedidos', d.orderId]"
-                    class="font-mono text-sm font-semibold text-[#071938] hover:text-[#0055FF] transition-colors"
+                  @if (d.tipoPedido === 'pedido_multipedido') {
+                    <span class="text-xs font-medium text-[#0055FF]">Múltiples pedidos</span>
+                  } @else {
+                    <a
+                      [routerLink]="['/pedidos', d.orderId]"
+                      class="font-mono text-sm font-semibold text-[#071938] hover:text-[#0055FF] transition-colors"
+                    >
+                      {{ d.orderNumber }}
+                    </a>
+                  }
+                </td>
+                <td>
+                  <span class="text-xs text-gray-600">{{ d.clientes }}</span>
+                </td>
+                <td>
+                  <span
+                    class="inline-block text-[10px] font-bold tracking-wide uppercase px-2 py-0.5 rounded-full"
+                    [class]="d.tipoPedido === 'pedido_multipedido'
+                      ? 'bg-indigo-50 text-indigo-600 border border-indigo-200'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200'"
                   >
-                    {{ d.orderNumber }}
-                  </a>
+                    {{ d.tipoPedido === 'pedido_multipedido' ? 'MULTIPEDIDO' : 'ÚNICO' }}
+                  </span>
+                </td>
+                <td class="text-right">
+                  <span class="text-sm font-semibold text-[#071938]">{{ (d.pesoTotal ?? 0).toFixed(2) }}</span>
+                  <span class="text-xs text-gray-400 ml-0.5">kg</span>
+                </td>
+                <td class="text-right">
+                  <span class="text-sm font-semibold text-[#071938]">{{ (d.totalDimension ?? 0).toFixed(2) }}</span>
                 </td>
                 <td>
                   <span class="text-gray-600 text-sm">{{ d.dispatchDate }}</span>
@@ -65,31 +96,56 @@ import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
                   <span class="font-medium text-[#071938] text-sm uppercase">{{ d.driverName }}</span>
                 </td>
                 <td>
-                  <span
-                    class="status-badge"
-                    [class]="statusClass(d.status)"
-                  >
-                    {{ statusLabel(d.status) }}
-                  </span>
+                  <div class="flex flex-col items-start gap-1">
+                    <span
+                      class="status-badge"
+                      [class]="statusClass(d.status)"
+                    >
+                      {{ statusLabel(d.status) }}
+                    </span>
+                    @if (d.cumplimiento) {
+                      <span
+                        [class]="d.cumplimiento === 'COMPLETO'
+                          ? 'status-badge bg-green-50 text-green-700 border-green-200'
+                          : 'status-badge bg-amber-50 text-amber-700 border-amber-200'"
+                      >
+                        {{ d.cumplimiento }}
+                      </span>
+                    }
+                  </div>
                 </td>
                 <td class="text-right !pr-6">
                   <div class="flex items-center justify-end gap-2">
-                    <button (click)="editDispatch(d)"
-                      class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
-                      title="Editar">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    <button (click)="verDetalle(d.id)"
+                      class="p-1.5 rounded-md hover:bg-blue-50 text-gray-500 hover:text-[#0055FF] transition-colors"
+                      title="Ver detalles">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6-3.11A10.96 10.96 0 0012 4c-5.06 0-9.42 2.89-11 7 1.58 4.11 5.94 7 11 7 5.06 0 9.42-2.89 11-7-.28-.58-.6-1.14-.99-1.66z"/></svg>
                     </button>
-                    <button (click)="eliminar(d.id)"
-                      class="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
-                      title="Eliminar">
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                    </button>
+                    @if (puedeAvanzar() && nextStatus(d.status)) {
+                      <button (click)="avanzar(d.id, d.status)"
+                        class="p-1.5 rounded-md hover:bg-blue-50 text-gray-500 hover:text-[#0055FF] transition-colors"
+                        [title]="'Avanzar a ' + statusLabel(nextStatus(d.status)!)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                      </button>
+                    }
+                    @if (!isCartera()) {
+                      <button (click)="editDispatch(d)"
+                        class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
+                        title="Editar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                      </button>
+                      <button (click)="eliminar(d.id)"
+                        class="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
+                        title="Eliminar">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    }
                   </div>
                 </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="py-16 text-center">
+                <td colspan="10" class="py-16 text-center">
                   <div class="flex flex-col items-center gap-2">
                     <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
                     <p class="text-sm font-semibold text-[#071938]">No se encontraron despachos</p>
@@ -111,10 +167,18 @@ import { Dispatch, DispatchStatus } from '../../core/models/dispatch.model';
 })
 export class DispatchListComponent implements OnInit {
   dispatchService = inject(DispatchService);
+  authService = inject(AuthService);
   router = inject(Router);
 
   currentPage = signal(1);
   pageSize = 5;
+
+  isCartera = computed(() => this.authService.currentUser()?.role === 'cartera');
+
+  puedeAvanzar = computed(() => {
+    const role = this.authService.currentUser()?.role;
+    return role === 'cartera' || role === 'admin';
+  });
 
   ngOnInit() {
     this.dispatchService.loadDispatches();
@@ -140,23 +204,21 @@ export class DispatchListComponent implements OnInit {
   statusClass(status: DispatchStatus): string {
     const map: Record<DispatchStatus, string> = {
       'PENDIENTE': 'bg-gray-100 text-gray-700 border-gray-300',
-      'EN REVISIÓN': 'bg-amber-50 text-amber-700 border-amber-200',
-      'APROBADO': 'bg-teal-50 text-teal-700 border-teal-200',
-      'EN RUTA': 'bg-gray-50 text-gray-700 border-gray-300',
-      'FINALIZADO': 'bg-green-50 text-green-700 border-green-200',
-      'CANCELADO': 'bg-red-50 text-red-600 border-red-200'
+      'ELABORACION': 'bg-amber-50 text-amber-700 border-amber-200',
+      'PRODUCCION': 'bg-blue-50 text-blue-700 border-blue-200',
+      'LISTO_CARGUE': 'bg-teal-50 text-teal-700 border-teal-200',
+      'DESPACHADO': 'bg-green-50 text-green-700 border-green-200'
     };
     return map[status] || 'bg-gray-100 text-gray-700 border-gray-300';
   }
 
   statusLabel(status: DispatchStatus): string {
     const map: Record<DispatchStatus, string> = {
-      'PENDIENTE': 'LISTO PARA DESPACHO',
-      'EN REVISIÓN': 'EN REVISIÓN',
-      'APROBADO': 'APROBADO',
-      'EN RUTA': 'EN RUTA',
-      'FINALIZADO': 'ENTREGADO',
-      'CANCELADO': 'CANCELADO'
+      'PENDIENTE': 'PENDIENTE',
+      'ELABORACION': 'ELABORACIÓN',
+      'PRODUCCION': 'PRODUCCIÓN',
+      'LISTO_CARGUE': 'LISTO CARGUE',
+      'DESPACHADO': 'DESPACHADO'
     };
     return map[status] || status;
   }
@@ -171,5 +233,22 @@ export class DispatchListComponent implements OnInit {
 
   editDispatch(d: Dispatch) {
     this.router.navigate(['/despachos', d.id, 'editar']);
+  }
+
+  verDetalle(id: string) {
+    this.router.navigate(['/despachos', id]);
+  }
+
+  nextStatus(status: DispatchStatus): DispatchStatus | null {
+    return nextDispatchStatus(status);
+  }
+
+  avanzar(id: string, status: DispatchStatus) {
+    const next = nextDispatchStatus(status);
+    if (!next) return;
+    this.dispatchService.updateStatus(Number(id), next).subscribe({
+      next: () => this.dispatchService.loadDispatches(),
+      error: () => alert('Error al avanzar el estado del despacho.')
+    });
   }
 }

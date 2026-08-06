@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -8,7 +8,17 @@ import { DriverService } from '../../core/services/driver.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ProductService } from '../../core/services/product.service';
 import { ChecklistItem, DispatchStatus, DispatchResponse } from '../../core/models/dispatch.model';
+import { Order } from '../../core/models/order.model';
 import { AuthService } from '../../core/services/auth.service';
+
+type TipoPedido = 'pedido_unico' | 'pedido_multipedido';
+
+interface PreviewItem {
+  productId: number;
+  description: string;
+  lot?: string;
+  qty: number;
+}
 
 @Component({
   selector: 'app-dispatch-form',
@@ -30,77 +40,229 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
 
     <div class="fm-card p-6 mb-5">
-      <h3 class="font-bold text-[#071938] text-base mb-5">Información del Despacho</h3>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-        <div>
-          <label for="select-pedido" class="block text-xs font-semibold text-gray-500 mb-1.5">Pedido</label>
-          <select id="select-pedido"
-            [(ngModel)]="selectedOrderId"
-            (ngModelChange)="onOrderChange()"
-            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
-          >
-            <option value="">Seleccionar pedido</option>
-            @for (o of orderService.orders(); track o.id) {
-              <option [value]="o.id">{{ o.orderNumber }} - {{ o.clientName }}</option>
-            }
-          </select>
-          @if (form.orderNumber) {
-            <span class="code-badge bg-blue-50 text-blue-700 border-blue-200 mt-2 inline-block">{{ form.orderNumber }}</span>
-          }
-        </div>
-        <div>
-          <label for="fecha-despacho" class="block text-xs font-semibold text-gray-500 mb-1.5">Fecha de Despacho</label>
-          <input id="fecha-despacho"
-            type="date"
-            [(ngModel)]="form.dispatchDate"
-            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-          />
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Estado</label>
-          <span class="status-badge bg-teal-50 text-teal-700 border-teal-200 text-xs font-bold">LISTO PARA DESPACHO</span>
-        </div>
+      <h3 class="font-bold text-[#071938] text-base mb-4">Tipo de Pedido</h3>
+      <div class="flex flex-col sm:flex-row gap-3">
+        <label [class]="radioClass('pedido_unico')">
+          <input type="radio" name="tipoPedido" value="pedido_unico" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_unico')" class="accent-[#0055FF]" />
+          <div class="ml-2">
+            <span class="block font-bold text-sm text-[#071938]">Pedido Único</span>
+            <span class="block text-xs text-gray-500">Despacho para un solo cliente</span>
+          </div>
+        </label>
+        <label [class]="radioClass('pedido_multipedido')">
+          <input type="radio" name="tipoPedido" value="pedido_multipedido" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_multipedido')" class="accent-[#0055FF]" />
+          <div class="ml-2">
+            <span class="block font-bold text-sm text-[#071938]">Pedido Multipedido</span>
+            <span class="block text-xs text-gray-500">Despacho consolidado para varios clientes</span>
+          </div>
+        </label>
       </div>
+      @if (!tipoPedido) {
+        <p class="text-xs text-red-600 mt-2">Debes seleccionar un tipo de pedido para continuar.</p>
+      }
     </div>
 
     <div class="fm-card p-6 mb-5">
-      <h3 class="font-bold text-[#071938] text-base mb-5">Detalle de Productos</h3>
+      <h3 class="font-bold text-[#071938] text-base mb-5">Información del Despacho</h3>
+
+      @if (isUnico()) {
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div>
+            <label for="select-pedido" class="block text-xs font-semibold text-gray-500 mb-1.5">Pedido (Cliente)</label>
+            <select id="select-pedido"
+              [(ngModel)]="selectedOrderId"
+              (ngModelChange)="onOrderChange()"
+              class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
+            >
+              <option value="">Seleccionar pedido</option>
+              @for (o of availableOrders(); track o.id) {
+                <option [value]="o.id">{{ o.orderNumber }} - {{ o.clientName }}</option>
+              }
+            </select>
+            @if (form.orderNumber) {
+              <span class="code-badge bg-blue-50 text-blue-700 border-blue-200 mt-2 inline-block">{{ form.orderNumber }}</span>
+            }
+          </div>
+          <div>
+            <label for="fecha-despacho" class="block text-xs font-semibold text-gray-500 mb-1.5">Fecha de Despacho</label>
+            <input id="fecha-despacho"
+              type="date"
+              [(ngModel)]="form.dispatchDate"
+              class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Estado</label>
+            <span class="status-badge bg-teal-50 text-teal-700 border-teal-200 text-xs font-bold">LISTO PARA DESPACHO</span>
+          </div>
+        </div>
+      } @else if (isMulti()) {
+        <p class="text-sm text-gray-500 mb-4">Selecciona uno o varios pedidos (un cliente por pedido) para consolidar el despacho.</p>
+        <div class="border border-gray-200 rounded-lg p-3 mb-4 max-h-64 overflow-y-auto">
+          @for (o of availableOrders(); track o.id) {
+            <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <input
+                type="checkbox"
+                [checked]="selectedOrderIds.includes(o.id)"
+                (change)="toggleOrder(o.id)"
+                class="w-4 h-4 accent-[#0055FF]"
+              />
+              <span class="text-sm font-semibold text-[#071938]">{{ o.orderNumber }}</span>
+              <span class="text-xs text-gray-500">{{ o.clientName }} — {{ o.city || '—' }}</span>
+            </label>
+          } @empty {
+            <p class="text-sm text-gray-400 py-4 text-center">No hay pedidos disponibles para despachar.</p>
+          }
+        </div>
+      }
+    </div>
+
+    @if (isMulti()) {
+      <div class="fm-card p-6 mb-5 border-l-4 border-l-[#0055FF]">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-bold text-[#071938] text-base">Vista Previa — Clientes Seleccionados</h3>
+          <span class="text-xs text-gray-500">{{ selectedOrderIds.length }} cliente(s) agregado(s)</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="fm-table">
+            <thead>
+              <tr class="bg-gray-50/60">
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Ciudad / Dirección</th>
+                <th class="text-right">Productos</th>
+                <th class="text-right">Peso Total (kg)</th>
+                <th class="text-right">Dimensión (m³)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of previewRows(); track row.id) {
+                <tr>
+                  <td class="font-bold text-xs text-[#071938]">{{ row.orderNumber }}</td>
+                  <td class="font-semibold text-xs text-gray-800">{{ row.clientName }}</td>
+                  <td class="text-xs text-gray-500">{{ row.city }} — {{ row.address }}</td>
+                  <td class="text-right text-xs text-gray-600">{{ row.items?.length ?? 0 }}</td>
+                  <td class="text-right font-bold text-xs text-gray-700">{{ orderWeight(row) }}</td>
+                  <td class="text-right font-semibold text-xs text-gray-700">{{ orderDimension(row) }}</td>
+                  <td class="text-right">
+                    <button type="button" (click)="removeOrder(row.id)"
+                      class="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700">
+                      Quitar
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr><td colspan="7" class="text-center text-gray-400 text-sm py-6">No hay clientes agregados. Marca al menos un pedido arriba.</td></tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+
+    <div class="fm-card p-6 mb-5">
+      <h3 class="font-bold text-[#071938] text-base mb-1">Productos del Pedido {{ isMulti() ? '(Consolidado)' : '' }}</h3>
+      <p class="text-xs text-gray-500 mb-5">Cantidades solicitadas en el pedido. Esta vista es informativa.</p>
       <div class="overflow-x-auto">
         <table class="fm-table">
           <thead>
             <tr class="bg-gray-50/60">
               <th>Producto</th>
-              <th>Cant.</th>
-              <th>Observación</th>
+              <th class="!text-right">Cant. Pedido</th>
             </tr>
           </thead>
           <tbody>
-            @if (selectedOrder) {
-              @for (item of selectedOrder.items; track item.item) {
-                @let qty = item.bulto || 0;
+            @if (aggregatedItems().length > 0) {
+              @for (item of aggregatedItems(); track item.productId) {
                 <tr>
                   <td>
                     <div class="flex flex-col gap-0.5">
                       <span class="font-semibold text-[#071938] text-sm">{{ item.description }}</span>
-                      <span class="text-xs text-gray-400 font-mono">{{ item.lot || '—' }}</span>
                     </div>
                   </td>
-                  <td><span class="font-semibold text-[#071938]">{{ qty }}</span></td>
-                  <td class="w-[30rem]">
+                  <td class="text-right"><span class="font-semibold text-[#071938]">{{ item.qty }}</span></td>
+                </tr>
+              }
+            } @else {
+              <tr>
+                <td colspan="2" class="py-10 text-center">
+                  <p class="text-sm text-gray-400">{{ isUnico() ? 'Selecciona un pedido para ver los productos' : 'Selecciona al menos un pedido para ver los productos' }}</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="fm-card p-6 mb-5 border-t-4 border-t-[#0055FF]">
+      <h3 class="font-bold text-[#071938] text-base mb-1">Detalle del Despacho</h3>
+      <p class="text-xs text-gray-500 mb-5">Registra la cantidad total despachada, los lotes, el detalle de producto (arrume) y la observación por producto.</p>
+      <div class="overflow-x-auto">
+        <table class="fm-table">
+          <thead>
+            <tr class="bg-gray-50/60">
+              <th>Producto</th>
+              <th>Despachar</th>
+              <th>Lotes</th>
+              <th>Detalle de Producto</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (aggregatedItems().length > 0) {
+              @for (item of aggregatedItems(); track item.productId) {
+                <tr>
+                  <td>
+                    <div class="flex flex-col gap-0.5">
+                      <span class="font-semibold text-[#071938] text-sm">{{ item.description }}</span>
+                      <span class="text-xs text-gray-400">Cant. pedido: {{ item.qty }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <input
+                      type="number"
+                      [ngModel]="itemDelivered[item.productId] ?? item.qty"
+                      (ngModelChange)="itemDelivered[item.productId] = $event"
+                      min="0"
+                      max="99999"
+                      class="w-28 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
+                    />
+                  </td>
+                  <td class="w-[12rem]">
+                    <input
+                      type="text"
+                      [ngModel]="itemLotes[item.productId] || ''"
+                      (ngModelChange)="itemLotes[item.productId] = $event"
+                      placeholder="Lotes..."
+                      class="w-[10rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </td>
+                  <td class="w-[18rem]">
+                    <input
+                      type="text"
+                      [ngModel]="itemDetalleProducto[item.productId] || ''"
+                      (ngModelChange)="itemDetalleProducto[item.productId] = $event"
+                      placeholder="Cómo se arruma el pedido..."
+                      class="w-[15rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                    />
+                  </td>
+                  <td class="w-[14rem]">
                     <input
                       type="text"
                       [ngModel]="itemObservations[item.productId] || ''"
                       (ngModelChange)="itemObservations[item.productId] = $event"
                       placeholder="Obs..."
-                      class="w-[26rem] mr-auto px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+                      class="w-[11rem] mr-auto px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
                     />
                   </td>
                 </tr>
               }
             } @else {
               <tr>
-                <td colspan="3" class="py-10 text-center">
-                  <p class="text-sm text-gray-400">Selecciona un pedido para ver los productos</p>
+                <td colspan="5" class="py-10 text-center">
+                  <p class="text-sm text-gray-400">{{ isUnico() ? 'Selecciona un pedido para ver los productos' : 'Selecciona al menos un pedido para ver los productos' }}</p>
                 </td>
               </tr>
             }
@@ -123,7 +285,7 @@ import { AuthService } from '../../core/services/auth.service';
     </div>
 
     <div class="fm-card p-6">
-      <div class="grid grid-cols-1 md:grid-cols-5 gap-5 items-end">
+      <div class="grid grid-cols-1 md:grid-cols-6 gap-5 items-end">
         <div>
           <label for="select-conductor" class="block text-xs font-semibold text-gray-500 mb-1.5">Conductor</label>
           <select id="select-conductor"
@@ -165,7 +327,7 @@ import { AuthService } from '../../core/services/auth.service';
           </div>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total Cargue</label>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total</label>
           <div class="flex items-center gap-2">
             <input
               type="number"
@@ -174,6 +336,18 @@ import { AuthService } from '../../core/services/auth.service';
               class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
             />
             <span class="text-sm text-gray-500 font-medium">Kg</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Total Dimensión</label>
+          <div class="flex items-center gap-2">
+            <input
+              type="number"
+              [ngModel]="totalDimension"
+              disabled
+              class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
+            />
+            <span class="text-sm text-gray-500 font-medium">m³</span>
           </div>
         </div>
         <div class="flex justify-end">
@@ -202,13 +376,19 @@ export class DispatchFormComponent {
   route = inject(ActivatedRoute);
 
   editId: number | null = null;
+  tipoPedido: '' | TipoPedido = '';
   selectedOrderId = '';
+  selectedOrderIds: string[] = [];
   selectedDriverId: number | null = null;
   selectedVehicleId: number | null = null;
   pesoBruto: number | undefined = undefined;
   pesoTotalCargue: number = 0;
-  selectedOrder: any = null;
+  totalDimension: number = 0;
+  selectedOrder: Order | null = null;
   itemObservations: Record<number, string> = {};
+  itemDelivered: Record<number, number> = {};
+  itemDetalleProducto: Record<number, string> = {};
+  itemLotes: Record<number, string> = {};
 
   form = {
     dispatchNumber: '',
@@ -262,12 +442,87 @@ export class DispatchFormComponent {
     }
   }
 
+  isUnico(): boolean { return this.tipoPedido === 'pedido_unico'; }
+  isMulti(): boolean { return this.tipoPedido === 'pedido_multipedido'; }
+
+  radioClass(tipo: TipoPedido): string {
+    const base = 'flex items-center px-4 py-3 border rounded-lg cursor-pointer transition-all ';
+    return base + (this.tipoPedido === tipo
+      ? 'border-[#0055FF] bg-blue-50 ring-1 ring-[#0055FF]'
+      : 'border-gray-200 hover:border-gray-300 bg-white');
+  }
+
+  onTipoPedido(tipo: TipoPedido) {
+    this.tipoPedido = tipo;
+    if (tipo === 'pedido_unico') {
+      this.selectedOrderIds = [];
+    } else {
+      this.selectedOrderId = '';
+      this.selectedOrder = null;
+    }
+  }
+
+  availableOrders(): Order[] {
+    const dispatched = new Set<string>(
+      this.orderService.orders()
+        .filter(o => !!o.dispatchDate)
+        .map(o => o.id)
+    );
+    return this.orderService.orders()
+      .filter(o => o.status === 'APROBADO' && !dispatched.has(o.id));
+  }
+
+  previewRows(): Order[] {
+    if (!this.isMulti()) return [];
+    const map = new Map(this.orderService.orders().map(o => [o.id, o]));
+    return this.selectedOrderIds
+      .map(id => map.get(id))
+      .filter((o): o is Order => !!o);
+  }
+
+  toggleOrder(id: string) {
+    if (this.selectedOrderIds.includes(id)) {
+      this.selectedOrderIds = this.selectedOrderIds.filter(x => x !== id);
+    } else {
+      this.selectedOrderIds = [...this.selectedOrderIds, id];
+    }
+  }
+
+  removeOrder(id: string) {
+    this.selectedOrderIds = this.selectedOrderIds.filter(x => x !== id);
+  }
+
+  aggregatedItems(): PreviewItem[] {
+    if (this.isUnico()) {
+      const order = this.selectedOrder;
+      return (order?.items ?? []).map((it) => ({
+        productId: it.productId,
+        description: it.description,
+        lot: it.lot,
+        qty: it.bulto || 0
+      }));
+    }
+    const map = new Map<number, PreviewItem>();
+    for (const order of this.previewRows()) {
+      for (const it of order.items ?? []) {
+        const pid = it.productId;
+        const existing = map.get(pid);
+        if (existing) {
+          existing.qty += it.bulto || 0;
+        } else {
+          map.set(pid, { productId: pid, description: it.description, lot: it.lot, qty: it.bulto || 0 });
+        }
+      }
+    }
+    return [...map.values()];
+  }
+
   cargarDespacho(resp: DispatchResponse) {
     this.form.dispatchNumber = resp.dispatchNumber;
     this.form.orderNumber = resp.orderNumber;
     this.form.status = resp.status as DispatchStatus;
     this.form.observations = resp.notes || '';
-    this.selectedOrderId = String(resp.orderId);
+    this.tipoPedido = (resp.tipoPedido || 'pedido_unico') as TipoPedido;
     this.selectedDriverId = resp.driverId;
     this.selectedVehicleId = resp.vehicleId;
 
@@ -275,22 +530,39 @@ export class DispatchFormComponent {
       this.form.dispatchDate = resp.dispatchDate.split('T')[0];
     }
 
-    const order = this.orderService.orders().find(o => o.id === String(resp.orderId));
-    if (order) {
-      this.selectedOrder = order;
-      this.form.route = `${order.city} - ${order.address}`;
-      this.pesoBruto = order.pesoTotalKg;
-      this.pesoTotalCargue = order.pesoTotalKg;
-      this.itemObservations = {};
-      for (const item of order.items) {
-        if (item.observation) {
-          this.itemObservations[item.productId] = item.observation;
-        }
+    const orderList = this.orderService.orders();
+    if (this.isMulti()) {
+      const ids = (resp.orders ?? []).map(o => String(o.id));
+      this.selectedOrderIds = ids;
+      if (ids.length === 0 && resp.orderId) this.selectedOrderIds = [String(resp.orderId)];
+    } else {
+      const orderId = resp.orderId ?? resp.orders?.[0]?.id;
+      this.selectedOrderId = orderId ? String(orderId) : '';
+      const order = orderList.find(o => o.id === String(orderId));
+      if (order) {
+        this.selectedOrder = order;
+        this.form.route = `${order.city} - ${order.address}`;
       }
     }
 
+    this.recalcWeight();
+    if (resp.pesoTotal != null) this.pesoTotalCargue = this.round2(resp.pesoTotal);
+    if (resp.totalDimension != null) this.totalDimension = this.round2(resp.totalDimension);
     this.onDriverChange();
     this.onVehicleChange();
+
+    if (resp.details) {
+      this.itemDetalleProducto = {};
+      this.itemDelivered = {};
+      this.itemObservations = {};
+      this.itemLotes = {};
+      for (const d of resp.details) {
+        if (d.detalleProducto) this.itemDetalleProducto[d.productId] = d.detalleProducto;
+        if (d.delivered != null) this.itemDelivered[d.productId] = d.delivered;
+        if (d.observations) this.itemObservations[d.productId] = d.observations;
+        if (d.lote) this.itemLotes[d.productId] = d.lote;
+      }
+    }
   }
 
   getLotCode(itemLot?: string, itemNum?: number): string {
@@ -311,21 +583,17 @@ export class DispatchFormComponent {
   }
 
   onOrderChange() {
-    const order = this.orderService.orders().find(o => o.id === this.selectedOrderId);
+    const order = this.orderService.orders().find(o => o.id === this.selectedOrderId) || null;
+    this.selectedOrder = order;
     if (order) {
-      this.selectedOrder = order;
       this.form.orderNumber = order.orderNumber;
       this.form.route = `${order.city} - ${order.address}`;
       if (order.dispatchDate) this.form.dispatchDate = order.dispatchDate;
       if (order.dispatchTime) this.form.dispatchTime = order.dispatchTime;
-      this.pesoBruto = order.pesoTotalKg;
-      this.pesoTotalCargue = order.pesoTotalKg;
       this.itemObservations = {};
-      for (const item of order.items) {
-        if (item.observation) {
-          this.itemObservations[item.productId] = item.observation;
-        }
-      }
+      this.itemDetalleProducto = {};
+      this.itemLotes = {};
+      this.recalcWeight();
 
       const driver = this.driverService.drivers().find(d =>
         d.document === order.driverDocument ||
@@ -334,10 +602,6 @@ export class DispatchFormComponent {
       if (driver) {
         this.selectedDriverId = driver.id;
         this.onDriverChange();
-      } else if (order.driverName) {
-        this.form.driverName = order.driverName;
-        this.form.driverDocument = order.driverDocument || '';
-        this.form.driverPhone = order.driverPhone || '';
       }
       const vehicle = this.vehicleService.vehicles().find(v => v.plate === order.vehicle);
       if (vehicle) {
@@ -345,9 +609,38 @@ export class DispatchFormComponent {
         this.onVehicleChange();
       }
     } else {
-      this.selectedOrder = null;
       this.form.orderNumber = '';
+      this.recalcWeight();
     }
+  }
+
+  recalcWeight() {
+    if (this.isUnico() && this.selectedOrder) {
+      this.pesoBruto = this.orderWeight(this.selectedOrder);
+      this.pesoTotalCargue = this.orderWeight(this.selectedOrder);
+      this.totalDimension = this.orderDimension(this.selectedOrder);
+    } else if (this.isMulti()) {
+      const orders = this.previewRows();
+      this.pesoTotalCargue = this.round2(orders.reduce((s, o) => s + this.orderWeight(o), 0));
+      this.pesoBruto = this.pesoTotalCargue;
+      this.totalDimension = this.round2(orders.reduce((s, o) => s + this.orderDimension(o), 0));
+    }
+  }
+
+  round2(v: number): number {
+    return Math.round(v * 100) / 100;
+  }
+
+  orderWeight(o: Order): number {
+    return this.round2(
+      (o.items ?? []).reduce((s, it) => s + ((it.pesoUnidad ?? 0) * (it.bulto ?? 0)), 0)
+    );
+  }
+
+  orderDimension(o: Order): number {
+    return this.round2(
+      (o.items ?? []).reduce((s, it) => s + ((it.dimension ?? 0) * (it.bulto ?? 0)), 0)
+    );
   }
 
   onDriverChange() {
@@ -378,21 +671,32 @@ export class DispatchFormComponent {
   }
 
   esValido(): boolean {
-    return (
-      !!this.selectedOrderId &&
-      !!this.selectedDriverId &&
-      !!this.selectedVehicleId
-    );
+    if (!this.tipoPedido) return false;
+    if (!this.selectedDriverId || !this.selectedVehicleId) return false;
+    if (this.isUnico()) return !!this.selectedOrderId;
+    if (this.isMulti()) return this.selectedOrderIds.length >= 1;
+    return false;
   }
 
   guardar() {
-    if (!this.esValido()) return;
+    if (!this.esValido()) {
+      const msg = !this.tipoPedido
+        ? 'Debes seleccionar un tipo de pedido.'
+        : this.isUnico()
+          ? 'Debes seleccionar un pedido, conductor y vehículo.'
+          : 'Debes agregar al menos un cliente (pedido), un conductor y un vehículo.';
+      alert(msg);
+      return;
+    }
 
-    const details = (this.selectedOrder?.items || []).map((item: any) => ({
+    const items = this.aggregatedItems();
+    const details = items.map(item => ({
       productId: item.productId,
-      quantity: item.bulto || 0,
-      delivered: 0,
-      observations: this.itemObservations[item.productId] || ''
+      quantity: item.qty,
+      delivered: this.itemDelivered[item.productId] ?? item.qty,
+      observations: this.itemObservations[item.productId] || '',
+      detalleProducto: this.itemDetalleProducto[item.productId] || '',
+      lote: this.itemLotes[item.productId] || ''
     }));
 
     const obsParts: string[] = [];
@@ -405,8 +709,13 @@ export class DispatchFormComponent {
       ? `${this.form.dispatchDate}T${this.form.dispatchTime || '00:00'}:00`
       : new Date().toISOString();
 
+    const orderIds = this.isMulti()
+      ? this.selectedOrderIds.map(Number)
+      : [Number(this.selectedOrderId)];
+
     const payload = {
-      orderId: Number(this.selectedOrderId),
+      tipoPedido: this.tipoPedido,
+      orderIds,
       driverId: Number(this.selectedDriverId),
       vehicleId: Number(this.selectedVehicleId),
       userId: this.authService.currentUser()?.id ?? null,
@@ -423,6 +732,7 @@ export class DispatchFormComponent {
 
     request.subscribe({
       next: () => {
+        this.orderService.loadOrders();
         this.dispatchService.loadDispatches();
         this.router.navigate(['/despachos']);
       },
