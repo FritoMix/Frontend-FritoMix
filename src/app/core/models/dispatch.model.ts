@@ -30,7 +30,7 @@ export interface Dispatch {
   driverName: string;
   driverDocument: string;
   driverPhone: string;
-  vehiclePlate: string;
+  vehicleNumber: string;
   vehicleType: string;
   helperName?: string;
   route: string;
@@ -60,15 +60,15 @@ export interface DispatchResponse {
   driverName: string;
   driverDocument: string;
   vehicleId: number;
-  vehiclePlate: string;
-  vehicleBrand: string;
-  vehicleModel: string;
+  vehicleNumber: string;
+  vehicleType: string;
   dispatchDate: string;
   status: string;
   cumplimiento?: string | null;
   notes: string;
   dispatchUserName?: string;
   details: DispatchDetailResponse[];
+  arrumes: ArrumeResponse[];
   createdAt: string;
 }
 
@@ -103,6 +103,22 @@ export interface CreateDispatchRequest {
   status?: string;
   notes?: string;
   details: CreateDispatchDetailRequest[];
+  arrumes?: CreateArrumeRequest[];
+}
+
+export interface CreateArrumeRequest {
+  numArrume?: number | null;
+  arrumeProducto?: string;
+  cantidad?: number | null;
+  lote?: string;
+}
+
+export interface ArrumeResponse {
+  id: number;
+  numArrume?: number | null;
+  arrumeProducto?: string;
+  cantidad?: number | null;
+  lote?: string;
 }
 
 export interface CreateDispatchDetailRequest {
@@ -135,8 +151,8 @@ export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
     driverName: resp.driverName,
     driverDocument: resp.driverDocument,
     driverPhone: '',
-    vehiclePlate: resp.vehiclePlate,
-    vehicleType: resp.vehicleBrand,
+    vehicleNumber: resp.vehicleNumber,
+    vehicleType: resp.vehicleType,
     route: '',
     estimatedArrival: '',
     checklist: [],

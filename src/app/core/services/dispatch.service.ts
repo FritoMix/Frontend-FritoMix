@@ -31,7 +31,7 @@ export class DispatchService {
       d.dispatchNumber.toLowerCase().includes(term) ||
       d.orderNumber.toLowerCase().includes(term) ||
       d.driverName.toLowerCase().includes(term) ||
-      d.vehiclePlate.toLowerCase().includes(term) ||
+      d.vehicleNumber.toLowerCase().includes(term) ||
       d.status.toLowerCase().includes(term) ||
       d.clientes.toLowerCase().includes(term) ||
       d.tipoPedido.toLowerCase().includes(term)

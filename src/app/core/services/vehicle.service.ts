@@ -28,9 +28,8 @@ export class VehicleService {
     const term = this.searchTerm();
     if (!term) return this.vehicles();
     return this.vehicles().filter(v =>
-      v.plate.toLowerCase().includes(term) ||
-      v.brand.toLowerCase().includes(term) ||
-      v.model.toLowerCase().includes(term)
+      v.vehicleNumber.toLowerCase().includes(term) ||
+      v.type.toLowerCase().includes(term)
     );
   });
 
