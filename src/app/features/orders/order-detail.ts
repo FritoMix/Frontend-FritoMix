@@ -99,7 +99,7 @@ import { OrderResponse, OrderDetailResponse } from '../../core/models/order.mode
               <div class="bg-blue-700 px-4 py-2"><h3 class="text-white font-bold text-sm">DESPACHADOR / TRANSPORTE</h3></div>
               <div class="p-4 space-y-1.5 text-sm">
                 <div class="flex gap-2"><span class="text-gray-500 w-32">Despachador:</span><span class="font-semibold">{{ ord.dispatchUserName || '—' }}</span></div>
-                <div class="flex gap-2"><span class="text-gray-500 w-32">Vehículo:</span><span class="font-semibold">{{ ord.dispatchVehiclePlate || '—' }}</span></div>
+                <div class="flex gap-2"><span class="text-gray-500 w-32">Vehículo:</span><span class="font-semibold">{{ ord.dispatchVehicleNumber || '—' }}</span></div>
                 <div class="flex gap-2"><span class="text-gray-500 w-32">Fecha Despacho:</span><span class="font-semibold">{{ ord.dispatchDate ? (ord.dispatchDate | date:'dd/MM/yyyy') : '—' }}</span></div>
               </div>
             </div>
@@ -480,7 +480,7 @@ export class OrderDetailComponent implements OnInit {
 
       const dspRows: [string, string][] = [
         ['Despachador:',    order.dispatchUserName || '—'],
-        ['Vehículo:',       order.dispatchVehiclePlate || '—'],
+        ['Vehículo:',       order.dispatchVehicleNumber || '—'],
         ['Fecha Despacho:', order.dispatchDate ? order.dispatchDate.split('T')[0].replace(/-/g, '/') : '—'],
       ];
       let dr = y + CLI_H + 3.5;

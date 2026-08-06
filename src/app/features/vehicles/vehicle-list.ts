@@ -16,7 +16,7 @@ import { PaginationComponent } from '../../shared/components/pagination';
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
       <app-search-input
         (valueChange)="vehicleService.setSearchTerm($event)"
-        placeholder="Buscar por placa, marca, modelo..."
+        placeholder="Buscar por Nº vehículo, tipo..."
       ></app-search-input>
       <button
         routerLink="/vehiculos/nuevo"
@@ -37,9 +37,10 @@ import { PaginationComponent } from '../../shared/components/pagination';
           <table class="fm-table">
             <thead>
               <tr class="bg-gray-50/60">
-                <th class="!pl-6">Placa</th>
-                <th>Vehículo</th>
+                <th class="!pl-6">Nº Vehículo</th>
+                <th>Tipo</th>
                 <th>Capacidad</th>
+                <th>Dimensión</th>
                 <th>Estado</th>
                 <th class="text-right !pr-6">Acciones</th>
               </tr>
@@ -48,13 +49,16 @@ import { PaginationComponent } from '../../shared/components/pagination';
               @for (vehicle of paginatedVehicles(); track vehicle.id) {
                 <tr>
                   <td class="!pl-6">
-                    <span class="code-badge bg-gray-900 text-white border-gray-900">{{ vehicle.plate }}</span>
+                    <span class="code-badge bg-gray-900 text-white border-gray-900">{{ vehicle.vehicleNumber }}</span>
                   </td>
                   <td>
-                    <span class="font-semibold text-[#071938]">{{ vehicle.brand }} {{ vehicle.model }}</span>
+                    <span class="font-semibold text-[#071938] capitalize">{{ vehicle.type }}</span>
                   </td>
                   <td>
                     <span class="text-gray-600 text-sm">{{ vehicle.capacity }} kg</span>
+                  </td>
+                  <td>
+                    <span class="text-gray-600 text-sm">{{ vehicle.dimension }} m³</span>
                   </td>
                   <td>
                     @if (vehicle.active) {
@@ -84,7 +88,7 @@ import { PaginationComponent } from '../../shared/components/pagination';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="5" class="py-16 text-center">
+                  <td colspan="6" class="py-16 text-center">
                     <div class="flex flex-col items-center gap-2">
                       <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
                       <p class="text-sm font-semibold text-[#071938]">No se encontraron vehículos</p>
