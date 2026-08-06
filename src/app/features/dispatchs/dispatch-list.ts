@@ -177,7 +177,7 @@ export class DispatchListComponent implements OnInit {
 
   puedeAvanzar = computed(() => {
     const role = this.authService.currentUser()?.role;
-    return role === 'cartera' || role === 'admin';
+    return role === 'despachador' || role === 'admin';
   });
 
   ngOnInit() {

@@ -67,7 +67,7 @@ export interface OrderResponse {
   dispatchDriverName?: string;
   dispatchDriverDocument?: string;
   dispatchDriverPhone?: string;
-  dispatchVehiclePlate?: string;
+  dispatchVehicleNumber?: string;
   dispatchDate?: string;
   details: OrderDetailResponse[];
   createdAt: string;
@@ -123,7 +123,7 @@ export function toOrderDisplay(resp: OrderResponse): Order {
     coordinatorName: '',
     dispatcherName: '',
     auxProduction: '',
-    vehicle: '',
+    vehicle: resp.dispatchVehicleNumber ?? '',
     lotGeneral: '',
     driverName: '',
     driverDocument: '',

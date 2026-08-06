@@ -37,58 +37,39 @@ import { VehicleService } from '../../core/services/vehicle.service';
         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Placa <span class="text-red-500">*</span>
+              Nº Vehículo <span class="text-red-500">*</span>
             </label>
             <input
               type="text"
-              name="plate"
-              [(ngModel)]="form.plate"
+              name="vehicleNumber"
+              [(ngModel)]="form.vehicleNumber"
               required
-              #plateField="ngModel"
-              placeholder="Ej: ESP336"
+              #vehicleNumberField="ngModel"
+              placeholder="Ej: VEH-001"
               class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all font-mono uppercase"
-              [class.border-red-400]="plateField.invalid && plateField.touched"
+              [class.border-red-400]="vehicleNumberField.invalid && vehicleNumberField.touched"
             />
-            @if (plateField.invalid && plateField.touched) {
-              <p class="mt-1 text-xs text-red-500">La placa es requerida</p>
+            @if (vehicleNumberField.invalid && vehicleNumberField.touched) {
+              <p class="mt-1 text-xs text-red-500">El Nº de vehículo es requerido</p>
             }
           </div>
 
           <div>
             <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Marca <span class="text-red-500">*</span>
+              Tipo <span class="text-red-500">*</span>
             </label>
             <input
               type="text"
-              name="brand"
-              [(ngModel)]="form.brand"
+              name="type"
+              [(ngModel)]="form.type"
               required
-              #brandField="ngModel"
-              placeholder="Ej: SENCILLO"
+              #typeField="ngModel"
+              placeholder="Ej: sencillo"
               class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="brandField.invalid && brandField.touched"
+              [class.border-red-400]="typeField.invalid && typeField.touched"
             />
-            @if (brandField.invalid && brandField.touched) {
-              <p class="mt-1 text-xs text-red-500">La marca es requerida</p>
-            }
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm font-semibold text-[#071938] mb-1.5">
-              Modelo <span class="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              name="model"
-              [(ngModel)]="form.model"
-              required
-              #modelField="ngModel"
-              placeholder="Ej: SENCILLO ESP336"
-              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
-              [class.border-red-400]="modelField.invalid && modelField.touched"
-            />
-            @if (modelField.invalid && modelField.touched) {
-              <p class="mt-1 text-xs text-red-500">El modelo es requerido</p>
+            @if (typeField.invalid && typeField.touched) {
+              <p class="mt-1 text-xs text-red-500">El tipo es requerido</p>
             }
           </div>
 
@@ -102,7 +83,23 @@ import { VehicleService } from '../../core/services/vehicle.service';
               [(ngModel)]="form.capacity"
               required
               min="0"
-              placeholder="Ej: 8000"
+              placeholder="Ej: 9500"
+              class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+              Dimensión (m³) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="dimension"
+              [(ngModel)]="form.dimension"
+              required
+              min="0"
+              step="0.01"
+              placeholder="Ej: 11.5"
               class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
             />
           </div>
@@ -172,10 +169,10 @@ export class VehicleFormComponent implements OnInit {
   editId: number | null = null;
 
   form = {
-    plate: '',
-    brand: '',
-    model: '',
+    vehicleNumber: '',
+    type: '',
     capacity: 0,
+    dimension: 0,
     active: true,
   };
 
@@ -186,10 +183,10 @@ export class VehicleFormComponent implements OnInit {
       this.editId = Number(id);
       this.vehicleService.findById(this.editId).subscribe({
         next: (res) => {
-          this.form.plate = res.plate;
-          this.form.brand = res.brand;
-          this.form.model = res.model;
+          this.form.vehicleNumber = res.vehicleNumber;
+          this.form.type = res.type;
           this.form.capacity = res.capacity;
+          this.form.dimension = res.dimension;
           this.form.active = res.active;
         },
       });
@@ -201,10 +198,10 @@ export class VehicleFormComponent implements OnInit {
     this.isSubmitting = true;
 
     const data = {
-      plate: this.form.plate.toUpperCase(),
-      brand: this.form.brand,
-      model: this.form.model,
+      vehicleNumber: this.form.vehicleNumber.toUpperCase(),
+      type: this.form.type,
       capacity: this.form.capacity,
+      dimension: this.form.dimension,
       active: this.form.active,
     };
 
