@@ -1,4 +1,14 @@
-export type DispatchStatus = 'PENDIENTE' | 'EN REVISIÓN' | 'APROBADO' | 'EN RUTA' | 'FINALIZADO' | 'CANCELADO';
+export type DispatchStatus = 'PENDIENTE' | 'ELABORACION' | 'PRODUCCION' | 'LISTO_CARGUE' | 'DESPACHADO';
+
+export const DISPATCH_STATUS_FLOW: DispatchStatus[] = [
+  'PENDIENTE', 'ELABORACION', 'PRODUCCION', 'LISTO_CARGUE', 'DESPACHADO'
+];
+
+export function nextDispatchStatus(status: DispatchStatus): DispatchStatus | null {
+  const idx = DISPATCH_STATUS_FLOW.indexOf(status);
+  if (idx < 0 || idx >= DISPATCH_STATUS_FLOW.length - 1) return null;
+  return DISPATCH_STATUS_FLOW[idx + 1];
+}
 
 export interface ChecklistItem {
   name: string;
@@ -11,8 +21,12 @@ export interface Dispatch {
   dispatchNumber: string;
   orderId: number;
   orderNumber: string;
+  clientes: string;
+  tipoPedido: string;
   dispatchDate: string;
   dispatchTime: string;
+  pesoTotal?: number | null;
+  totalDimension?: number | null;
   driverName: string;
   driverDocument: string;
   driverPhone: string;
@@ -23,6 +37,7 @@ export interface Dispatch {
   estimatedArrival: string;
   checklist: ChecklistItem[];
   status: DispatchStatus;
+  cumplimiento?: string | null;
   departureKm?: number;
   arrivalKm?: number;
   fuelLiters?: number;
@@ -34,8 +49,12 @@ export interface Dispatch {
 export interface DispatchResponse {
   id: number;
   dispatchNumber: string;
+  tipoPedido: string;
+  orders: DispatchOrderInfo[];
   orderId: number;
   orderNumber: string;
+  pesoTotal: number | null;
+  totalDimension: number | null;
   pesoTotalCargue: number | null;
   driverId: number;
   driverName: string;
@@ -46,10 +65,18 @@ export interface DispatchResponse {
   vehicleModel: string;
   dispatchDate: string;
   status: string;
+  cumplimiento?: string | null;
   notes: string;
   dispatchUserName?: string;
   details: DispatchDetailResponse[];
   createdAt: string;
+}
+
+export interface DispatchOrderInfo {
+  id: number;
+  orderNumber: string;
+  clientName: string;
+  pesoTotalCargue: number | null;
 }
 
 export interface DispatchDetailResponse {
@@ -60,10 +87,14 @@ export interface DispatchDetailResponse {
   quantity: number;
   delivered: number;
   observations: string;
+  detalleProducto?: string | null;
+  lote?: string | null;
 }
 
 export interface CreateDispatchRequest {
-  orderId: number;
+  tipoPedido: string;
+  orderIds: number[];
+  orderId?: number;
   driverId: number;
   vehicleId: number;
   userId: number | null;
@@ -79,18 +110,28 @@ export interface CreateDispatchDetailRequest {
   quantity: number;
   delivered?: number;
   observations?: string;
+  detalleProducto?: string;
+  lote?: string;
 }
 
 export type UpdateDispatchRequest = CreateDispatchRequest;
 
 export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
+  const clientes = (resp.orders ?? [])
+    .map(o => o.clientName)
+    .filter(Boolean)
+    .join(', ');
   return {
     id: String(resp.id),
     dispatchNumber: resp.dispatchNumber,
     orderId: resp.orderId,
     orderNumber: resp.orderNumber,
+    clientes,
+    tipoPedido: resp.tipoPedido || 'pedido_unico',
     dispatchDate: resp.dispatchDate ? resp.dispatchDate.split('T')[0] : '',
     dispatchTime: '',
+    pesoTotal: resp.pesoTotal,
+    totalDimension: resp.totalDimension,
     driverName: resp.driverName,
     driverDocument: resp.driverDocument,
     driverPhone: '',
@@ -100,6 +141,7 @@ export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
     estimatedArrival: '',
     checklist: [],
     status: resp.status as DispatchStatus,
+    cumplimiento: resp.cumplimiento || null,
     observations: resp.notes || '',
     createdBy: resp.dispatchUserName || '',
   };

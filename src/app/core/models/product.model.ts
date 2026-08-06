@@ -15,6 +15,7 @@ export interface ProductResponse {
   pesoUnidad: number | null;
   dimension: number | null;
   pesoTotalCargue: number | null;
+  stock: number | null;
   createdAt: string;
 }
 
@@ -54,6 +55,7 @@ export interface Product {
   pesoUnidad: number | null;
   dimension: number | null;
   pesoTotalCargue: number | null;
+  stock: number | null;
 }
 
 export interface CategoryDTO {
@@ -79,5 +81,6 @@ export function toProductDisplay(resp: ProductResponse): Product {
     pesoUnidad: resp.pesoUnidad,
     dimension: resp.dimension,
     pesoTotalCargue: resp.pesoTotalCargue,
+    stock: resp.stock ?? null,
   };
 }

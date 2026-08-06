@@ -49,6 +49,10 @@ export class OrderService {
     return this.http.get<OrderResponse>(`${this.apiUrl}/${id}`);
   }
 
+  getNextOrderNumber(): Observable<string> {
+    return this.http.get<string>(`${this.apiUrl}/next-number`, { responseType: 'text' as 'json' });
+  }
+
   create(data: CreateOrderRequest): Observable<OrderResponse> {
     return this.http.post<OrderResponse>(this.apiUrl, data);
   }
@@ -59,5 +63,9 @@ export class OrderService {
 
   delete(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+  updateStatus(id: number, status: string): Observable<OrderResponse> {
+    return this.http.patch<OrderResponse>(`${this.apiUrl}/${id}/status`, null, { params: { status } });
   }
 }

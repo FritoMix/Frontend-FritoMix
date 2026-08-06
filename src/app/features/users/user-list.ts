@@ -188,7 +188,7 @@ export class UserListComponent {
   roleLabel(role: UserRole): string {
     const labels: Record<UserRole, string> = {
       admin: 'Administrador',
-      contador: 'Contador',
+      cartera: 'Cartera',
       coordinador: 'Coordinador',
       despachador: 'Despachador',
     };
@@ -198,7 +198,7 @@ export class UserListComponent {
   getRoleBadgeClass(role: UserRole): string {
     const classes: Record<UserRole, string> = {
       admin: 'bg-red-50 text-red-700 border-red-200',
-      contador: 'bg-purple-50 text-purple-700 border-purple-200',
+      cartera: 'bg-purple-50 text-purple-700 border-purple-200',
       coordinador: 'bg-amber-50 text-amber-700 border-amber-200',
       despachador: 'bg-rose-50 text-rose-700 border-rose-200',
     };
