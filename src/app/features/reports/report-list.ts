@@ -101,18 +101,18 @@ const TABS: ReportTab[] = [
           <span class="text-xs text-gray-500">{{ activeTab().logistica ? 'despachos' : 'pedidos' }}: {{ tabData(activeTab().key)()?.length ?? 0 }}</span>
         </div>
 
-        <div class="overflow-x-auto">
+        <div class="fm-table-wrapper">
           @if (activeTab().logistica) {
             <table class="fm-table">
               <thead>
-                <tr class="bg-gray-50/60">
+                <tr>
                   <th>Despacho</th>
                   <th>Pedidos</th>
                   <th>Cliente</th>
                   <th>Conductor</th>
                   <th>Vehículo</th>
                   <th>Fecha</th>
-                  <th class="!text-right">Peso (kg)</th>
+                  <th class="text-right">Peso (kg)</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -131,19 +131,19 @@ const TABS: ReportTab[] = [
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="8" class="text-center text-gray-400 text-sm py-8">Sin despachos realizados</td></tr>
+                  <tr><td colspan="8" class="!text-center"><div class="fm-empty"><p class="fm-empty__title">Sin despachos realizados</p></div></td></tr>
                 }
               </tbody>
             </table>
           } @else {
             <table class="fm-table">
               <thead>
-                <tr class="bg-gray-50/60">
+                <tr>
                   <th>Pedido</th>
                   <th>Cliente</th>
                   <th>Ciudad</th>
                   <th>Fecha</th>
-                  <th class="!text-right">Peso (kg)</th>
+                  <th class="text-right">Peso (kg)</th>
                   <th>Estado</th>
                 </tr>
               </thead>
@@ -160,7 +160,7 @@ const TABS: ReportTab[] = [
                     </td>
                   </tr>
                 } @empty {
-                  <tr><td colspan="6" class="text-center text-gray-400 text-sm py-8">Sin pedidos en esta sección</td></tr>
+                  <tr><td colspan="6" class="!text-center"><div class="fm-empty"><p class="fm-empty__title">Sin pedidos en esta sección</p></div></td></tr>
                 }
               </tbody>
             </table>
