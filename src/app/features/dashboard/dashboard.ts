@@ -135,56 +135,60 @@ interface DashboardData {
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-[#071938]">Productos más vendidos</h3>
           </div>
-          <table class="fm-table">
-            <thead>
-              <tr class="bg-gray-50/60">
-                <th>Producto</th>
-                <th>Código</th>
-                <th class="text-right">Unidades</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of data()?.topProducts ?? []; track p.code) {
+          <div class="fm-table-wrapper -mx-2">
+            <table class="fm-table">
+              <thead>
                 <tr>
-                  <td class="font-semibold text-[#071938] text-xs">{{ p.name }}</td>
-                  <td><span class="font-mono text-sm font-semibold text-[#071938]">{{ p.code }}</span></td>
-                  <td class="text-right font-bold text-[#071938]">{{ p.units }}</td>
+                  <th>Producto</th>
+                  <th>Código</th>
+                  <th class="text-right">Unidades</th>
                 </tr>
-              } @empty {
-                <tr><td colspan="3" class="text-center text-gray-400 text-sm py-8">Sin datos</td></tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (p of data()?.topProducts ?? []; track p.code) {
+                  <tr>
+                    <td class="font-semibold text-[#071938] text-xs">{{ p.name }}</td>
+                    <td><span class="font-mono text-sm font-semibold text-[#071938]">{{ p.code }}</span></td>
+                    <td class="text-right font-bold text-[#071938]">{{ p.units }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="3" class="!text-center"><div class="fm-empty"><p class="fm-empty__title">Sin datos</p></div></td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div class="fm-card p-5">
           <div class="flex items-center justify-between mb-4">
             <h3 class="font-bold text-[#071938]">Últimos pedidos</h3>
           </div>
-          <table class="fm-table">
-            <thead>
-              <tr class="bg-gray-50/60">
-                <th>Pedido</th>
-                <th>Cliente</th>
-                <th>Estado</th>
-                <th class="text-right">Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (o of data()?.recentOrders ?? []; track o.id) {
+          <div class="fm-table-wrapper -mx-2">
+            <table class="fm-table">
+              <thead>
                 <tr>
-                  <td class="font-mono text-xs font-bold text-[#071938]">{{ o.id }}</td>
-                  <td class="text-gray-600 text-xs font-medium">{{ o.client }}</td>
-                  <td>
-                    <span class="status-badge" [class]="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
-                  </td>
-                  <td class="text-right text-gray-500 text-xs">{{ o.date }}</td>
+                  <th>Pedido</th>
+                  <th>Cliente</th>
+                  <th>Estado</th>
+                  <th class="text-right">Fecha</th>
                 </tr>
-              } @empty {
-                <tr><td colspan="4" class="text-center text-gray-400 text-sm py-8">Sin pedidos</td></tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                @for (o of data()?.recentOrders ?? []; track o.id) {
+                  <tr>
+                    <td class="font-mono text-xs font-bold text-[#071938]">{{ o.id }}</td>
+                    <td class="text-gray-600 text-xs font-medium">{{ o.client }}</td>
+                    <td>
+                      <span class="status-badge" [class]="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
+                    </td>
+                    <td class="text-right text-gray-500 text-xs">{{ o.date }}</td>
+                  </tr>
+                } @empty {
+                  <tr><td colspan="4" class="!text-center"><div class="fm-empty"><p class="fm-empty__title">Sin pedidos</p></div></td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     }

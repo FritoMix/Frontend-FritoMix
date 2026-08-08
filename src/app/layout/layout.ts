@@ -77,7 +77,7 @@ import { UserRole } from '../core/models/user.model';
           </button>
           <!-- Company info -->
           <div class="flex items-center gap-1.5">
-            <img src="logo-fritomix.png" alt="FritoMix" class="w-30 h-20 object-contain" />
+            <img src="logo-fritomix.png" alt="FritoMix" class="w-[80px] h-[52px] object-contain" />
             
           </div>
         </div>
@@ -91,7 +91,7 @@ import { UserRole } from '../core/models/user.model';
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
               @if (notificationUnread() > 0) {
-                <span class="absolute -top-0.5 -right-0.5 w-4.5 h-4.5 bg-blue-500 border-radius-5px rounded-full text-[10px] text-white flex items-center justify-center font-bold ring-2 ring-white">{{ notificationUnread() > 99 ? '99+' : notificationUnread() }}</span>
+                <span class="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] bg-blue-500 rounded-full text-[10px] text-white flex items-center justify-center font-bold ring-2 ring-white min-w-[18px]">{{ notificationUnread() > 99 ? '99+' : notificationUnread() }}</span>
               }
             </button>
 
