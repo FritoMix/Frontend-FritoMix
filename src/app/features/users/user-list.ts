@@ -14,16 +14,16 @@ import { UserRole } from '../../core/models/user.model';
   template: `
 <app-page-header badge="12." color="purple" title="Usuarios"></app-page-header>
 
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+    <div class="fm-search-row">
       <app-search-input
         (valueChange)="userService.setSearchTerm($event)"
         placeholder="Buscar por nombre, email..."
       ></app-search-input>
       <button
         routerLink="/usuarios/nuevo"
-        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap justify-center sm:justify-center"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
         Nuevo usuario
       </button>
     </div>
@@ -34,14 +34,14 @@ import { UserRole } from '../../core/models/user.model';
           <svg class="animate-spin h-8 w-8 text-[#0055FF]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
         </div>
       } @else {
-        <div class="overflow-x-auto">
+        <div class="fm-table-wrapper">
           <table class="fm-table">
             <thead>
-              <tr class="bg-gray-50/60">
+              <tr>
                 <th>Nombre</th>
                 <th>Rol</th>
                 <th>Estado</th>
-                <th class="text-right !pr-6">Acciones</th>
+                <th class="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -68,7 +68,7 @@ import { UserRole } from '../../core/models/user.model';
                       <span class="status-badge bg-red-50 text-red-600 border-red-200">Inactivo</span>
                     }
                   </td>
-                  <td class="text-right !pr-6">
+                  <td>
                     <div class="relative inline-block">
                       <button
                         (click)="toggleMenu(user.id)"
@@ -105,11 +105,11 @@ import { UserRole } from '../../core/models/user.model';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="py-16 text-center">
-                    <div class="flex flex-col items-center gap-2">
-                      <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                      <p class="text-sm font-semibold text-[#071938]">No se encontraron usuarios</p>
-                      <p class="text-xs text-gray-500">Intenta con otro término de búsqueda</p>
+                  <td colspan="4" class="!text-center">
+                    <div class="fm-empty">
+                      <svg class="fm-empty__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                      <p class="fm-empty__title">No se encontraron usuarios</p>
+                      <p class="fm-empty__subtitle">Intenta con otro término de búsqueda</p>
                     </div>
                   </td>
                 </tr>

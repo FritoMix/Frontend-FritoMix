@@ -13,16 +13,16 @@ import { PaginationComponent } from '../../shared/components/pagination';
   template: `
 <app-page-header badge="13." color="purple" title="Roles"></app-page-header>
 
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+    <div class="fm-search-row">
       <app-search-input
         (valueChange)="roleService.setSearchTerm($event)"
         placeholder="Buscar por nombre..."
       ></app-search-input>
       <button
         routerLink="/roles/nuevo"
-        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap justify-center sm:justify-center"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
         Nuevo rol
       </button>
     </div>
@@ -33,14 +33,14 @@ import { PaginationComponent } from '../../shared/components/pagination';
           <svg class="animate-spin h-8 w-8 text-[#0055FF]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
         </div>
       } @else {
-        <div class="overflow-x-auto">
+        <div class="fm-table-wrapper">
           <table class="fm-table">
             <thead>
-              <tr class="bg-gray-50/60">
+              <tr>
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Permisos</th>
-                <th class="text-right !pr-6">Acciones</th>
+                <th class="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -63,7 +63,7 @@ import { PaginationComponent } from '../../shared/components/pagination';
                       {{ role.permissionCount }} permisos
                     </span>
                   </td>
-                  <td class="text-right !pr-6">
+                  <td>
                     <div class="relative inline-block">
                       <button
                         (click)="toggleMenu(role.id)"
@@ -93,11 +93,13 @@ import { PaginationComponent } from '../../shared/components/pagination';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="py-16 text-center">
-                    <div class="flex flex-col items-center gap-2">
-                      <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                      <p class="text-sm font-semibold text-[#071938]">No se encontraron roles</p>
-                      <p class="text-xs text-gray-500">Intenta con otro término de búsqueda</p>
+                  <td colspan="4" class="!text-center">
+                    <div class="fm-empty">
+                      <div class="fm-empty__icon">
+                        <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                      </div>
+                      <div class="fm-empty__title">No se encontraron roles</div>
+                      <div class="fm-empty__subtitle">Intenta con otro término de búsqueda</div>
                     </div>
                   </td>
                 </tr>
