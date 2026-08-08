@@ -13,16 +13,16 @@ import { PaginationComponent } from '../../shared/components/pagination';
   template: `
 <app-page-header badge="14." color="green" title="Conductores"></app-page-header>
 
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+    <div class="fm-search-row">
       <app-search-input
         (valueChange)="driverService.setSearchTerm($event)"
         placeholder="Buscar conductor por nombre o documento..."
       ></app-search-input>
       <button
         routerLink="/conductores/nuevo"
-        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center justify-center sm:justify-center gap-2 transition-colors shadow-sm whitespace-nowrap"
       >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
         Nuevo Conductor
       </button>
     </div>
@@ -33,22 +33,22 @@ import { PaginationComponent } from '../../shared/components/pagination';
           <span class="text-gray-500 text-sm">Cargando conductores...</span>
         </div>
       } @else {
-        <div class="overflow-x-auto">
+        <div class="fm-table-wrapper">
           <table class="fm-table">
             <thead>
-              <tr class="bg-gray-50/60">
-                <th class="!pl-6">Nombre</th>
+              <tr>
+                <th>Nombre</th>
                 <th>Documento</th>
                 <th>Teléfono</th>
                 <th>Licencia</th>
                 <th>Estado</th>
-                <th class="text-right !pr-6">Acciones</th>
+                <th class="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (driver of paginatedDrivers(); track driver.id) {
                 <tr>
-                  <td class="!pl-6">
+                  <td>
                     <div class="flex items-center gap-3">
                       <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm bg-blue-100 text-blue-700 ring-2 ring-white shadow-sm">
                         {{ driver.avatarInitials }}
@@ -72,8 +72,8 @@ import { PaginationComponent } from '../../shared/components/pagination';
                       <span class="status-badge bg-red-50 text-red-600 border-red-200">Inactivo</span>
                     }
                   </td>
-                  <td class="text-right !pr-6">
-                    <div class="flex items-center justify-end gap-2">
+                  <td>
+                    <div class="fm-actions-cell">
                       <button
                         (click)="editDriver(driver.id)"
                         class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
@@ -93,11 +93,11 @@ import { PaginationComponent } from '../../shared/components/pagination';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="6" class="py-16 text-center">
-                    <div class="flex flex-col items-center gap-2">
-                      <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                      <p class="text-sm font-semibold text-[#071938]">No se encontraron conductores</p>
-                      <p class="text-xs text-gray-500">Intenta con otro término de búsqueda</p>
+                  <td colspan="6" class="!text-center">
+                    <div class="fm-empty">
+                      <svg class="fm-empty__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+                      <p class="fm-empty__title">No se encontraron conductores</p>
+                      <p class="fm-empty__subtitle">Intenta con otro término de búsqueda</p>
                     </div>
                   </td>
                 </tr>
