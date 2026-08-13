@@ -323,6 +323,7 @@ export class OrderDetailComponent implements OnInit {
 
     try {
       const { default: jsPDF } = await import('jspdf');
+      type TextOptionsLight = import('jspdf').TextOptionsLight;
       const logoDataUrl = await this.clipToCircle(await this.loadImageAsBase64('logo-fritomix.png'));
 
       const doc   = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
@@ -337,7 +338,6 @@ export class OrderDetailComponent implements OnInit {
       // ── Colour aliases ───────────────────────────────────────────
       type RGB = [number, number, number];
       const NAVY:  RGB = [7,   25,  56];
-      const BLUE:  RGB = [30,  58, 138];
       const RED:   RGB = [196, 30,  30];
       const WHITE: RGB = [255, 255, 255];
       const LGRAY: RGB = [240, 242, 246];
@@ -364,8 +364,8 @@ export class OrderDetailComponent implements OnInit {
       const N  = (s: number) => { doc.setFont('helvetica', 'normal'); doc.setFontSize(s); };
       const FR = (x: number, y: number, w: number, h: number) => doc.rect(x, y, w, h, 'F');
       const SR = (x: number, y: number, w: number, h: number) => doc.rect(x, y, w, h, 'S');
-      const TX = (t: string, x: number, y: number, o?: { align?: 'center' | 'right' | 'left' }) =>
-        doc.text(t, x, y, o as any);
+      const TX = (t: string, x: number, y: number, o?: TextOptionsLight) =>
+        doc.text(t, x, y, o);
       const LN = (x1: number, y1: number, x2: number, y2: number) => doc.line(x1, y1, x2, y2);
 
       const fmtDate = (iso: string) => {
@@ -613,8 +613,6 @@ export class OrderDetailComponent implements OnInit {
         y += SHDR;
       };
 
-      const dateRaw = order.orderDate ? order.orderDate.split('T')[0].replace(/-/g, '') : '';
-
       items.forEach((item: OrderDetailResponse, idx: number) => {
         // Page break check
         if (y + ROW_H > PH - MR - FOOT_NEEDED) {
@@ -623,8 +621,6 @@ export class OrderDetailComponent implements OnInit {
 
         const gIdx   = Math.floor(idx / GS);
         const gColor = GCLR[gIdx % GCLR.length];
-        const isFirst = idx % GS === 0;
-        const gNo    = gIdx + 1;
         const ty     = y + ROW_H - 1.1;  // text baseline within row
         const numQty = Number(item.quantity);
 
@@ -660,7 +656,7 @@ export class OrderDetailComponent implements OnInit {
 
         // RIGHT: detalle de producto (cómo se arruma el pedido)
         TC(BLK); N(6);
-        const detalleArrume = (item as any).detalleProducto;
+        const detalleArrume = item.detalleProducto;
         if (detalleArrume) {
           const arrumeLines = doc.splitTextToSize(detalleArrume, RC_DESC - 2);
           const maxLines = Math.max(1, Math.floor(ROW_H / 3.4));
@@ -670,21 +666,21 @@ export class OrderDetailComponent implements OnInit {
         }
 
         // RIGHT: cantidad despachada (columna CANT.)
-        const despachado = (item as any).delivered;
+        const despachado = item.delivered;
         if (despachado != null && despachado !== 0) {
           TC(BLK); B(6.5);
           TX(String(despachado), RX + RC_GRP + RC_DESC + RC_CNT / 2, ty, { align: 'center' });
         }
 
         // RIGHT: lote del producto (columna LOTE)
-        const loteProducto = (item as any).lote;
+        const loteProducto = item.lote;
         if (loteProducto) {
           TC(BLK); N(6);
           TX(clip(loteProducto, RC_LOT - 2), RX + RC_GRP + RC_DESC + RC_CNT + 1.5, ty);
         }
 
         // RIGHT: observaciones del despacho (columna OBSERVACIÓN)
-        const obsDespacho = (item as any).observations;
+        const obsDespacho = item.observations;
         if (obsDespacho) {
           TC(BLK); N(5.5);
           const obsLines = doc.splitTextToSize(obsDespacho, RC_OBS - 2);

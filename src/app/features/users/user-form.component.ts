@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UserService } from '../../core/services/user.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { UserRole } from '../../core/models/user.model';
 
 @Component({
@@ -161,9 +162,15 @@ import { UserRole } from '../../core/models/user.model';
                   <input
                     type="password"
                     [(ngModel)]="password"
-                    placeholder="{{ isEdit ? 'Nueva contraseña (opcional)' : 'Mínimo 6 caracteres' }}"
+                    placeholder="{{ isEdit ? 'Nueva contraseña (opcional)' : 'Crea una contraseña segura' }}"
                     class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm focus:outline-none transition-all"
                   />
+                  @if (passwordPolicyMessage()) {
+                    <p class="mt-2 text-xs flex items-start gap-1.5 text-blue-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 mt-0.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                      <span>{{ passwordPolicyMessage() }}</span>
+                    </p>
+                  }
                 </div>
               </div>
             </div>
@@ -196,6 +203,7 @@ import { UserRole } from '../../core/models/user.model';
 })
 export class UserFormComponent implements OnInit {
   userService = inject(UserService);
+  settingsService = inject(SettingsService);
   router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -211,6 +219,19 @@ export class UserFormComponent implements OnInit {
   role: UserRole | '' = '';
   enabled = true;
 
+  passwordMinLength = 8;
+  passwordRequireSpecial = true;
+
+  passwordPolicyMessage = computed(() => {
+    const parts: string[] = [
+      `Mínimo ${this.passwordMinLength} caracteres`,
+    ];
+    if (this.passwordRequireSpecial) {
+      parts.push('debe incluir al menos un carácter especial (ej: @, #, !, $)');
+    }
+    return `La contraseña debe tener: ${parts.join(' y ')}.`;
+  });
+
   avatarInitials = computed(() => {
     const f = this.firstName.trim().charAt(0) || '';
     const l = this.lastName.trim().charAt(0) || '';
@@ -223,6 +244,17 @@ export class UserFormComponent implements OnInit {
   });
 
   ngOnInit() {
+    this.settingsService.get().subscribe({
+      next: (settings) => {
+        this.passwordMinLength = settings.passwordMinLength;
+        this.passwordRequireSpecial = settings.passwordRequireSpecial;
+      },
+      error: () => {
+        this.passwordMinLength = 8;
+        this.passwordRequireSpecial = true;
+      },
+    });
+
     this.route.params.subscribe(params => {
       if (params['id']) {
         this.isEdit = true;
@@ -274,7 +306,8 @@ export class UserFormComponent implements OnInit {
   isFormValid(): boolean {
     if (!this.firstName.trim() || !this.lastName.trim() || !this.email.trim() || !this.role) return false;
     if (!this.isEdit && !this.password) return false;
-    if (this.password && this.password.length < 6) return false;
+    if (this.password && this.password.length < this.passwordMinLength) return false;
+    if (this.password && this.passwordRequireSpecial && !/[^A-Za-z0-9]/.test(this.password)) return false;
     return true;
   }
 

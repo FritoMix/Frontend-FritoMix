@@ -2,9 +2,9 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { RoleService } from '../../core/services/role.service';
-import { PageHeaderComponent } from '../../shared/components/page-header';
-import { SearchInputComponent } from '../../shared/components/search-input';
-import { PaginationComponent } from '../../shared/components/pagination';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SearchInputComponent } from '../../shared/components/search-input.component';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 
 @Component({
   selector: 'app-role-list',
