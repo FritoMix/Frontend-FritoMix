@@ -1,0 +1,151 @@
+
+<div class="mb-6">
+  <div class="flex items-center justify-between mb-2">
+    <div>
+      <nav class="flex items-center gap-2 text-xs text-gray-500 mb-2">
+        <a routerLink="/dashboard" class="hover:text-[#0055FF] transition-colors">Dashboard</a>
+        <span>/</span>
+        <a routerLink="/conductores" class="hover:text-[#0055FF] transition-colors">Conductores</a>
+        <span>/</span>
+        <span class="text-[#071938] font-semibold">{{ isEdit ? 'Editar conductor' : 'Nuevo conductor' }}</span>
+      </nav>
+      <h1 class="text-2xl font-extrabold text-[#071938]">{{ isEdit ? 'Editar conductor' : 'Nuevo conductor' }}</h1>
+      <p class="text-sm text-gray-500 mt-0.5">{{ isEdit ? 'Actualiza los datos del conductor' : 'Registra la información de un nuevo conductor' }}</p>
+    </div>
+    <button
+      (click)="router.navigate(['/conductores'])"
+      class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors"
+    >
+      <span>←</span>
+      Volver
+    </button>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+  <form (ngSubmit)="onSave()" #driverForm="ngForm" class="space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div>
+        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+          Documento <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="document"
+          [(ngModel)]="form.document"
+          required
+          #documentField="ngModel"
+          placeholder="Ej: 7547283"
+          class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          [class.border-red-400]="documentField.invalid && documentField.touched"
+        />
+        @if (documentField.invalid && documentField.touched) {
+          <p class="mt-1 text-xs text-red-500">El documento es requerido</p>
+        }
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+          Número de licencia <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="licenseNumber"
+          [(ngModel)]="form.licenseNumber"
+          required
+          #licenseField="ngModel"
+          placeholder="Ej: LIC-7547283"
+          class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          [class.border-red-400]="licenseField.invalid && licenseField.touched"
+        />
+        @if (licenseField.invalid && licenseField.touched) {
+          <p class="mt-1 text-xs text-red-500">La licencia es requerida</p>
+        }
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+          Nombre completo <span class="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          name="name"
+          [(ngModel)]="form.name"
+          required
+          #nameField="ngModel"
+          placeholder="Ej: EDUARDO AGUIRRE RAMIREZ"
+          class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+          [class.border-red-400]="nameField.invalid && nameField.touched"
+        />
+        @if (nameField.invalid && nameField.touched) {
+          <p class="mt-1 text-xs text-red-500">El nombre es requerido</p>
+        }
+      </div>
+
+      <div>
+        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+          Teléfono
+        </label>
+        <input
+          type="text"
+          name="phone"
+          [(ngModel)]="form.phone"
+          placeholder="Ej: 310 464 4665"
+          class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+        />
+      </div>
+
+      <div class="flex items-end">
+        <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50 w-full">
+          <input
+            type="checkbox"
+            id="active"
+            name="active"
+            [(ngModel)]="form.active"
+            class="w-5 h-5 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF] cursor-pointer"
+          />
+          <label for="active" class="text-sm font-medium text-[#071938] cursor-pointer select-none">
+            Conductor activo
+          </label>
+          @if (form.active) {
+            <span class="ml-auto inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+              <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+              Activo
+            </span>
+          } @else {
+            <span class="ml-auto inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full bg-gray-100 text-gray-600">
+              <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+              Inactivo
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-gray-100 pt-5"></div>
+
+    <div class="flex items-center justify-end gap-3">
+      <button
+        type="button"
+        (click)="router.navigate(['/conductores'])"
+        class="border border-gray-300 text-gray-700 hover:bg-gray-50 font-bold py-2.5 px-5 rounded-lg text-sm transition-colors"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        [disabled]="driverForm.invalid || isSubmitting"
+        class="bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded-lg text-sm flex items-center gap-2 transition-colors"
+      >
+        @if (isSubmitting) {
+          <span class="animate-spin">⏳</span>
+          Guardando...
+        } @else {
+          <span>💾</span>
+          {{ isEdit ? 'Actualizar conductor' : 'Guardar conductor' }}
+        }
+      </button>
+    </div>
+  </form>
+</div>
+

@@ -7,407 +7,19 @@ import { OrderService } from '../../core/services/order.service';
 import { DriverService } from '../../core/services/driver.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ProductService } from '../../core/services/product.service';
-import { ChecklistItem, DispatchStatus, DispatchResponse, CreateArrumeRequest } from '../../core/models/dispatch.model';
+import { ChecklistItem, DispatchStatus, DispatchResponse, DispatchPreviewItem, CreateArrumeRequest } from '../../core/models/dispatch.model';
 import { Order } from '../../core/models/order.model';
 import { AuthService } from '../../core/services/auth.service';
+import { DispatchArrumesFormComponent } from './dispatch-arrumes-form.component';
+import { DispatchProductsDetailComponent } from './dispatch-products-detail.component';
 
 type TipoPedido = 'pedido_unico' | 'pedido_multipedido';
-
-interface PreviewItem {
-  productId: number;
-  description: string;
-  lot?: string;
-  qty: number;
-}
 
 @Component({
   selector: 'app-dispatch-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
-  template: `
-    <div class="mb-6">
-      <div class="flex items-center gap-3 mb-1">
-        <span class="module-badge module-badge--green">11.</span>
-        <div>
-          <h1 class="text-2xl font-extrabold text-[#071938]">{{ editId ? 'Editar Despacho' : 'Confirmación de Despacho' }}</h1>
-          <nav class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
-            <a routerLink="/despachos" class="text-[#0055FF] hover:underline">{{ editId ? 'Editar Despacho' : 'Confirmar Despacho' }}</a>
-            <span>/</span>
-            <span class="text-gray-700 font-semibold">{{ form.dispatchNumber || 'DES-XXXXX' }}</span>
-          </nav>
-        </div>
-      </div>
-    </div>
-
-    <div class="fm-card p-6 mb-5">
-      <h3 class="font-bold text-[#071938] text-base mb-4">Tipo de Pedido</h3>
-      <div class="flex flex-col sm:flex-row gap-3">
-        <label [class]="radioClass('pedido_unico')">
-          <input type="radio" name="tipoPedido" value="pedido_unico" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_unico')" class="accent-[#0055FF]" />
-          <div class="ml-2">
-            <span class="block font-bold text-sm text-[#071938]">Pedido Único</span>
-            <span class="block text-xs text-gray-500">Despacho para un solo cliente</span>
-          </div>
-        </label>
-        <label [class]="radioClass('pedido_multipedido')">
-          <input type="radio" name="tipoPedido" value="pedido_multipedido" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_multipedido')" class="accent-[#0055FF]" />
-          <div class="ml-2">
-            <span class="block font-bold text-sm text-[#071938]">Pedido Multipedido</span>
-            <span class="block text-xs text-gray-500">Despacho consolidado para varios clientes</span>
-          </div>
-        </label>
-      </div>
-      @if (!tipoPedido) {
-        <p class="text-xs text-red-600 mt-2">Debes seleccionar un tipo de pedido para continuar.</p>
-      }
-    </div>
-
-    <div class="fm-card p-6 mb-5">
-      <h3 class="font-bold text-[#071938] text-base mb-5">Información del Despacho</h3>
-
-      @if (isUnico()) {
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <div>
-            <label for="select-pedido" class="block text-xs font-semibold text-gray-500 mb-1.5">Pedido (Cliente)</label>
-            <select id="select-pedido"
-              [(ngModel)]="selectedOrderId"
-              (ngModelChange)="onOrderChange()"
-              class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
-            >
-              <option value="">Seleccionar pedido</option>
-              @for (o of availableOrders(); track o.id) {
-                <option [value]="o.id">{{ o.orderNumber }} - {{ o.clientName }}</option>
-              }
-            </select>
-            @if (form.orderNumber) {
-              <span class="code-badge bg-blue-50 text-blue-700 border-blue-200 mt-2 inline-block">{{ form.orderNumber }}</span>
-            }
-          </div>
-          <div>
-            <label for="fecha-despacho" class="block text-xs font-semibold text-gray-500 mb-1.5">Fecha de Despacho</label>
-            <input id="fecha-despacho"
-              type="date"
-              [(ngModel)]="form.dispatchDate"
-              class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-gray-500 mb-1.5">Estado</label>
-            <span class="status-badge bg-teal-50 text-teal-700 border-teal-200 text-xs font-bold">LISTO PARA DESPACHO</span>
-          </div>
-        </div>
-      } @else if (isMulti()) {
-        <p class="text-sm text-gray-500 mb-4">Selecciona uno o varios pedidos (un cliente por pedido) para consolidar el despacho.</p>
-        <div class="border border-gray-200 rounded-lg p-3 mb-4 max-h-64 overflow-y-auto">
-          @for (o of availableOrders(); track o.id) {
-            <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
-              <input
-                type="checkbox"
-                [checked]="selectedOrderIds.includes(o.id)"
-                (change)="toggleOrder(o.id)"
-                class="w-4 h-4 accent-[#0055FF]"
-              />
-              <span class="text-sm font-semibold text-[#071938]">{{ o.orderNumber }}</span>
-              <span class="text-xs text-gray-500">{{ o.clientName }} — {{ o.city || '—' }}</span>
-            </label>
-          } @empty {
-            <p class="text-sm text-gray-400 py-4 text-center">No hay pedidos disponibles para despachar.</p>
-          }
-        </div>
-      }
-    </div>
-
-    @if (isMulti()) {
-      <div class="fm-card p-6 mb-5 border-l-4 border-l-[#0055FF]">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="font-bold text-[#071938] text-base">Vista Previa — Clientes Seleccionados</h3>
-          <span class="text-xs text-gray-500">{{ selectedOrderIds.length }} cliente(s) agregado(s)</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="fm-table">
-            <thead>
-              <tr class="bg-gray-50/60">
-                <th>Pedido</th>
-                <th>Cliente</th>
-                <th>Ciudad / Dirección</th>
-                <th class="text-right">Productos</th>
-                <th class="text-right">Peso Total (kg)</th>
-                <th class="text-right">Dimensión (m³)</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (row of previewRows(); track row.id) {
-                <tr>
-                  <td class="font-bold text-xs text-[#071938]">{{ row.orderNumber }}</td>
-                  <td class="font-semibold text-xs text-gray-800">{{ row.clientName }}</td>
-                  <td class="text-xs text-gray-500">{{ row.city }} — {{ row.address }}</td>
-                  <td class="text-right text-xs text-gray-600">{{ row.items?.length ?? 0 }}</td>
-                  <td class="text-right font-bold text-xs text-gray-700">{{ orderWeight(row) }}</td>
-                  <td class="text-right font-semibold text-xs text-gray-700">{{ orderDimension(row) }}</td>
-                  <td class="text-right">
-                    <button type="button" (click)="removeOrder(row.id)"
-                      class="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700">
-                      Quitar
-                    </button>
-                  </td>
-                </tr>
-              } @empty {
-                <tr><td colspan="7" class="text-center text-gray-400 text-sm py-6">No hay clientes agregados. Marca al menos un pedido arriba.</td></tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-    }
-
-    <div class="fm-card p-6 mb-5">
-      <h3 class="font-bold text-[#071938] text-base mb-1">Productos del Pedido {{ isMulti() ? '(Consolidado)' : '' }}</h3>
-      <p class="text-xs text-gray-500 mb-5">Cantidades solicitadas en el pedido. Esta vista es informativa.</p>
-      <div class="overflow-x-auto">
-        <table class="fm-table">
-          <thead>
-            <tr class="bg-gray-50/60">
-              <th>Producto</th>
-              <th class="!text-right">Cant. Pedido</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (aggregatedItems().length > 0) {
-              @for (item of aggregatedItems(); track item.productId) {
-                <tr>
-                  <td>
-                    <div class="flex flex-col gap-0.5">
-                      <span class="font-semibold text-[#071938] text-sm">{{ item.description }}</span>
-                    </div>
-                  </td>
-                  <td class="text-right"><span class="font-semibold text-[#071938]">{{ item.qty }}</span></td>
-                </tr>
-              }
-            } @else {
-              <tr>
-                <td colspan="2" class="py-10 text-center">
-                  <p class="text-sm text-gray-400">{{ isUnico() ? 'Selecciona un pedido para ver los productos' : 'Selecciona al menos un pedido para ver los productos' }}</p>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="fm-card p-6 mb-5 border-t-4 border-t-[#0055FF]">
-      <h3 class="font-bold text-[#071938] text-base mb-1">Detalle del Despacho</h3>
-      <p class="text-xs text-gray-500 mb-5">Registra la cantidad total despachada y la observación por producto.</p>
-      <div class="overflow-x-auto">
-        <table class="fm-table">
-          <thead>
-            <tr class="bg-gray-50/60">
-              <th>Producto</th>
-              <th>Despachar</th>
-              <th>Observación</th>
-            </tr>
-          </thead>
-          <tbody>
-            @if (aggregatedItems().length > 0) {
-              @for (item of aggregatedItems(); track item.productId) {
-                <tr>
-                  <td>
-                    <div class="flex flex-col gap-0.5">
-                      <span class="font-semibold text-[#071938] text-sm">{{ item.description }}</span>
-                      <span class="text-xs text-gray-400">Cant. pedido: {{ item.qty }}</span>
-                    </div>
-                  </td>
-                  <td>
-                    <input
-                      type="number"
-                      [ngModel]="itemDelivered[item.productId] ?? item.qty"
-                      (ngModelChange)="itemDelivered[item.productId] = $event"
-                      min="0"
-                      max="99999"
-                      class="w-28 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
-                    />
-                  </td>
-                  <td class="w-[20rem]">
-                    <input
-                      type="text"
-                      [ngModel]="itemObservations[item.productId] || ''"
-                      (ngModelChange)="itemObservations[item.productId] = $event"
-                      placeholder="Obs..."
-                      class="w-[15rem] mr-auto px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                    />
-                  </td>
-                </tr>
-              }
-            } @else {
-              <tr>
-                <td colspan="3" class="py-10 text-center">
-                  <p class="text-sm text-gray-400">{{ isUnico() ? 'Selecciona un pedido para ver los productos' : 'Selecciona al menos un pedido para ver los productos' }}</p>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="fm-card p-6 mb-5 border-t-4 border-t-green-600">
-      <div class="flex items-center justify-between mb-1">
-        <h3 class="font-bold text-[#071938] text-base">Detalle de Arrumes</h3>
-        <button type="button" (click)="addArrume()"
-          class="text-sm font-semibold text-[#0055FF] hover:text-[#0044DD] inline-flex items-center gap-1">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Agregar arrume
-        </button>
-      </div>
-      <p class="text-xs text-gray-500 mb-5">Registra cada arrume del despacho con su número, producto, cantidad y lote.</p>
-      <div class="overflow-x-auto">
-        <table class="fm-table">
-          <thead>
-            <tr class="bg-gray-50/60">
-              <th>Nº Arrume</th>
-              <th>Arrume Producto</th>
-              <th>Cantidad</th>
-              <th>Lote</th>
-              <th class="text-right"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (a of arrumes(); track $index; let i = $index) {
-              <tr>
-                <td>
-                  <input
-                    type="number"
-                    [(ngModel)]="a.numArrume"
-                    min="1"
-                    placeholder="Nº"
-                    class="w-24 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
-                  />
-                </td>
-                <td class="w-[20rem]">
-                  <input
-                    type="text"
-                    [(ngModel)]="a.arrumeProducto"
-                    placeholder="Producto del arrume..."
-                    class="w-[16rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="number"
-                    [(ngModel)]="a.cantidad"
-                    min="0"
-                    placeholder="0"
-                    class="w-28 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
-                  />
-                </td>
-                <td class="w-[12rem]">
-                  <input
-                    type="text"
-                    [(ngModel)]="a.lote"
-                    placeholder="Lote..."
-                    class="w-[10rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
-                  />
-                </td>
-                <td class="text-right">
-                  <button type="button" (click)="removeArrume(i)"
-                    class="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
-                    title="Quitar arrume">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                  </button>
-                </td>
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="5" class="py-10 text-center">
-                  <p class="text-sm text-gray-400">No hay arrumes registrados. Haz clic en "Agregar arrume" para empezar.</p>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="fm-card p-6 mb-5">
-      <h3 class="font-bold text-[#071938] text-base mb-5">Observaciones del Despacho</h3>
-      <div>
-        <textarea
-          [(ngModel)]="form.observations"
-          rows="3"
-          placeholder="Escribe aquí cualquier observación sobre el despacho (productos faltantes, daños, novedades, etc.)..."
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm resize-y transition-all"
-        ></textarea>
-        <p class="text-xs text-gray-400 mt-1">Estas observaciones se guardarán junto con los detalles del despacho.</p>
-      </div>
-    </div>
-
-    <div class="fm-card p-6">
-      <div class="grid grid-cols-1 md:grid-cols-6 gap-5 items-end">
-        <div>
-          <label for="select-conductor" class="block text-xs font-semibold text-gray-500 mb-1.5">Conductor</label>
-          <select id="select-conductor"
-            [(ngModel)]="selectedDriverId"
-            (ngModelChange)="onDriverChange()"
-            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
-          >
-            <option value="">Seleccionar conductor</option>
-            @for (dr of driverService.drivers().filter(d => d.active); track dr.id) {
-              <option [value]="dr.id">{{ dr.name }} — {{ dr.document }}</option>
-            }
-          </select>
-        </div>
-        <div>
-          <label for="select-vehiculo" class="block text-xs font-semibold text-gray-500 mb-1.5">Vehículo</label>
-          <select id="select-vehiculo"
-            [(ngModel)]="selectedVehicleId"
-            (ngModelChange)="onVehicleChange()"
-            class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
-          >
-            <option value="">Seleccionar vehículo</option>
-            @for (v of vehicleService.vehicles().filter(veh => veh.active); track v.id) {
-              <option [value]="v.id">{{ v.type }} — {{ v.vehicleNumber }}</option>
-            }
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total</label>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              [ngModel]="pesoTotalCargue"
-              disabled
-              class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
-            />
-            <span class="text-sm text-gray-500 font-medium">Kg</span>
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-gray-500 mb-1.5">Total Dimensión</label>
-          <div class="flex items-center gap-2">
-            <input
-              type="number"
-              [ngModel]="totalDimension"
-              disabled
-              class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
-            />
-            <span class="text-sm text-gray-500 font-medium">m³</span>
-          </div>
-        </div>
-        <div class="flex justify-end">
-          <button
-            type="button"
-            (click)="guardar()"
-            [disabled]="!esValido()"
-            class="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-            {{ editId ? 'Actualizar Despacho' : 'Confirmar Despacho' }}
-          </button>
-        </div>
-      </div>
-    </div>
-  `
+  imports: [CommonModule, FormsModule, RouterLink, DispatchArrumesFormComponent, DispatchProductsDetailComponent],
+  templateUrl: 'dispatch-form.component.html'
 })
 export class DispatchFormComponent {
   dispatchService = inject(DispatchService);
@@ -431,14 +43,6 @@ export class DispatchFormComponent {
   itemObservations: Record<number, string> = {};
   itemDelivered: Record<number, number> = {};
   arrumes = signal<CreateArrumeRequest[]>([]);
-
-  addArrume() {
-    this.arrumes.update(list => [...list, { numArrume: null, arrumeProducto: '', cantidad: null, lote: '' }]);
-  }
-
-  removeArrume(i: number) {
-    this.arrumes.update(list => list.filter((_, idx) => idx !== i));
-  }
 
   form = {
     dispatchNumber: '',
@@ -542,7 +146,7 @@ export class DispatchFormComponent {
     this.selectedOrderIds = this.selectedOrderIds.filter(x => x !== id);
   }
 
-  aggregatedItems(): PreviewItem[] {
+  aggregatedItems(): DispatchPreviewItem[] {
     if (this.isUnico()) {
       const order = this.selectedOrder;
       return (order?.items ?? []).map((it) => ({
@@ -552,7 +156,7 @@ export class DispatchFormComponent {
         qty: it.bulto || 0
       }));
     }
-    const map = new Map<number, PreviewItem>();
+    const map = new Map<number, DispatchPreviewItem>();
     for (const order of this.previewRows()) {
       for (const it of order.items ?? []) {
         const pid = it.productId;
@@ -602,12 +206,14 @@ export class DispatchFormComponent {
     this.onVehicleChange();
 
     if (resp.details) {
-      this.itemDelivered = {};
-      this.itemObservations = {};
+      let delivered: Record<number, number> = {};
+      let observations: Record<number, string> = {};
       for (const d of resp.details) {
-        if (d.delivered != null) this.itemDelivered[d.productId] = d.delivered;
-        if (d.observations) this.itemObservations[d.productId] = d.observations;
+        if (d.delivered != null) delivered[d.productId] = d.delivered;
+        if (d.observations) observations[d.productId] = d.observations;
       }
+      this.itemDelivered = delivered;
+      this.itemObservations = observations;
     }
 
     this.arrumes.set((resp.arrumes ?? []).map(a => ({
