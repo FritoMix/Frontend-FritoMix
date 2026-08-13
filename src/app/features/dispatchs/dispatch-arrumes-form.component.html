@@ -1,0 +1,77 @@
+<div class="fm-card p-6 mb-5 border-t-4 border-t-green-600">
+  <div class="flex items-center justify-between mb-1">
+    <h3 class="font-bold text-[#071938] text-base">Detalle de Arrumes</h3>
+    <button type="button" (click)="addArrume()"
+      class="text-sm font-semibold text-[#0055FF] hover:text-[#0044DD] inline-flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Agregar arrume
+    </button>
+  </div>
+  <p class="text-xs text-gray-500 mb-5">Registra cada arrume del despacho con su número, producto, cantidad y lote.</p>
+  <div class="overflow-x-auto">
+    <table class="fm-table">
+      <thead>
+        <tr class="bg-gray-50/60">
+          <th>Nº Arrume</th>
+          <th>Arrume Producto</th>
+          <th>Cantidad</th>
+          <th>Lote</th>
+          <th class="text-right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (a of arrumes(); track $index; let i = $index) {
+          <tr>
+            <td>
+              <input
+                type="number"
+                [(ngModel)]="a.numArrume"
+                min="1"
+                placeholder="Nº"
+                class="w-24 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
+              />
+            </td>
+            <td class="w-[20rem]">
+              <input
+                type="text"
+                [(ngModel)]="a.arrumeProducto"
+                placeholder="Producto del arrume..."
+                class="w-[16rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              />
+            </td>
+            <td>
+              <input
+                type="number"
+                [(ngModel)]="a.cantidad"
+                min="0"
+                placeholder="0"
+                class="w-28 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm text-center"
+              />
+            </td>
+            <td class="w-[12rem]">
+              <input
+                type="text"
+                [(ngModel)]="a.lote"
+                placeholder="Lote..."
+                class="w-[10rem] px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+              />
+            </td>
+            <td class="text-right">
+              <button type="button" (click)="removeArrume(i)"
+                class="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                title="Quitar arrume">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="py-10 text-center">
+              <p class="text-sm text-gray-400">No hay arrumes registrados. Haz clic en "Agregar arrume" para empezar.</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
