@@ -94,7 +94,6 @@ export interface CreateOrderRequest {
   orderNumber: string;
   orderDate?: string;
   status?: string;
-  total: number;
   notes?: string;
   details: CreateOrderDetailRequest[];
 }
