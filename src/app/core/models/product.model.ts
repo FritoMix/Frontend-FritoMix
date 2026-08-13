@@ -5,8 +5,6 @@ export interface ProductResponse {
   description: string;
   unit: string;
   active: boolean;
-  price: number;
-  cost: number;
   presentation: number;
   weight: string;
   weightGrams: number;
@@ -15,7 +13,6 @@ export interface ProductResponse {
   pesoUnidad: number | null;
   dimension: number | null;
   pesoTotalCargue: number | null;
-  stock: number | null;
   createdAt: string;
 }
 
@@ -25,8 +22,6 @@ export interface CreateProductRequest {
   name: string;
   description?: string;
   unit: string;
-  price?: number;
-  cost?: number;
   presentation?: number;
   weight?: string;
   weightGrams?: number;
@@ -45,8 +40,6 @@ export interface Product {
   description: string;
   unit: string;
   active: boolean;
-  price: number;
-  cost: number;
   presentation: number;
   weight: string;
   weightGrams: number;
@@ -55,7 +48,6 @@ export interface Product {
   pesoUnidad: number | null;
   dimension: number | null;
   pesoTotalCargue: number | null;
-  stock: number | null;
 }
 
 export interface CategoryDTO {
@@ -71,8 +63,6 @@ export function toProductDisplay(resp: ProductResponse): Product {
     description: resp.description,
     unit: resp.unit,
     active: resp.active,
-    price: resp.price,
-    cost: resp.cost,
     presentation: resp.presentation,
     weight: resp.weight,
     weightGrams: resp.weightGrams,
@@ -81,6 +71,5 @@ export function toProductDisplay(resp: ProductResponse): Product {
     pesoUnidad: resp.pesoUnidad,
     dimension: resp.dimension,
     pesoTotalCargue: resp.pesoTotalCargue,
-    stock: resp.stock ?? null,
   };
 }

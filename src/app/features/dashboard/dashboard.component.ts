@@ -16,6 +16,14 @@ interface DashboardData {
   recentOrders: { id: string; client: string; status: string; date: string }[];
 }
 
+interface OrderLite {
+  id: number;
+  orderNumber?: string;
+  customerName?: string;
+  status?: string;
+  orderDate?: string;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -219,18 +227,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const sub = this.http.get<DashboardData>(`${environment.apiUrl}/api/v1/dashboard`).pipe(
       catchError(() => {
         return forkJoin({
-          customers: this.http.get<any[]>(`${environment.apiUrl}/api/v1/customers`).pipe(catchError(() => of([]))),
-          products:  this.http.get<any[]>(`${environment.apiUrl}/api/v1/products`).pipe(catchError(() => of([]))),
-          orders:    this.http.get<any[]>(`${environment.apiUrl}/api/v1/orders`).pipe(catchError(() => of([]))),
+          customers: this.http.get<unknown[]>(`${environment.apiUrl}/api/v1/customers`).pipe(catchError(() => of([]))),
+          products:  this.http.get<unknown[]>(`${environment.apiUrl}/api/v1/products`).pipe(catchError(() => of([]))),
+          orders:    this.http.get<OrderLite[]>(`${environment.apiUrl}/api/v1/orders`).pipe(catchError(() => of([]))),
         }).pipe(
           map(({ customers, products, orders }) => {
             const statusMap: Record<string, number> = {};
-            orders.forEach((o: any) => {
+            orders.forEach((o: OrderLite) => {
               const s = o.status || 'PENDIENTE';
               statusMap[s] = (statusMap[s] || 0) + 1;
             });
 
-            const recentOrders = orders.slice(-5).reverse().map((o: any) => ({
+            const recentOrders = orders.slice(-5).reverse().map((o: OrderLite) => ({
               id: o.orderNumber || String(o.id),
               client: o.customerName || '—',
               status: o.status || 'PENDIENTE',
@@ -238,11 +246,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
             }));
 
             const today = new Date().toISOString().split('T')[0];
-            const ordersToday = orders.filter((o: any) =>
+            const ordersToday = orders.filter((o: OrderLite) =>
               (o.orderDate || '').startsWith(today)
             ).length;
 
-            const pendingDispatches = orders.filter((o: any) =>
+            const pendingDispatches = orders.filter((o: OrderLite) =>
               o.status === 'PENDIENTE' || o.status === 'EN PREPARACIÓN'
             ).length;
 

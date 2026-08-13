@@ -130,10 +130,7 @@ import { forkJoin } from 'rxjs';
           class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"></textarea>
       </div>
 
-      <div class="border-t border-gray-100 pt-4 flex items-center justify-between">
-        <div class="text-sm text-gray-600">
-          Total: <span class="font-bold text-[#071938] font-mono text-lg">{{ total().toFixed(2) }}</span>
-        </div>
+      <div class="border-t border-gray-100 pt-4 flex items-center justify-end">
         <div class="flex gap-3">
           <button (click)="onSave()" [disabled]="saving"
             class="bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded-lg text-sm flex items-center gap-2 transition-colors">
@@ -165,8 +162,6 @@ export class OrderFormComponent implements OnInit {
   clientDropdownOpen = false;
 
   items = signal<{ productId: number | null; quantity: number }[]>([]);
-
-  total = computed(() => 0);
 
   filteredClients = computed(() => {
     const term = this.clientQuery().toLowerCase().trim();
@@ -268,7 +263,6 @@ export class OrderFormComponent implements OnInit {
       customerId: Number(this.selectedClientId),
       userId: Number(this.authService.currentUser()?.id) || 1,
       orderNumber: this.orderNumber,
-      total: 0,
       status: this.status,
       notes: this.notes,
       details,
@@ -286,7 +280,7 @@ export class OrderFormComponent implements OnInit {
       },
       error: (err) => {
         this.saving = false;
-        const msg = err.error?.message || err.message || 'Error al guardar el pedido.';
+        const msg = err.error?.error || err.error?.message || err.message || 'Error al guardar el pedido.';
         alert(msg);
       },
     });

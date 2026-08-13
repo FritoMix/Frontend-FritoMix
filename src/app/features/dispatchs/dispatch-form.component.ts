@@ -425,8 +425,8 @@ export class DispatchFormComponent {
   selectedOrderIds: string[] = [];
   selectedDriverId: number | null = null;
   selectedVehicleId: number | null = null;
-  pesoTotalCargue: number = 0;
-  totalDimension: number = 0;
+  pesoTotalCargue = 0;
+  totalDimension = 0;
   selectedOrder: Order | null = null;
   itemObservations: Record<number, string> = {};
   itemDelivered: Record<number, number> = {};
