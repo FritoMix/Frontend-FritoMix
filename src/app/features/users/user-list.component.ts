@@ -2,9 +2,9 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { UserService } from '../../core/services/user.service';
-import { PageHeaderComponent } from '../../shared/components/page-header';
-import { SearchInputComponent } from '../../shared/components/search-input';
-import { PaginationComponent } from '../../shared/components/pagination';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SearchInputComponent } from '../../shared/components/search-input.component';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 import { UserRole } from '../../core/models/user.model';
 
 @Component({

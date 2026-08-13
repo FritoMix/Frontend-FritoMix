@@ -1,87 +1,67 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { ClientService } from '../../core/services/client.service';
-import { PageHeaderComponent } from '../../shared/components/page-header';
-import { SearchInputComponent } from '../../shared/components/search-input';
-import { PaginationComponent } from '../../shared/components/pagination';
+import { VehicleService } from '../../core/services/vehicle.service';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SearchInputComponent } from '../../shared/components/search-input.component';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 
 @Component({
-  selector: 'app-client-list',
+  selector: 'app-vehicle-list',
   standalone: true,
   imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent],
   template: `
-    <app-page-header badge="2." color="blue" title="Clientes"></app-page-header>
+<app-page-header badge="13." color="purple" title="Vehículos"></app-page-header>
 
     <div class="fm-search-row">
       <app-search-input
-        (valueChange)="onSearchChange($event)"
-        placeholder="Buscar por nombre, código, NIT o ciudad..."
+        (valueChange)="vehicleService.setSearchTerm($event)"
+        placeholder="Buscar por Nº vehículo, tipo..."
       ></app-search-input>
       <button
-        routerLink="/clientes/nuevo"
-        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center justify-center sm:justify-center gap-2 transition-colors shadow-sm whitespace-nowrap"
+        routerLink="/vehiculos/nuevo"
+        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm whitespace-nowrap justify-center sm:justify-center"
       >
         <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-        Nuevo cliente
+        Nuevo vehículo
       </button>
     </div>
 
     <div class="fm-card overflow-hidden">
-      @if (clientService.loading()) {
+      @if (vehicleService.loading()) {
         <div class="flex items-center justify-center py-16">
-          <div class="flex flex-col items-center gap-3">
-            <div class="w-7 h-7 border-4 border-blue-200 border-t-[#0055FF] rounded-full animate-spin"></div>
-            <span class="text-gray-500 text-sm">Cargando clientes...</span>
-          </div>
-        </div>
-      } @else if (clientService.hasError()) {
-        <div class="flex items-center justify-center py-16">
-          <div class="text-center px-4">
-            <div class="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
-              <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            </div>
-            <p class="font-semibold text-[#071938] mb-1">No se pudieron cargar los clientes</p>
-            <p class="text-sm text-gray-500 mb-4">Verifica la conexión con el servidor</p>
-            <button (click)="clientService.loadClients()" class="bg-[#0055FF] text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-[#0044DD] transition-colors">
-              Reintentar
-            </button>
-          </div>
+          <span class="text-gray-500 text-sm">Cargando vehículos...</span>
         </div>
       } @else {
         <div class="fm-table-wrapper">
           <table class="fm-table">
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Nombre</th>
-                <th>NIT / CC</th>
-                <th>Ciudad</th>
-                <th>Teléfono</th>
+                <th>Nº Vehículo</th>
+                <th>Tipo</th>
+                <th>Capacidad</th>
+                <th>Dimensión</th>
                 <th>Estado</th>
                 <th class="text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
-              @for (client of paginatedClients(); track client.id) {
+              @for (vehicle of paginatedVehicles(); track vehicle.id) {
                 <tr>
                   <td>
-                    <span class="font-mono text-sm font-semibold text-[#071938]">{{ client.code }}</span>
+                    <span class="code-badge bg-gray-900 text-white border-gray-900">{{ vehicle.vehicleNumber }}</span>
                   </td>
                   <td>
-                    <span class="font-semibold text-[#071938]">{{ client.businessName }}</span>
+                    <span class="font-semibold text-[#071938] capitalize">{{ vehicle.type }}</span>
                   </td>
                   <td>
-                    <span class="font-mono text-sm text-gray-600">{{ client.document }}</span>
+                    <span class="text-gray-600 text-sm">{{ vehicle.capacity }} kg</span>
                   </td>
                   <td>
-                    <span class="text-gray-600 text-sm">{{ client.cityName }}</span>
+                    <span class="text-gray-600 text-sm">{{ vehicle.dimension }} m³</span>
                   </td>
                   <td>
-                    <span class="text-gray-600 text-sm">{{ client.phone }}</span>
-                  </td>
-                  <td>
-                    @if (client.active) {
+                    @if (vehicle.active) {
                       <span class="status-badge bg-green-50 text-green-700 border-green-200">Activo</span>
                     } @else {
                       <span class="status-badge bg-red-50 text-red-600 border-red-200">Inactivo</span>
@@ -90,14 +70,14 @@ import { PaginationComponent } from '../../shared/components/pagination';
                   <td>
                     <div class="fm-actions-cell">
                       <button
-                        (click)="editClient(client.id)"
+                        (click)="editVehicle(vehicle.id)"
                         class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
                         title="Editar"
                       >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                       </button>
                       <button
-                        (click)="deleteClient(client.id)"
+                        (click)="deleteVehicle(vehicle.id)"
                         class="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
                         title="Eliminar"
                       >
@@ -108,10 +88,10 @@ import { PaginationComponent } from '../../shared/components/pagination';
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="7" class="!text-center">
+                  <td colspan="6" class="!text-center">
                     <div class="fm-empty">
                       <svg class="fm-empty__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                      <p class="fm-empty__title">No se encontraron clientes</p>
+                      <p class="fm-empty__title">No se encontraron vehículos</p>
                       <p class="fm-empty__subtitle">Intenta con otro término de búsqueda</p>
                     </div>
                   </td>
@@ -128,38 +108,39 @@ import { PaginationComponent } from '../../shared/components/pagination';
     </div>
   `
 })
-export class ClientListComponent implements OnInit {
-  clientService = inject(ClientService);
+export class VehicleListComponent implements OnInit {
+  vehicleService = inject(VehicleService);
   router = inject(Router);
 
   currentPage = signal(1);
   pageSize = 5;
 
-  clientsFiltered = computed(() => this.clientService.filteredClients());
-  totalPages = computed(() => Math.ceil(this.clientsFiltered().length / this.pageSize) || 1);
+  vehiculosFiltrados = computed(() => this.vehicleService.filteredVehicles());
+  totalPages = computed(() => Math.ceil(this.vehiculosFiltrados().length / this.pageSize) || 1);
 
-  paginatedClients = computed(() => {
+  paginatedVehicles = computed(() => {
     const start = (this.currentPage() - 1) * this.pageSize;
-    return this.clientsFiltered().slice(start, start + this.pageSize);
+    return this.vehiculosFiltrados().slice(start, start + this.pageSize);
   });
 
+
   ngOnInit() {
-    this.clientService.loadClients();
+    this.vehicleService.loadVehicles();
   }
 
   onSearchChange(value: string) {
     this.currentPage.set(1);
-    this.clientService.setSearchTerm(value);
+    this.vehicleService.setSearchTerm(value);
   }
 
-  editClient(id: number) {
-    this.router.navigate(['/clientes', id]);
+  editVehicle(id: number) {
+    this.router.navigate(['/vehiculos', id]);
   }
 
-  deleteClient(id: number) {
-    if (confirm('¿Estás seguro de eliminar este cliente?')) {
-      this.clientService.delete(id).subscribe({
-        next: () => this.clientService.loadClients(),
+  deleteVehicle(id: number) {
+    if (confirm('¿Estás seguro de eliminar este vehículo?')) {
+      this.vehicleService.delete(id).subscribe({
+        next: () => this.vehicleService.loadVehicles(),
       });
     }
   }

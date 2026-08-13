@@ -3,9 +3,9 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { DispatchService } from '../../core/services/dispatch.service';
 import { AuthService } from '../../core/services/auth.service';
-import { PageHeaderComponent } from '../../shared/components/page-header';
-import { SearchInputComponent } from '../../shared/components/search-input';
-import { PaginationComponent } from '../../shared/components/pagination';
+import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { SearchInputComponent } from '../../shared/components/search-input.component';
+import { PaginationComponent } from '../../shared/components/pagination.component';
 import { Dispatch, DispatchStatus, nextDispatchStatus } from '../../core/models/dispatch.model';
 
 @Component({
@@ -173,7 +173,7 @@ export class DispatchListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 5;
+  pageSize = 10;
 
   isCartera = computed(() => this.authService.currentUser()?.role === 'cartera');
 
