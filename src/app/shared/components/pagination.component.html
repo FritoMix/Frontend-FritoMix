@@ -1,0 +1,18 @@
+
+<div class="fm-pagination">
+  <div class="fm-pagination__info">
+    Página <span class="font-semibold text-[#071938]">{{ currentPage() }}</span> de <span class="font-semibold text-[#071938]">{{ totalPages() }}</span>
+  </div>
+  <div class="fm-pagination__controls">
+    <button class="fm-page-btn" [disabled]="currentPage() === 1" (click)="currentPage.set(currentPage() - 1)" aria-label="Página anterior">&lsaquo;</button>
+    @for (page of visiblePages(); track page) {
+      @if (page === -1) {
+        <span class="px-2 text-gray-400 text-sm">…</span>
+      } @else {
+        <button class="fm-page-btn" [class.fm-page-btn--active]="page === currentPage()" (click)="currentPage.set(page)">{{ page }}</button>
+      }
+    }
+    <button class="fm-page-btn" [disabled]="currentPage() === totalPages()" (click)="currentPage.set(currentPage() + 1)" aria-label="Página siguiente">&rsaquo;</button>
+  </div>
+</div>
+

@@ -113,6 +113,13 @@ export interface CreateArrumeRequest {
   lote?: string;
 }
 
+export interface DispatchPreviewItem {
+  productId: number;
+  description: string;
+  lot?: string;
+  qty: number;
+}
+
 export interface ArrumeResponse {
   id: number;
   numArrume?: number | null;
