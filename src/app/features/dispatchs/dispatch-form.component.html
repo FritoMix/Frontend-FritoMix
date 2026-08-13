@@ -1,0 +1,225 @@
+
+<div class="mb-6">
+  <div class="flex items-center gap-3 mb-1">
+    <span class="module-badge module-badge--green">11.</span>
+    <div>
+      <h1 class="text-2xl font-extrabold text-[#071938]">{{ editId ? 'Editar Despacho' : 'Confirmación de Despacho' }}</h1>
+      <nav class="text-xs text-gray-500 mt-0.5 flex items-center gap-1.5">
+        <a routerLink="/despachos" class="text-[#0055FF] hover:underline">{{ editId ? 'Editar Despacho' : 'Confirmar Despacho' }}</a>
+        <span>/</span>
+        <span class="text-gray-700 font-semibold">{{ form.dispatchNumber || 'DES-XXXXX' }}</span>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<div class="fm-card p-6 mb-5">
+  <h3 class="font-bold text-[#071938] text-base mb-4">Tipo de Pedido</h3>
+  <div class="flex flex-col sm:flex-row gap-3">
+    <label [class]="radioClass('pedido_unico')">
+      <input type="radio" name="tipoPedido" value="pedido_unico" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_unico')" class="accent-[#0055FF]" />
+      <div class="ml-2">
+        <span class="block font-bold text-sm text-[#071938]">Pedido Único</span>
+        <span class="block text-xs text-gray-500">Despacho para un solo cliente</span>
+      </div>
+    </label>
+    <label [class]="radioClass('pedido_multipedido')">
+      <input type="radio" name="tipoPedido" value="pedido_multipedido" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_multipedido')" class="accent-[#0055FF]" />
+      <div class="ml-2">
+        <span class="block font-bold text-sm text-[#071938]">Pedido Multipedido</span>
+        <span class="block text-xs text-gray-500">Despacho consolidado para varios clientes</span>
+      </div>
+    </label>
+  </div>
+  @if (!tipoPedido) {
+    <p class="text-xs text-red-600 mt-2">Debes seleccionar un tipo de pedido para continuar.</p>
+  }
+</div>
+
+<div class="fm-card p-6 mb-5">
+  <h3 class="font-bold text-[#071938] text-base mb-5">Información del Despacho</h3>
+
+  @if (isUnico()) {
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div>
+        <label for="select-pedido" class="block text-xs font-semibold text-gray-500 mb-1.5">Pedido (Cliente)</label>
+        <select id="select-pedido"
+          [(ngModel)]="selectedOrderId"
+          (ngModelChange)="onOrderChange()"
+          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
+        >
+          <option value="">Seleccionar pedido</option>
+          @for (o of availableOrders(); track o.id) {
+            <option [value]="o.id">{{ o.orderNumber }} - {{ o.clientName }}</option>
+          }
+        </select>
+        @if (form.orderNumber) {
+          <span class="code-badge bg-blue-50 text-blue-700 border-blue-200 mt-2 inline-block">{{ form.orderNumber }}</span>
+        }
+      </div>
+      <div>
+        <label for="fecha-despacho" class="block text-xs font-semibold text-gray-500 mb-1.5">Fecha de Despacho</label>
+        <input id="fecha-despacho"
+          type="date"
+          [(ngModel)]="form.dispatchDate"
+          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+        />
+      </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-1.5">Estado</label>
+        <span class="status-badge bg-teal-50 text-teal-700 border-teal-200 text-xs font-bold">LISTO PARA DESPACHO</span>
+      </div>
+    </div>
+  } @else if (isMulti()) {
+    <p class="text-sm text-gray-500 mb-4">Selecciona uno o varios pedidos (un cliente por pedido) para consolidar el despacho.</p>
+    <div class="border border-gray-200 rounded-lg p-3 mb-4 max-h-64 overflow-y-auto">
+      @for (o of availableOrders(); track o.id) {
+        <label class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+          <input
+            type="checkbox"
+            [checked]="selectedOrderIds.includes(o.id)"
+            (change)="toggleOrder(o.id)"
+            class="w-4 h-4 accent-[#0055FF]"
+          />
+          <span class="text-sm font-semibold text-[#071938]">{{ o.orderNumber }}</span>
+          <span class="text-xs text-gray-500">{{ o.clientName }} — {{ o.city || '—' }}</span>
+        </label>
+      } @empty {
+        <p class="text-sm text-gray-400 py-4 text-center">No hay pedidos disponibles para despachar.</p>
+      }
+    </div>
+  }
+</div>
+
+@if (isMulti()) {
+  <div class="fm-card p-6 mb-5 border-l-4 border-l-[#0055FF]">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-bold text-[#071938] text-base">Vista Previa — Clientes Seleccionados</h3>
+      <span class="text-xs text-gray-500">{{ selectedOrderIds.length }} cliente(s) agregado(s)</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="fm-table">
+        <thead>
+          <tr class="bg-gray-50/60">
+            <th>Pedido</th>
+            <th>Cliente</th>
+            <th>Ciudad / Dirección</th>
+            <th class="text-right">Productos</th>
+            <th class="text-right">Peso Total (kg)</th>
+            <th class="text-right">Dimensión (m³)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of previewRows(); track row.id) {
+            <tr>
+              <td class="font-bold text-xs text-[#071938]">{{ row.orderNumber }}</td>
+              <td class="font-semibold text-xs text-gray-800">{{ row.clientName }}</td>
+              <td class="text-xs text-gray-500">{{ row.city }} — {{ row.address }}</td>
+              <td class="text-right text-xs text-gray-600">{{ row.items?.length ?? 0 }}</td>
+              <td class="text-right font-bold text-xs text-gray-700">{{ orderWeight(row) }}</td>
+              <td class="text-right font-semibold text-xs text-gray-700">{{ orderDimension(row) }}</td>
+              <td class="text-right">
+                <button type="button" (click)="removeOrder(row.id)"
+                  class="inline-flex items-center gap-1 text-xs font-semibold text-red-600 hover:text-red-700">
+                  Quitar
+                </button>
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="7" class="text-center text-gray-400 text-sm py-6">No hay clientes agregados. Marca al menos un pedido arriba.</td></tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+<app-dispatch-products-detail
+  [items]="aggregatedItems()"
+  [isMulti]="isMulti()"
+  [(delivered)]="itemDelivered"
+  [(observations)]="itemObservations"
+/>
+
+<app-dispatch-arrumes-form [(arrumes)]="arrumes" />
+
+<div class="fm-card p-6 mb-5">
+  <h3 class="font-bold text-[#071938] text-base mb-5">Observaciones del Despacho</h3>
+  <div>
+    <textarea
+      [(ngModel)]="form.observations"
+      rows="3"
+      placeholder="Escribe aquí cualquier observación sobre el despacho (productos faltantes, daños, novedades, etc.)..."
+      class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm resize-y transition-all"
+    ></textarea>
+    <p class="text-xs text-gray-400 mt-1">Estas observaciones se guardarán junto con los detalles del despacho.</p>
+  </div>
+</div>
+
+<div class="fm-card p-6">
+  <div class="grid grid-cols-1 md:grid-cols-6 gap-5 items-end">
+    <div>
+      <label for="select-conductor" class="block text-xs font-semibold text-gray-500 mb-1.5">Conductor</label>
+      <select id="select-conductor"
+        [(ngModel)]="selectedDriverId"
+        (ngModelChange)="onDriverChange()"
+        class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
+      >
+        <option value="">Seleccionar conductor</option>
+        @for (dr of driverService.drivers().filter(d => d.active); track dr.id) {
+          <option [value]="dr.id">{{ dr.name }} — {{ dr.document }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label for="select-vehiculo" class="block text-xs font-semibold text-gray-500 mb-1.5">Vehículo</label>
+      <select id="select-vehiculo"
+        [(ngModel)]="selectedVehicleId"
+        (ngModelChange)="onVehicleChange()"
+        class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
+      >
+        <option value="">Seleccionar vehículo</option>
+        @for (v of vehicleService.vehicles().filter(veh => veh.active); track v.id) {
+          <option [value]="v.id">{{ v.type }} — {{ v.vehicleNumber }}</option>
+        }
+      </select>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total</label>
+      <div class="flex items-center gap-2">
+        <input
+          type="number"
+          [ngModel]="pesoTotalCargue"
+          disabled
+          class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
+        />
+        <span class="text-sm text-gray-500 font-medium">Kg</span>
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs font-semibold text-gray-500 mb-1.5">Total Dimensión</label>
+      <div class="flex items-center gap-2">
+        <input
+          type="number"
+          [ngModel]="totalDimension"
+          disabled
+          class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm text-gray-500"
+        />
+        <span class="text-sm text-gray-500 font-medium">m³</span>
+      </div>
+    </div>
+    <div class="flex justify-end">
+      <button
+        type="button"
+        (click)="guardar()"
+        [disabled]="!esValido()"
+        class="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        {{ editId ? 'Actualizar Despacho' : 'Confirmar Despacho' }}
+      </button>
+    </div>
+  </div>
+</div>
+
