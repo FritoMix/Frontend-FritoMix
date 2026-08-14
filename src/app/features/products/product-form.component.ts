@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
+import { ToastService } from '../../core/services/toast.service';
 import { CategoryDTO } from '../../core/models/product.model';
 
 @Component({
@@ -13,6 +14,7 @@ import { CategoryDTO } from '../../core/models/product.model';
 })
 export class ProductFormComponent implements OnInit {
   productService = inject(ProductService);
+  toastService = inject(ToastService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
@@ -88,10 +90,12 @@ export class ProductFormComponent implements OnInit {
       next: () => {
         this.productService.loadProducts();
         this.isSubmitting = false;
+        this.toastService.success(this.isEdit ? 'Producto actualizado exitosamente.' : 'Producto creado exitosamente.');
         this.router.navigate(['/productos']);
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting = false;
+        this.toastService.error(err.error?.message || err.error?.error || 'Error al guardar el producto.');
       },
     });
   }

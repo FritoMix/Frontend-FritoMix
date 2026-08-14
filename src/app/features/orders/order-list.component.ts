@@ -3,25 +3,30 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SearchInputComponent } from '../../shared/components/search-input.component';
 import { PaginationComponent } from '../../shared/components/pagination.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent],
+  imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent, ConfirmDialogComponent],
   templateUrl: 'order-list.component.html'
 })
 export class OrderListComponent implements OnInit {
   orderService = inject(OrderService);
   authService = inject(AuthService);
+  toastService = inject(ToastService);
   router = inject(Router);
 
   currentPage = signal(1);
   pageSize = 10;
 
   isCartera = computed(() => this.authService.currentUser()?.role === 'cartera');
+
+  confirmDialog = signal<{ title: string; message: string; confirmLabel: string; type: 'info' | 'danger'; action: () => void } | null>(null);
 
   ordersFiltered = computed(() => this.orderService.filteredOrders());
   totalPages = computed(() => Math.ceil(this.ordersFiltered().length / this.pageSize) || 1);
@@ -58,30 +63,65 @@ export class OrderListComponent implements OnInit {
     this.router.navigate(['/pedidos', id, 'editar']);
   }
 
+  openConfirm(config: { title: string; message: string; confirmLabel: string; type: 'info' | 'danger'; action: () => void }) {
+    this.confirmDialog.set(config);
+  }
+
+  closeConfirm() {
+    this.confirmDialog.set(null);
+  }
+
   deleteOrder(id: string) {
-    if (confirm('¿Está seguro de eliminar este pedido?')) {
-      this.orderService.delete(Number(id)).subscribe({
-        next: () => this.orderService.loadOrders(),
-        error: () => alert('Error al eliminar el pedido.')
-      });
-    }
+    this.openConfirm({
+      title: 'Eliminar pedido',
+      message: '¿Está seguro de eliminar este pedido? Esta acción no se puede deshacer.',
+      confirmLabel: 'Eliminar',
+      type: 'danger',
+      action: () => {
+        this.orderService.delete(Number(id)).subscribe({
+          next: () => {
+            this.orderService.loadOrders();
+            this.toastService.success('Pedido eliminado exitosamente.');
+          },
+          error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al eliminar el pedido.')
+        });
+      }
+    });
   }
 
   approveOrder(id: string) {
-    if (confirm('¿Está seguro de aprobar este pedido?')) {
-      this.orderService.updateStatus(Number(id), 'APROBADO').subscribe({
-        next: () => this.orderService.loadOrders(),
-        error: () => alert('Error al aprobar el pedido.')
-      });
-    }
+    this.openConfirm({
+      title: 'Aprobar pedido',
+      message: '¿Está seguro de aprobar este pedido?',
+      confirmLabel: 'Aprobar',
+      type: 'info',
+      action: () => {
+        this.orderService.updateStatus(Number(id), 'APROBADO').subscribe({
+          next: () => {
+            this.orderService.loadOrders();
+            this.toastService.success('Pedido aprobado exitosamente.');
+          },
+          error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al aprobar el pedido.')
+        });
+      }
+    });
   }
 
   cancelOrder(id: string) {
-    if (confirm('¿Está seguro de cancelar este pedido?')) {
-      this.orderService.updateStatus(Number(id), 'CANCELADO').subscribe({
-        next: () => this.orderService.loadOrders(),
-        error: () => alert('Error al cancelar el pedido.')
-      });
-    }
+    this.openConfirm({
+      title: 'Cancelar pedido',
+      message: '¿Está seguro de cancelar este pedido?',
+      confirmLabel: 'Cancelar',
+      type: 'danger',
+      action: () => {
+        this.orderService.updateStatus(Number(id), 'CANCELADO').subscribe({
+          next: () => {
+            this.orderService.loadOrders();
+            this.toastService.success('Pedido cancelado.');
+          },
+          error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al cancelar el pedido.')
+        });
+      }
+    });
   }
 }
