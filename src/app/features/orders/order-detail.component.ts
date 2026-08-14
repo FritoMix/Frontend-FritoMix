@@ -4,37 +4,56 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { OrderService } from '../../core/services/order.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ToastService } from '../../core/services/toast.service';
 import { OrderResponse, OrderDetailResponse } from '../../core/models/order.model';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, ConfirmDialogComponent],
   templateUrl: 'order-detail.component.html'
 })
 export class OrderDetailComponent implements OnInit {
   private orderService = inject(OrderService);
   private route       = inject(ActivatedRoute);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
 
   loading       = signal(true);
   pdfGenerating  = signal(false);
   order         = signal<OrderResponse | null>(null);
 
+  confirmDialog = signal<{ title: string; message: string; confirmLabel: string; type: 'info' | 'danger'; status: 'APROBADO' | 'CANCELADO' } | null>(null);
+
   isCartera(): boolean {
     return this.authService.currentUser()?.role === 'cartera';
+  }
+
+  openConfirm(status: 'APROBADO' | 'CANCELADO') {
+    const isApprove = status === 'APROBADO';
+    this.confirmDialog.set({
+      title: isApprove ? 'Aprobar pedido' : 'Cancelar pedido',
+      message: isApprove ? '¿Está seguro de aprobar este pedido?' : '¿Está seguro de cancelar este pedido?',
+      confirmLabel: isApprove ? 'Aprobar' : 'Cancelar',
+      type: isApprove ? 'info' : 'danger',
+      status
+    });
+  }
+
+  closeConfirm() {
+    this.confirmDialog.set(null);
   }
 
   changeStatus(status: 'APROBADO' | 'CANCELADO') {
     const id = this.order()?.id;
     if (!id) return;
-    const message = status === 'APROBADO'
-      ? '¿Está seguro de aprobar este pedido?'
-      : '¿Está seguro de cancelar este pedido?';
-    if (!confirm(message)) return;
     this.orderService.updateStatus(id, status).subscribe({
-      next: (res) => this.order.set(res),
-      error: () => alert('Error al cambiar el estado del pedido.')
+      next: (res) => {
+        this.order.set(res);
+        this.toastService.success(status === 'APROBADO' ? 'Pedido aprobado exitosamente.' : 'Pedido cancelado.');
+      },
+      error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al cambiar el estado del pedido.')
     });
   }
 

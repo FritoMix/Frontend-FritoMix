@@ -7,6 +7,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { SearchInputComponent } from '../../shared/components/search-input.component';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { Dispatch, DispatchStatus, nextDispatchStatus } from '../../core/models/dispatch.model';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-dispatch-list',
@@ -17,6 +18,7 @@ import { Dispatch, DispatchStatus, nextDispatchStatus } from '../../core/models/
 export class DispatchListComponent implements OnInit {
   dispatchService = inject(DispatchService);
   authService = inject(AuthService);
+  toastService = inject(ToastService);
   router = inject(Router);
 
   currentPage = signal(1);
@@ -74,8 +76,12 @@ export class DispatchListComponent implements OnInit {
 
   eliminar(id: string) {
     if (confirm('¿Está seguro de eliminar este despacho?')) {
-      this.dispatchService.delete(Number(id)).subscribe(() => {
-        this.dispatchService.loadDispatches();
+      this.dispatchService.delete(Number(id)).subscribe({
+        next: () => {
+          this.dispatchService.loadDispatches();
+          this.toastService.success('Despacho eliminado exitosamente.');
+        },
+        error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al eliminar el despacho.')
       });
     }
   }
@@ -96,8 +102,11 @@ export class DispatchListComponent implements OnInit {
     const next = nextDispatchStatus(status);
     if (!next) return;
     this.dispatchService.updateStatus(Number(id), next).subscribe({
-      next: () => this.dispatchService.loadDispatches(),
-      error: () => alert('Error al avanzar el estado del despacho.')
+      next: () => {
+        this.dispatchService.loadDispatches();
+        this.toastService.success('Estado del despacho actualizado.');
+      },
+      error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al avanzar el estado del despacho.')
     });
   }
 }
