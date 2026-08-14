@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { UserService } from '../../core/services/user.service';
 import { SettingsService } from '../../core/services/settings.service';
+import { ToastService } from '../../core/services/toast.service';
 import { UserRole } from '../../core/models/user.model';
 
 @Component({
@@ -15,6 +16,7 @@ import { UserRole } from '../../core/models/user.model';
 export class UserFormComponent implements OnInit {
   userService = inject(UserService);
   settingsService = inject(SettingsService);
+  toastService = inject(ToastService);
   router = inject(Router);
   private route = inject(ActivatedRoute);
 
@@ -142,9 +144,13 @@ export class UserFormComponent implements OnInit {
         next: () => {
           this.userService.loadUsers();
           this.saving.set(false);
+          this.toastService.success('Usuario actualizado exitosamente.');
           this.router.navigate(['/usuarios']);
         },
-        error: () => this.saving.set(false),
+        error: (err) => {
+          this.saving.set(false);
+          this.toastService.error(err.error?.message || err.error?.error || 'Error al actualizar el usuario.');
+        },
       });
     } else {
       this.userService.create({
@@ -157,9 +163,13 @@ export class UserFormComponent implements OnInit {
         next: () => {
           this.userService.loadUsers();
           this.saving.set(false);
+          this.toastService.success('Usuario creado exitosamente.');
           this.router.navigate(['/usuarios']);
         },
-        error: () => this.saving.set(false),
+        error: (err) => {
+          this.saving.set(false);
+          this.toastService.error(err.error?.message || err.error?.error || 'Error al crear el usuario.');
+        },
       });
     }
   }
