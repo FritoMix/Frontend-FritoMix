@@ -9,12 +9,12 @@
     </div>
     <div class="flex flex-wrap gap-2">
       @if (isCartera() && order()?.status === 'PENDIENTE') {
-        <button (click)="changeStatus('APROBADO')"
+        <button (click)="openConfirm('APROBADO')"
           class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Aprobar
         </button>
-        <button (click)="changeStatus('CANCELADO')"
+        <button (click)="openConfirm('CANCELADO')"
           class="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-sm inline-flex items-center gap-2 transition-colors shadow-sm">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           Cancelar
@@ -178,4 +178,15 @@
     }
   }
 </div>
+
+@if (confirmDialog(); as dialog) {
+  <app-confirm-dialog
+    [title]="dialog.title"
+    [message]="dialog.message"
+    [confirmLabel]="dialog.confirmLabel"
+    [type]="dialog.type"
+    (confirm)="closeConfirm(); changeStatus(dialog.status)"
+    (cancel)="closeConfirm()"
+  ></app-confirm-dialog>
+}
 

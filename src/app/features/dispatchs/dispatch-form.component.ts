@@ -12,13 +12,15 @@ import { Order } from '../../core/models/order.model';
 import { AuthService } from '../../core/services/auth.service';
 import { DispatchArrumesFormComponent } from './dispatch-arrumes-form.component';
 import { DispatchProductsDetailComponent } from './dispatch-products-detail.component';
+import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
+import { ToastService } from '../../core/services/toast.service';
 
 type TipoPedido = 'pedido_unico' | 'pedido_multipedido';
 
 @Component({
   selector: 'app-dispatch-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DispatchArrumesFormComponent, DispatchProductsDetailComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DispatchArrumesFormComponent, DispatchProductsDetailComponent, ConfirmDialogComponent],
   templateUrl: 'dispatch-form.component.html'
 })
 export class DispatchFormComponent {
@@ -28,6 +30,7 @@ export class DispatchFormComponent {
   vehicleService = inject(VehicleService);
   productService = inject(ProductService);
   authService = inject(AuthService);
+  toastService = inject(ToastService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
@@ -43,6 +46,14 @@ export class DispatchFormComponent {
   itemObservations: Record<number, string> = {};
   itemDelivered: Record<number, number> = {};
   arrumes = signal<CreateArrumeRequest[]>([]);
+  message = signal('');
+  messageType = signal<'success' | 'error'>('success');
+  errorDialog = signal<string>('');
+
+  showMessage(msg: string, type: 'success' | 'error' = 'error') {
+    this.message.set(msg);
+    this.messageType.set(type);
+  }
 
   form = {
     dispatchNumber: '',
@@ -140,10 +151,12 @@ export class DispatchFormComponent {
     } else {
       this.selectedOrderIds = [...this.selectedOrderIds, id];
     }
+    this.recalcWeight();
   }
 
   removeOrder(id: string) {
     this.selectedOrderIds = this.selectedOrderIds.filter(x => x !== id);
+    this.recalcWeight();
   }
 
   aggregatedItems(): DispatchPreviewItem[] {
@@ -272,9 +285,9 @@ export class DispatchFormComponent {
   }
 
   recalcWeight() {
-    if (this.isUnico() && this.selectedOrder) {
-      this.pesoTotalCargue = this.orderWeight(this.selectedOrder);
-      this.totalDimension = this.orderDimension(this.selectedOrder);
+    if (this.isUnico()) {
+      this.pesoTotalCargue = this.selectedOrder ? this.orderWeight(this.selectedOrder) : 0;
+      this.totalDimension = this.selectedOrder ? this.orderDimension(this.selectedOrder) : 0;
     } else if (this.isMulti()) {
       const orders = this.previewRows();
       this.pesoTotalCargue = this.round2(orders.reduce((s, o) => s + this.orderWeight(o), 0));
@@ -341,7 +354,7 @@ export class DispatchFormComponent {
         : this.isUnico()
           ? 'Debes seleccionar un pedido, conductor y vehículo.'
           : 'Debes agregar al menos un cliente (pedido), un conductor y un vehículo.';
-      alert(msg);
+      this.showMessage(msg);
       return;
     }
 
@@ -398,11 +411,12 @@ export class DispatchFormComponent {
       next: () => {
         this.orderService.loadOrders();
         this.dispatchService.loadDispatches();
+        this.toastService.success(this.editId ? 'Despacho actualizado exitosamente.' : 'Despacho creado exitosamente.');
         this.router.navigate(['/despachos']);
       },
       error: (err) => {
         const msg = err.error?.message || err.message || 'Error al guardar el despacho. Verifica los datos e intenta de nuevo.';
-        alert(msg);
+        this.errorDialog.set(msg);
       }
     });
   }

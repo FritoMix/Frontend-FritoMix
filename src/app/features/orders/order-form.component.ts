@@ -8,6 +8,7 @@ import { ClientService } from '../../core/services/client.service';
 import { ProductService } from '../../core/services/product.service';
 import { OrderItem, OrderStatus } from '../../core/models/order.model';
 import { Client } from '../../core/models/client.model';
+import { ToastService } from '../../core/services/toast.service';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -21,6 +22,7 @@ export class OrderFormComponent implements OnInit {
   orderService = inject(OrderService);
   clientService = inject(ClientService);
   productService = inject(ProductService);
+  toastService = inject(ToastService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
@@ -150,12 +152,13 @@ export class OrderFormComponent implements OnInit {
       next: () => {
         this.orderService.loadOrders();
         this.saving = false;
+        this.toastService.success(this.isEdit ? 'Pedido actualizado exitosamente.' : 'Pedido creado exitosamente.');
         this.router.navigate(['/pedidos']);
       },
       error: (err) => {
         this.saving = false;
         const msg = err.error?.error || err.error?.message || err.message || 'Error al guardar el pedido.';
-        alert(msg);
+        this.toastService.error(msg);
       },
     });
   }

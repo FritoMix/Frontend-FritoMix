@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DispatchService } from '../../core/services/dispatch.service';
 import { AuthService } from '../../core/services/auth.service';
 import { DispatchResponse, DispatchStatus, nextDispatchStatus } from '../../core/models/dispatch.model';
+import { ToastService } from '../../core/services/toast.service';
 
 @Component({
   selector: 'app-dispatch-detail',
@@ -14,6 +15,7 @@ import { DispatchResponse, DispatchStatus, nextDispatchStatus } from '../../core
 export class DispatchDetailComponent implements OnInit {
   private dispatchService = inject(DispatchService);
   private authService = inject(AuthService);
+  private toastService = inject(ToastService);
   private route = inject(ActivatedRoute);
 
   loading = signal(true);
@@ -49,8 +51,11 @@ export class DispatchDetailComponent implements OnInit {
     const next = nextDispatchStatus(d.status as DispatchStatus);
     if (!next) return;
     this.dispatchService.updateStatus(d.id, next).subscribe({
-      next: (res) => this.despacho.set(res),
-      error: () => alert('Error al avanzar el estado del despacho.')
+      next: (res) => {
+        this.despacho.set(res);
+        this.toastService.success('Estado del despacho actualizado.');
+      },
+      error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al avanzar el estado del despacho.')
     });
   }
 
