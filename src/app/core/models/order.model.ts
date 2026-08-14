@@ -127,8 +127,8 @@ export function toOrderDisplay(resp: OrderResponse): Order {
     driverName: '',
     driverDocument: '',
     driverPhone: '',
-    dispatchDate: '',
-    dispatchTime: '',
+    dispatchDate: resp.dispatchDate ? resp.dispatchDate.split('T')[0] : '',
+    dispatchTime: resp.dispatchDate ? resp.dispatchDate.split('T')[1]?.slice(0, 5) : '',
     status: resp.status as OrderStatus,
     items: resp.details.map((d, i) => ({
       item: i + 1,
