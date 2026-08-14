@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ClientService } from '../../core/services/client.service';
+import { ToastService } from '../../core/services/toast.service';
 import { Department, City } from '../../core/models/client.model';
 
 @Component({
@@ -13,6 +14,7 @@ import { Department, City } from '../../core/models/client.model';
 })
 export class ClientFormComponent implements OnInit {
   clientService = inject(ClientService);
+  toastService = inject(ToastService);
   router = inject(Router);
   route = inject(ActivatedRoute);
 
@@ -101,10 +103,12 @@ export class ClientFormComponent implements OnInit {
       next: () => {
         this.clientService.loadClients();
         this.isSubmitting = false;
+        this.toastService.success(this.isEdit ? 'Cliente actualizado exitosamente.' : 'Cliente creado exitosamente.');
         this.router.navigate(['/clientes']);
       },
-      error: () => {
+      error: (err) => {
         this.isSubmitting = false;
+        this.toastService.error(err.error?.message || err.error?.error || 'Error al guardar el cliente.');
       },
     });
   }
