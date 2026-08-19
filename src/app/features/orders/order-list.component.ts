@@ -22,23 +22,22 @@ export class OrderListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 10;
 
   isCartera = computed(() => this.authService.currentUser()?.role === 'cartera');
 
   confirmDialog = signal<{ title: string; message: string; confirmLabel: string; type: 'info' | 'danger'; action: () => void } | null>(null);
 
-  ordersFiltered = computed(() => this.orderService.filteredOrders());
-  totalPages = computed(() => Math.ceil(this.ordersFiltered().length / this.pageSize) || 1);
-
-  paginatedOrders = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.ordersFiltered().slice(start, start + this.pageSize);
-  });
+  paginatedOrders = computed(() => this.orderService.items());
+  totalPages = computed(() => this.orderService.totalPages() || 1);
 
 
   ngOnInit() {
-    this.orderService.loadOrders();
+    this.orderService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.orderService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -80,7 +79,7 @@ export class OrderListComponent implements OnInit {
       action: () => {
         this.orderService.delete(Number(id)).subscribe({
           next: () => {
-            this.orderService.loadOrders();
+            this.orderService.load();
             this.toastService.success('Pedido eliminado exitosamente.');
           },
           error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al eliminar el pedido.')
@@ -98,7 +97,7 @@ export class OrderListComponent implements OnInit {
       action: () => {
         this.orderService.updateStatus(Number(id), 'APROBADO').subscribe({
           next: () => {
-            this.orderService.loadOrders();
+            this.orderService.load();
             this.toastService.success('Pedido aprobado exitosamente.');
           },
           error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al aprobar el pedido.')
@@ -116,7 +115,7 @@ export class OrderListComponent implements OnInit {
       action: () => {
         this.orderService.updateStatus(Number(id), 'CANCELADO').subscribe({
           next: () => {
-            this.orderService.loadOrders();
+            this.orderService.load();
             this.toastService.success('Pedido cancelado.');
           },
           error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al cancelar el pedido.')

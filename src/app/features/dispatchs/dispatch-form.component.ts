@@ -7,15 +7,22 @@ import { OrderService } from '../../core/services/order.service';
 import { DriverService } from '../../core/services/driver.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ProductService } from '../../core/services/product.service';
-import { ChecklistItem, DispatchStatus, DispatchResponse, DispatchPreviewItem, CreateArrumeRequest } from '../../core/models/dispatch.model';
+import { ChecklistItem, DispatchStatus, DispatchResponse, CreateArrumeRequest } from '../../core/models/dispatch.model';
 import { Order } from '../../core/models/order.model';
 import { AuthService } from '../../core/services/auth.service';
 import { DispatchArrumesFormComponent } from './dispatch-arrumes-form.component';
 import { DispatchProductsDetailComponent } from './dispatch-products-detail.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { ToastService } from '../../core/services/toast.service';
-
-type TipoPedido = 'pedido_unico' | 'pedido_multipedido';
+import {
+  aggregateItems,
+  buildDispatchPayload,
+  orderDimension,
+  orderWeight,
+  round2,
+  validateDispatchForm,
+  TipoPedido,
+} from './dispatch-form.helper';
 
 @Component({
   selector: 'app-dispatch-form',
@@ -38,7 +45,10 @@ export class DispatchFormComponent {
   tipoPedido: '' | TipoPedido = '';
   selectedOrderId = '';
   selectedOrderIds: string[] = [];
+  numeroFactura = '';
+  facturasPorPedido: Record<string, string> = {};
   selectedDriverId: number | null = null;
+
   selectedVehicleId: number | null = null;
   pesoTotalCargue = 0;
   totalDimension = 0;
@@ -87,11 +97,11 @@ export class DispatchFormComponent {
   ];
 
   constructor() {
-    this.orderService.loadOrders();
-    this.driverService.loadDrivers();
-    this.vehicleService.loadVehicles();
-    this.productService.loadProducts();
-    this.dispatchService.loadDispatches();
+    this.orderService.loadAll();
+    this.driverService.loadAll();
+    this.vehicleService.loadAll();
+    this.productService.loadAll();
+    this.dispatchService.loadAll();
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -121,25 +131,27 @@ export class DispatchFormComponent {
     this.tipoPedido = tipo;
     if (tipo === 'pedido_unico') {
       this.selectedOrderIds = [];
+      this.facturasPorPedido = {};
     } else {
       this.selectedOrderId = '';
       this.selectedOrder = null;
+      this.numeroFactura = '';
     }
   }
 
   availableOrders(): Order[] {
     const dispatched = new Set<string>(
-      this.orderService.orders()
+      this.orderService.items()
         .filter(o => !!o.dispatchDate)
         .map(o => o.id)
     );
-    return this.orderService.orders()
+    return this.orderService.items()
       .filter(o => o.status === 'APROBADO' && !dispatched.has(o.id));
   }
 
   previewRows(): Order[] {
     if (!this.isMulti()) return [];
-    const map = new Map(this.orderService.orders().map(o => [o.id, o]));
+    const map = new Map(this.orderService.items().map(o => [o.id, o]));
     return this.selectedOrderIds
       .map(id => map.get(id))
       .filter((o): o is Order => !!o);
@@ -148,6 +160,7 @@ export class DispatchFormComponent {
   toggleOrder(id: string) {
     if (this.selectedOrderIds.includes(id)) {
       this.selectedOrderIds = this.selectedOrderIds.filter(x => x !== id);
+      delete this.facturasPorPedido[id];
     } else {
       this.selectedOrderIds = [...this.selectedOrderIds, id];
     }
@@ -156,32 +169,20 @@ export class DispatchFormComponent {
 
   removeOrder(id: string) {
     this.selectedOrderIds = this.selectedOrderIds.filter(x => x !== id);
+    delete this.facturasPorPedido[id];
     this.recalcWeight();
   }
 
-  aggregatedItems(): DispatchPreviewItem[] {
-    if (this.isUnico()) {
-      const order = this.selectedOrder;
-      return (order?.items ?? []).map((it) => ({
-        productId: it.productId,
-        description: it.description,
-        lot: it.lot,
-        qty: it.bulto || 0
-      }));
-    }
-    const map = new Map<number, DispatchPreviewItem>();
-    for (const order of this.previewRows()) {
-      for (const it of order.items ?? []) {
-        const pid = it.productId;
-        const existing = map.get(pid);
-        if (existing) {
-          existing.qty += it.bulto || 0;
-        } else {
-          map.set(pid, { productId: pid, description: it.description, lot: it.lot, qty: it.bulto || 0 });
-        }
-      }
-    }
-    return [...map.values()];
+  aggregatedItems() {
+    return aggregateItems(this.isUnico(), this.selectedOrder, this.previewRows());
+  }
+
+  orderWeight(o: Order): number {
+    return orderWeight(o);
+  }
+
+  orderDimension(o: Order): number {
+    return orderDimension(o);
   }
 
   cargarDespacho(resp: DispatchResponse) {
@@ -192,12 +193,20 @@ export class DispatchFormComponent {
     this.tipoPedido = (resp.tipoPedido || 'pedido_unico') as TipoPedido;
     this.selectedDriverId = resp.driverId;
     this.selectedVehicleId = resp.vehicleId;
+    this.numeroFactura = resp.numeroFactura || '';
+
+    this.facturasPorPedido = {};
+    (resp.orders ?? []).forEach(o => {
+      if (o.id && o.numeroFactura) {
+        this.facturasPorPedido[String(o.id)] = o.numeroFactura;
+      }
+    });
 
     if (resp.dispatchDate) {
       this.form.dispatchDate = resp.dispatchDate.split('T')[0];
     }
 
-    const orderList = this.orderService.orders();
+    const orderList = this.orderService.items();
     if (this.isMulti()) {
       const ids = (resp.orders ?? []).map(o => String(o.id));
       this.selectedOrderIds = ids;
@@ -213,14 +222,14 @@ export class DispatchFormComponent {
     }
 
     this.recalcWeight();
-    if (resp.pesoTotal != null) this.pesoTotalCargue = this.round2(resp.pesoTotal);
-    if (resp.totalDimension != null) this.totalDimension = this.round2(resp.totalDimension);
+    if (resp.pesoTotal != null) this.pesoTotalCargue = round2(resp.pesoTotal);
+    if (resp.totalDimension != null) this.totalDimension = round2(resp.totalDimension);
     this.onDriverChange();
     this.onVehicleChange();
 
     if (resp.details) {
-      let delivered: Record<number, number> = {};
-      let observations: Record<number, string> = {};
+      const delivered: Record<number, number> = {};
+      const observations: Record<number, string> = {};
       for (const d of resp.details) {
         if (d.delivered != null) delivered[d.productId] = d.delivered;
         if (d.observations) observations[d.productId] = d.observations;
@@ -255,7 +264,7 @@ export class DispatchFormComponent {
   }
 
   onOrderChange() {
-    const order = this.orderService.orders().find(o => o.id === this.selectedOrderId) || null;
+    const order = this.orderService.items().find(o => o.id === this.selectedOrderId) || null;
     this.selectedOrder = order;
     if (order) {
       this.form.orderNumber = order.orderNumber;
@@ -265,7 +274,7 @@ export class DispatchFormComponent {
       this.itemObservations = {};
       this.recalcWeight();
 
-      const driver = this.driverService.drivers().find(d =>
+      const driver = this.driverService.items().find(d =>
         d.document === order.driverDocument ||
         d.name.includes((order.driverName || '').split(' ')[0])
       );
@@ -273,7 +282,7 @@ export class DispatchFormComponent {
         this.selectedDriverId = driver.id;
         this.onDriverChange();
       }
-      const vehicle = this.vehicleService.vehicles().find(v => v.vehicleNumber === order.vehicle);
+      const vehicle = this.vehicleService.items().find(v => v.vehicleNumber === order.vehicle);
       if (vehicle) {
         this.selectedVehicleId = vehicle.id;
         this.onVehicleChange();
@@ -286,29 +295,13 @@ export class DispatchFormComponent {
 
   recalcWeight() {
     if (this.isUnico()) {
-      this.pesoTotalCargue = this.selectedOrder ? this.orderWeight(this.selectedOrder) : 0;
-      this.totalDimension = this.selectedOrder ? this.orderDimension(this.selectedOrder) : 0;
+      this.pesoTotalCargue = this.selectedOrder ? orderWeight(this.selectedOrder) : 0;
+      this.totalDimension = this.selectedOrder ? orderDimension(this.selectedOrder) : 0;
     } else if (this.isMulti()) {
       const orders = this.previewRows();
-      this.pesoTotalCargue = this.round2(orders.reduce((s, o) => s + this.orderWeight(o), 0));
-      this.totalDimension = this.round2(orders.reduce((s, o) => s + this.orderDimension(o), 0));
+      this.pesoTotalCargue = round2(orders.reduce((s, o) => s + orderWeight(o), 0));
+      this.totalDimension = round2(orders.reduce((s, o) => s + orderDimension(o), 0));
     }
-  }
-
-  round2(v: number): number {
-    return Math.round(v * 100) / 100;
-  }
-
-  orderWeight(o: Order): number {
-    return this.round2(
-      (o.items ?? []).reduce((s, it) => s + ((it.pesoUnidad ?? 0) * (it.bulto ?? 0)), 0)
-    );
-  }
-
-  orderDimension(o: Order): number {
-    return this.round2(
-      (o.items ?? []).reduce((s, it) => s + ((it.dimension ?? 0) * (it.bulto ?? 0)), 0)
-    );
   }
 
   onDriverChange() {
@@ -318,7 +311,7 @@ export class DispatchFormComponent {
       this.form.driverPhone = '';
       return;
     }
-    const driver = this.driverService.drivers().find(d => d.id === this.selectedDriverId);
+    const driver = this.driverService.items().find(d => d.id === this.selectedDriverId);
     if (driver) {
       this.form.driverName = driver.name;
       this.form.driverDocument = driver.document;
@@ -332,7 +325,7 @@ export class DispatchFormComponent {
       this.form.vehicleType = '';
       return;
     }
-    const vehicle = this.vehicleService.vehicles().find(v => v.id === this.selectedVehicleId);
+    const vehicle = this.vehicleService.items().find(v => v.id === this.selectedVehicleId);
     if (vehicle) {
       this.form.vehicleNumber = vehicle.vehicleNumber;
       this.form.vehicleType = vehicle.type;
@@ -340,68 +333,35 @@ export class DispatchFormComponent {
   }
 
   esValido(): boolean {
-    if (!this.tipoPedido) return false;
-    if (!this.selectedDriverId || !this.selectedVehicleId) return false;
-    if (this.isUnico()) return !!this.selectedOrderId;
-    if (this.isMulti()) return this.selectedOrderIds.length >= 1;
-    return false;
+    return validateDispatchForm(this.dispatchState()) === null;
+  }
+
+  private dispatchState() {
+    return {
+      tipoPedido: this.tipoPedido,
+      selectedOrderId: this.selectedOrderId,
+      selectedOrderIds: this.selectedOrderIds,
+      selectedDriverId: this.selectedDriverId,
+      selectedVehicleId: this.selectedVehicleId,
+      numeroFactura: this.numeroFactura,
+      facturasPorPedido: this.facturasPorPedido,
+      itemDelivered: this.itemDelivered,
+      itemObservations: this.itemObservations,
+      form: this.form,
+      checklist: this.checklist,
+      arrumes: this.arrumes(),
+      userId: this.authService.currentUser()?.id ?? null,
+    };
   }
 
   guardar() {
-    if (!this.esValido()) {
-      const msg = !this.tipoPedido
-        ? 'Debes seleccionar un tipo de pedido.'
-        : this.isUnico()
-          ? 'Debes seleccionar un pedido, conductor y vehículo.'
-          : 'Debes agregar al menos un cliente (pedido), un conductor y un vehículo.';
-      this.showMessage(msg);
+    const invalidMsg = validateDispatchForm(this.dispatchState());
+    if (invalidMsg) {
+      this.showMessage(invalidMsg);
       return;
     }
 
-    const items = this.aggregatedItems();
-    const details = items.map(item => ({
-      productId: item.productId,
-      quantity: item.qty,
-      delivered: this.itemDelivered[item.productId] ?? item.qty,
-      observations: this.itemObservations[item.productId] || ''
-    }));
-
-    const obsParts: string[] = [];
-    if (this.form.observations) obsParts.push(this.form.observations);
-    for (const c of this.checklist) {
-      if (!c.checked) obsParts.push(`Checklist pendiente: ${c.name}`);
-    }
-
-    const dispatchDateStr = this.form.dispatchDate
-      ? `${this.form.dispatchDate}T${this.form.dispatchTime || '00:00'}:00`
-      : new Date().toISOString();
-
-    const orderIds = this.isMulti()
-      ? this.selectedOrderIds.map(Number)
-      : [Number(this.selectedOrderId)];
-
-    const arrumes = this.arrumes()
-      .filter(a => a.arrumeProducto || a.numArrume || a.cantidad != null || a.lote)
-      .map(a => ({
-        numArrume: a.numArrume ?? null,
-        arrumeProducto: a.arrumeProducto || '',
-        cantidad: a.cantidad ?? null,
-        lote: a.lote || ''
-      }));
-
-    const payload = {
-      tipoPedido: this.tipoPedido,
-      orderIds,
-      driverId: Number(this.selectedDriverId),
-      vehicleId: Number(this.selectedVehicleId),
-      userId: this.authService.currentUser()?.id ?? null,
-      dispatchNumber: this.form.dispatchNumber,
-      dispatchDate: dispatchDateStr,
-      status: this.form.status,
-      notes: obsParts.join(' | '),
-      details,
-      arrumes
-    };
+    const payload = buildDispatchPayload(this.dispatchState(), this.aggregatedItems());
 
     const request = this.editId
       ? this.dispatchService.update(this.editId, payload)
@@ -409,8 +369,8 @@ export class DispatchFormComponent {
 
     request.subscribe({
       next: () => {
-        this.orderService.loadOrders();
-        this.dispatchService.loadDispatches();
+        this.orderService.loadAll();
+        this.dispatchService.loadAll();
         this.toastService.success(this.editId ? 'Despacho actualizado exitosamente.' : 'Despacho creado exitosamente.');
         this.router.navigate(['/despachos']);
       },
