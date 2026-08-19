@@ -41,8 +41,8 @@ export class OrderFormComponent implements OnInit {
 
   filteredClients = computed(() => {
     const term = this.clientQuery().toLowerCase().trim();
-    if (!term) return this.clientService.clients();
-    return this.clientService.clients().filter(c =>
+    if (!term) return this.clientService.items();
+    return this.clientService.items().filter(c =>
       c.businessName?.toLowerCase().includes(term) ||
       c.code?.toLowerCase().includes(term) ||
       c.document?.toLowerCase().includes(term) ||
@@ -71,8 +71,8 @@ export class OrderFormComponent implements OnInit {
     forkJoin([
       this.clientService.getDepartments(),
     ]).subscribe();
-    this.clientService.loadClients();
-    this.productService.loadProducts();
+    this.clientService.loadAll();
+    this.productService.loadAll();
 
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
@@ -150,7 +150,7 @@ export class OrderFormComponent implements OnInit {
 
     request.subscribe({
       next: () => {
-        this.orderService.loadOrders();
+        this.orderService.loadAll();
         this.saving = false;
         this.toastService.success(this.isEdit ? 'Pedido actualizado exitosamente.' : 'Pedido creado exitosamente.');
         this.router.navigate(['/pedidos']);

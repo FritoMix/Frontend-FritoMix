@@ -16,6 +16,11 @@ export interface ChecklistItem {
   observations?: string;
 }
 
+export interface OrderFacturaRequest {
+  orderId: number;
+  numeroFactura: string;
+}
+
 export interface Dispatch {
   id: string;
   dispatchNumber: string;
@@ -25,6 +30,7 @@ export interface Dispatch {
   tipoPedido: string;
   dispatchDate: string;
   dispatchTime: string;
+  numeroFactura?: string | null;
   pesoTotal?: number | null;
   totalDimension?: number | null;
   driverName: string;
@@ -53,6 +59,7 @@ export interface DispatchResponse {
   orders: DispatchOrderInfo[];
   orderId: number;
   orderNumber: string;
+  numeroFactura?: string | null;
   pesoTotal: number | null;
   totalDimension: number | null;
   pesoTotalCargue: number | null;
@@ -77,6 +84,7 @@ export interface DispatchOrderInfo {
   orderNumber: string;
   clientName: string;
   pesoTotalCargue: number | null;
+  numeroFactura?: string | null;
 }
 
 export interface DispatchDetailResponse {
@@ -102,6 +110,8 @@ export interface CreateDispatchRequest {
   dispatchDate?: string;
   status?: string;
   notes?: string;
+  numeroFactura?: string;
+  orderFacturas?: OrderFacturaRequest[];
   details: CreateDispatchDetailRequest[];
   arrumes?: CreateArrumeRequest[];
 }
@@ -153,6 +163,7 @@ export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
     tipoPedido: resp.tipoPedido || 'pedido_unico',
     dispatchDate: resp.dispatchDate ? resp.dispatchDate.split('T')[0] : '',
     dispatchTime: '',
+    numeroFactura: resp.numeroFactura || null,
     pesoTotal: resp.pesoTotal,
     totalDimension: resp.totalDimension,
     driverName: resp.driverName,
@@ -169,3 +180,4 @@ export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
     createdBy: resp.dispatchUserName || '',
   };
 }
+

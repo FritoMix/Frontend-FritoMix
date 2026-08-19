@@ -18,11 +18,16 @@ export class UserListComponent {
   private router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 5;
   openMenuId = signal<number | null>(null);
 
   constructor() {
-    this.userService.loadUsers();
+    this.userService.pageSize.set(5);
+    this.userService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.userService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -30,13 +35,8 @@ export class UserListComponent {
     this.userService.setSearchTerm(value);
   }
 
-  filteredList = computed(() => this.userService.filteredUsers());
-  totalPages = computed(() => Math.ceil(this.filteredList().length / this.pageSize) || 1);
-
-  paginatedUsers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.filteredList().slice(start, start + this.pageSize);
-  });
+  paginatedUsers = computed(() => this.userService.items());
+  totalPages = computed(() => this.userService.totalPages() || 1);
 
 
   toggleMenu(id: number) {
@@ -58,7 +58,7 @@ export class UserListComponent {
     if (!confirm(`¿Estás seguro de ${action} a ${user.name}?`)) return;
     this.userService.toggleStatus(user.id).subscribe({
       next: () => {
-        this.userService.loadUsers();
+        this.userService.load();
       },
     });
   }
@@ -68,7 +68,7 @@ export class UserListComponent {
     if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
     this.userService.delete(id).subscribe({
       next: () => {
-        this.userService.loadUsers();
+        this.userService.load();
       },
     });
   }

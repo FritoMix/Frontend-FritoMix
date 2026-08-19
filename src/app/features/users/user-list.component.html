@@ -106,7 +106,7 @@
         </div>
 
         @if (totalPages() > 1) {
-          <app-pagination [totalPages]="totalPages()" [(currentPage)]="currentPage"></app-pagination>
+          <app-pagination [totalPages]="totalPages()" [currentPage]="currentPage()" (currentPageChange)="onPageChange($event)"></app-pagination>
         }
       }
     </div>

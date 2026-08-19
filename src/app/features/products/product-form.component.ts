@@ -88,7 +88,7 @@ export class ProductFormComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.productService.loadProducts();
+        this.productService.loadAll();
         this.isSubmitting = false;
         this.toastService.success(this.isEdit ? 'Producto actualizado exitosamente.' : 'Producto creado exitosamente.');
         this.router.navigate(['/productos']);

@@ -1,64 +1,23 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, UserResponse, CreateUserRequest, UpdateUserRequest, toUserDisplay } from '../models/user.model';
+import { BaseCrudService } from './base-crud.service';
 
 @Injectable({ providedIn: 'root' })
-export class UserService {
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/api/v1/users`;
+export class UserService extends BaseCrudService<UserResponse, User, CreateUserRequest, UpdateUserRequest> {
+  protected readonly apiUrl = `${environment.apiUrl}/api/v1/users`;
 
-  private usersSignal = signal<User[]>([]);
-  readonly users = this.usersSignal.asReadonly();
-  loading = signal(false);
-
-  searchTerm = signal<string>('');
-  private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  setSearchTerm(value: string) {
-    if (this._debounceTimer) clearTimeout(this._debounceTimer);
-    this._debounceTimer = setTimeout(() => {
-      this.searchTerm.set(value.toLowerCase().trim());
-      this._debounceTimer = null;
-    }, 300);
+  protected toDisplay(item: UserResponse): User {
+    return toUserDisplay(item);
   }
 
-  filteredUsers = computed(() => {
-    const term = this.searchTerm();
-    if (!term) return this.users();
-    return this.users().filter(u =>
-      u.name.toLowerCase().includes(term) ||
-      u.email.toLowerCase().includes(term) ||
-      u.role.toLowerCase().includes(term)
-    );
-  });
-
-  loadUsers(): void {
-    this.loading.set(true);
-    this.http.get<UserResponse[]>(this.apiUrl).subscribe({
-      next: (res) => {
-        this.usersSignal.set(res.map(toUserDisplay));
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+  override create(data: CreateUserRequest): Observable<UserResponse> {
+    return super.create(data);
   }
 
-  findById(id: number): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.apiUrl}/${id}`);
-  }
-
-  create(data: CreateUserRequest): Observable<UserResponse> {
-    return this.http.post<UserResponse>(this.apiUrl, data);
-  }
-
-  update(id: number, data: UpdateUserRequest): Observable<UserResponse> {
-    return this.http.put<UserResponse>(`${this.apiUrl}/${id}`, data);
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  override update(id: number, data: UpdateUserRequest): Observable<UserResponse> {
+    return super.update(id, data);
   }
 
   toggleStatus(id: number): Observable<UserResponse> {

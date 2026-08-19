@@ -1,21 +1,36 @@
 <div class="fixed top-4 right-4 z-[100] flex flex-col gap-3 items-end max-w-sm w-full pointer-events-none">
   @for (toast of toastService.toasts(); track toast.id) {
-    <div class="pointer-events-auto w-full flex items-start gap-3 px-4 py-3 rounded-lg shadow-lg border text-sm font-medium animate-[slideIn_.2s_ease-out]"
-      [class.bg-green-50]="toast.type === 'success'"
-      [class.border-green-200]="toast.type === 'success'"
-      [class.bg-red-50]="toast.type === 'error'"
+    <div class="pointer-events-auto w-full flex flex-col rounded-2xl shadow-xl border overflow-hidden backdrop-blur-xl animate-slide-in-right relative"
+      [class.bg-emerald-50/95]="toast.type === 'success'"
+      [class.border-emerald-200]="toast.type === 'success'"
+      [class.bg-red-50/95]="toast.type === 'error'"
       [class.border-red-200]="toast.type === 'error'">
-      @if (toast.type === 'success') {
-        <svg class="w-5 h-5 text-green-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-        <p class="text-green-700">{{ toast.message }}</p>
-      } @else {
-        <svg class="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-        <p class="text-red-700">{{ toast.message }}</p>
-      }
-      <button type="button" (click)="toastService.dismiss(toast.id)"
-        class="ml-auto shrink-0 text-gray-400 hover:text-gray-600 transition-colors">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-      </button>
+      
+      <div class="flex items-start gap-3 p-4">
+        @if (toast.type === 'success') {
+          <div class="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 animate-icon-pulse">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <p class="text-emerald-900 text-xs sm:text-sm font-semibold flex-1">{{ toast.message }}</p>
+        } @else {
+          <div class="w-6 h-6 rounded-full bg-red-500/20 text-red-600 flex items-center justify-center shrink-0 mt-0.5 animate-icon-pulse">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+          </div>
+          <p class="text-red-900 text-xs sm:text-sm font-semibold flex-1">{{ toast.message }}</p>
+        }
+        <button type="button" (click)="toastService.dismiss(toast.id)"
+          class="shrink-0 text-gray-400 hover:text-gray-600 transition-colors p-0.5 rounded-lg hover:bg-black/5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Auto dismiss progress bar -->
+      <div class="h-1 w-full bg-black/5">
+        <div class="h-full animate-[progressBar_3s_linear_forwards]"
+          [class.bg-emerald-500]="toast.type === 'success'"
+          [class.bg-red-500]="toast.type === 'error'"></div>
+      </div>
     </div>
   }
 </div>
+
