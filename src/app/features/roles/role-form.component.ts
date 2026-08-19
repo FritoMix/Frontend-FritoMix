@@ -206,7 +206,7 @@ export class RoleFormComponent implements OnInit {
         permissions: selectedPerms,
       }).subscribe({
         next: () => {
-          this.roleService.loadRoles();
+          this.roleService.loadAll();
           this.saving.set(false);
           this.router.navigate(['/roles']);
         },
@@ -219,7 +219,7 @@ export class RoleFormComponent implements OnInit {
         permissions: selectedPerms,
       }).subscribe({
         next: () => {
-          this.roleService.loadRoles();
+          this.roleService.loadAll();
           this.saving.set(false);
           this.router.navigate(['/roles']);
         },

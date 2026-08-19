@@ -62,7 +62,7 @@ export class DriverFormComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.driverService.loadDrivers();
+        this.driverService.loadAll();
         this.isSubmitting = false;
         this.router.navigate(['/conductores']);
       },

@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, of, Subscription } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { PageResponse } from '../../core/models/pagination.model';
 
 interface DashboardData {
   ordersToday: number;
@@ -23,6 +24,15 @@ interface OrderLite {
   status?: string;
   orderDate?: string;
 }
+
+const EMPTY_PAGE: PageResponse<never> = {
+  content: [],
+  page: 0,
+  size: 0,
+  totalElements: 0,
+  totalPages: 0,
+  last: true,
+};
 
 @Component({
   selector: 'app-dashboard',
@@ -55,18 +65,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const sub = this.http.get<DashboardData>(`${environment.apiUrl}/api/v1/dashboard`).pipe(
       catchError(() => {
         return forkJoin({
-          customers: this.http.get<unknown[]>(`${environment.apiUrl}/api/v1/customers`).pipe(catchError(() => of([]))),
-          products:  this.http.get<unknown[]>(`${environment.apiUrl}/api/v1/products`).pipe(catchError(() => of([]))),
-          orders:    this.http.get<OrderLite[]>(`${environment.apiUrl}/api/v1/orders`).pipe(catchError(() => of([]))),
+          customers: this.http.get<PageResponse<unknown>>(`${environment.apiUrl}/api/v1/customers`).pipe(catchError(() => of(EMPTY_PAGE as PageResponse<unknown>))),
+          products:  this.http.get<PageResponse<unknown>>(`${environment.apiUrl}/api/v1/products`).pipe(catchError(() => of(EMPTY_PAGE as PageResponse<unknown>))),
+          orders:    this.http.get<PageResponse<OrderLite>>(`${environment.apiUrl}/api/v1/orders`).pipe(catchError(() => of(EMPTY_PAGE as PageResponse<OrderLite>))),
         }).pipe(
           map(({ customers, products, orders }) => {
             const statusMap: Record<string, number> = {};
-            orders.forEach((o: OrderLite) => {
+            orders.content.forEach((o: OrderLite) => {
               const s = o.status || 'PENDIENTE';
               statusMap[s] = (statusMap[s] || 0) + 1;
             });
 
-            const recentOrders = orders.slice(-5).reverse().map((o: OrderLite) => ({
+            const recentOrders = orders.content.slice(-5).reverse().map((o: OrderLite) => ({
               id: o.orderNumber || String(o.id),
               client: o.customerName || '—',
               status: o.status || 'PENDIENTE',
@@ -74,19 +84,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
             }));
 
             const today = new Date().toISOString().split('T')[0];
-            const ordersToday = orders.filter((o: OrderLite) =>
+            const ordersToday = orders.content.filter((o: OrderLite) =>
               (o.orderDate || '').startsWith(today)
             ).length;
 
-            const pendingDispatches = orders.filter((o: OrderLite) =>
+            const pendingDispatches = orders.content.filter((o: OrderLite) =>
               o.status === 'PENDIENTE' || o.status === 'EN PREPARACIÓN'
             ).length;
 
             return {
               ordersToday,
               pendingDispatches,
-              totalProducts: products.length,
-              totalCustomers: customers.length,
+              totalProducts: products.totalElements,
+              totalCustomers: customers.totalElements,
               monthlySales: [],
               ordersByStatus: Object.entries(statusMap).map(([status, count]) => ({ status, count })),
               topProducts: [],
@@ -125,6 +135,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ordersByStatus = computed(() => {
     return this.data()?.ordersByStatus ?? [];
   });
+
+  totalOrdersCount = computed(() => {
+    return this.ordersByStatus().reduce((sum, item) => sum + item.count, 0);
+  });
+
 
   donutConic = computed(() => {
     const items = this.ordersByStatus();
