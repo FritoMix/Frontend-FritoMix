@@ -17,19 +17,17 @@ export class DriverListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 5;
 
-  driversFiltered = computed(() => this.driverService.filteredDrivers());
-  totalPages = computed(() => Math.ceil(this.driversFiltered().length / this.pageSize) || 1);
-
-  paginatedDrivers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.driversFiltered().slice(start, start + this.pageSize);
-  });
-
+  paginatedDrivers = computed(() => this.driverService.items());
+  totalPages = computed(() => this.driverService.totalPages() || 1);
 
   ngOnInit() {
-    this.driverService.loadDrivers();
+    this.driverService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.driverService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -49,7 +47,7 @@ export class DriverListComponent implements OnInit {
   deleteDriver(id: number) {
     if (confirm('¿Estás seguro de eliminar este conductor?')) {
       this.driverService.delete(id).subscribe({
-        next: () => this.driverService.loadDrivers(),
+        next: () => this.driverService.load(),
       });
     }
   }

@@ -1,71 +1,35 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { Injectable, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Client, ClientResponse, CreateClientRequest, UpdateClientRequest, Department, City, toClientDisplay } from '../models/client.model';
+import { BaseCrudService } from './base-crud.service';
 
 @Injectable({ providedIn: 'root' })
-export class ClientService {
-  private readonly http = inject(HttpClient);
-  private readonly apiUrl = `${environment.apiUrl}/api/v1/customers`;
+export class ClientService extends BaseCrudService<ClientResponse, Client, CreateClientRequest, UpdateClientRequest> {
+  protected readonly apiUrl = `${environment.apiUrl}/api/v1/customers`;
   private readonly locationsUrl = `${environment.apiUrl}/api/v1/locations`;
 
-  private clientsSignal = signal<Client[]>([]);
-  readonly clients = this.clientsSignal.asReadonly();
-  loading = signal(false);
   hasError = signal(false);
 
-  searchTerm = signal<string>('');
-  private _debounceTimer: ReturnType<typeof setTimeout> | null = null;
-
-  setSearchTerm(value: string) {
-    if (this._debounceTimer) clearTimeout(this._debounceTimer);
-    this._debounceTimer = setTimeout(() => {
-      this.searchTerm.set(value.toLowerCase().trim());
-      this._debounceTimer = null;
-    }, 300);
+  protected toDisplay(item: ClientResponse): Client {
+    return toClientDisplay(item);
   }
 
-  filteredClients = computed(() => {
-    const term = this.searchTerm();
-    if (!term) return this.clients();
-    return this.clients().filter(c =>
-      (c.businessName?.toLowerCase().includes(term) ?? false) ||
-      (c.code?.toLowerCase().includes(term) ?? false) ||
-      (c.document?.toLowerCase().includes(term) ?? false) ||
-      (c.cityName?.toLowerCase().includes(term) ?? false)
-    );
-  });
-
-  loadClients(): void {
-    this.loading.set(true);
+  override load(): void {
     this.hasError.set(false);
-    this.http.get<ClientResponse[]>(this.apiUrl).subscribe({
-      next: (res) => {
-        this.clientsSignal.set(res.map(toClientDisplay));
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loading.set(false);
-        this.hasError.set(true);
-      },
-    });
+    super.load();
   }
 
-  findById(id: number): Observable<ClientResponse> {
-    return this.http.get<ClientResponse>(`${this.apiUrl}/${id}`);
+  protected override onLoadError(): void {
+    this.hasError.set(true);
   }
 
-  create(data: CreateClientRequest): Observable<ClientResponse> {
-    return this.http.post<ClientResponse>(this.apiUrl, data);
+  override create(data: CreateClientRequest): Observable<ClientResponse> {
+    return super.create(data);
   }
 
-  update(id: number, data: UpdateClientRequest): Observable<ClientResponse> {
-    return this.http.put<ClientResponse>(`${this.apiUrl}/${id}`, data);
-  }
-
-  delete(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  override update(id: number, data: UpdateClientRequest): Observable<ClientResponse> {
+    return super.update(id, data);
   }
 
   getDepartments(): Observable<Department[]> {

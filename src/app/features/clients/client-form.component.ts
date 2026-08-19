@@ -101,7 +101,7 @@ export class ClientFormComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.clientService.loadClients();
+        this.clientService.loadAll();
         this.isSubmitting = false;
         this.toastService.success(this.isEdit ? 'Cliente actualizado exitosamente.' : 'Cliente creado exitosamente.');
         this.router.navigate(['/clientes']);

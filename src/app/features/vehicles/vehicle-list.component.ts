@@ -17,19 +17,17 @@ export class VehicleListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 5;
 
-  vehiculosFiltrados = computed(() => this.vehicleService.filteredVehicles());
-  totalPages = computed(() => Math.ceil(this.vehiculosFiltrados().length / this.pageSize) || 1);
-
-  paginatedVehicles = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.vehiculosFiltrados().slice(start, start + this.pageSize);
-  });
-
+  paginatedVehicles = computed(() => this.vehicleService.items());
+  totalPages = computed(() => this.vehicleService.totalPages() || 1);
 
   ngOnInit() {
-    this.vehicleService.loadVehicles();
+    this.vehicleService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.vehicleService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -44,7 +42,7 @@ export class VehicleListComponent implements OnInit {
   deleteVehicle(id: number) {
     if (confirm('¿Estás seguro de eliminar este vehículo?')) {
       this.vehicleService.delete(id).subscribe({
-        next: () => this.vehicleService.loadVehicles(),
+        next: () => this.vehicleService.load(),
       });
     }
   }

@@ -3,7 +3,9 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Notification, UnreadCountResponse } from '../models/notification.model';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AuthService } from './auth.service';
+import { PageResponse } from '../models/pagination.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService implements OnDestroy {
@@ -15,7 +17,9 @@ export class NotificationService implements OnDestroy {
   unreadCount = signal(0);
 
   findAll(): Observable<Notification[]> {
-    return this.http.get<Notification[]>(this.apiUrl);
+    return this.http
+      .get<PageResponse<Notification>>(this.apiUrl, { params: { page: 0, size: 20 } })
+      .pipe(map(res => res.content));
   }
 
   loadUnreadCount() {

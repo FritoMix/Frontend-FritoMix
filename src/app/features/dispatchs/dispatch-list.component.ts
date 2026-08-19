@@ -22,7 +22,6 @@ export class DispatchListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 10;
 
   isCartera = computed(() => this.authService.currentUser()?.role === 'cartera');
 
@@ -32,7 +31,12 @@ export class DispatchListComponent implements OnInit {
   });
 
   ngOnInit() {
-    this.dispatchService.loadDispatches();
+    this.dispatchService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.dispatchService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -40,16 +44,8 @@ export class DispatchListComponent implements OnInit {
     this.dispatchService.setSearchTerm(value);
   }
 
-  filtrosAplicados = computed(() => {
-    return this.dispatchService.filteredDispatches();
-  });
-
-  totalPages = computed(() => Math.ceil(this.filtrosAplicados().length / this.pageSize) || 1);
-
-  paginatedDispatches = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.filtrosAplicados().slice(start, start + this.pageSize);
-  });
+  paginatedDispatches = computed(() => this.dispatchService.items());
+  totalPages = computed(() => this.dispatchService.totalPages() || 1);
 
 
   statusClass(status: DispatchStatus): string {
@@ -78,7 +74,7 @@ export class DispatchListComponent implements OnInit {
     if (confirm('¿Está seguro de eliminar este despacho?')) {
       this.dispatchService.delete(Number(id)).subscribe({
         next: () => {
-          this.dispatchService.loadDispatches();
+          this.dispatchService.load();
           this.toastService.success('Despacho eliminado exitosamente.');
         },
         error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al eliminar el despacho.')
@@ -103,7 +99,7 @@ export class DispatchListComponent implements OnInit {
     if (!next) return;
     this.dispatchService.updateStatus(Number(id), next).subscribe({
       next: () => {
-        this.dispatchService.loadDispatches();
+        this.dispatchService.load();
         this.toastService.success('Estado del despacho actualizado.');
       },
       error: (err) => this.toastService.error(err.error?.message || err.error?.error || 'Error al avanzar el estado del despacho.')

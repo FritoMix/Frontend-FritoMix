@@ -62,7 +62,7 @@ export class VehicleFormComponent implements OnInit {
 
     request$.subscribe({
       next: () => {
-        this.vehicleService.loadVehicles();
+        this.vehicleService.loadAll();
         this.isSubmitting = false;
         this.router.navigate(['/vehiculos']);
       },

@@ -1,117 +1,168 @@
 
-<div class="mb-6">
+<div class="mb-6 animate-fade-in-up">
   <div class="flex items-center gap-3 mb-1">
-    <span class="module-badge module-badge--blue">1.</span>
+    <span class="module-badge module-badge--blue shadow-md">1.</span>
     <div>
-      <h1 class="text-2xl font-extrabold text-[#071938]">Dashboard</h1>
-      <p class="text-xs text-gray-500 mt-0.5">Resumen general de la operación</p>
+      <h1 class="text-2xl font-extrabold text-[#071938] tracking-tight">Dashboard</h1>
+      <p class="text-xs text-gray-500 mt-0.5">Resumen general de la operación en tiempo real</p>
     </div>
   </div>
 </div>
 
 @if (loading()) {
-  <div class="flex items-center justify-center py-20">
-    <div class="flex flex-col items-center gap-3">
-      <div class="w-8 h-8 border-4 border-blue-200 border-t-[#0055FF] rounded-full animate-spin"></div>
-      <span class="text-gray-500 text-sm">Cargando dashboard...</span>
+  <!-- Skeleton Loading State -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+    @for (i of [1,2,3,4]; track i) {
+      <div class="fm-card p-5 flex items-center justify-between">
+        <div class="space-y-2 flex-1 pr-4">
+          <div class="h-3 w-24 skeleton"></div>
+          <div class="h-8 w-16 skeleton"></div>
+        </div>
+        <div class="w-12 h-12 rounded-2xl skeleton"></div>
+      </div>
+    }
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
+    <div class="lg:col-span-3 fm-card p-5 space-y-4">
+      <div class="h-5 w-32 skeleton"></div>
+      <div class="h-44 w-full skeleton rounded-lg"></div>
+    </div>
+    <div class="lg:col-span-2 fm-card p-5 space-y-4">
+      <div class="h-5 w-36 skeleton"></div>
+      <div class="h-44 w-full skeleton rounded-lg"></div>
     </div>
   </div>
 } @else if (hasError()) {
-  <div class="flex items-center justify-center py-20">
-    <div class="fm-card p-8 text-center max-w-sm">
-      <div class="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+  <div class="flex items-center justify-center py-20 animate-scale-in">
+    <div class="fm-card p-8 text-center max-w-sm shadow-xl">
+      <div class="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-4 text-red-500 shadow-inner">
+        <svg class="w-7 h-7 text-red-500 animate-icon-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
       </div>
-      <h3 class="font-bold text-[#071938] mb-2">No se pudo conectar al servidor</h3>
-      <p class="text-sm text-gray-500 mb-4">Verifica que el backend esté corriendo en <code class="text-xs bg-gray-100 px-1 rounded">localhost:8080</code></p>
-      <button (click)="loadDashboard()" class="bg-[#0055FF] text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-[#0044DD] transition-colors">
-        Reintentar
+      <h3 class="font-bold text-[#071938] mb-2 text-lg">No se pudo conectar al servidor</h3>
+      <p class="text-xs text-gray-500 mb-5">Verifica que el backend esté ejecutándose en <code class="text-xs bg-gray-100 px-1.5 py-0.5 rounded text-gray-700 font-mono">localhost:8080</code></p>
+      <button (click)="loadDashboard()" class="bg-[#0055FF] hover:bg-[#0044DD] text-white text-sm font-bold py-2.5 px-6 rounded-xl transition-all shadow-md hover:shadow-lg active:scale-95 btn-shimmer">
+        Reintentar conexión
       </button>
     </div>
   </div>
 } @else {
+  <!-- KPI Cards with stagger animation -->
   <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-    <div class="fm-card p-5 flex items-center justify-between">
+    <!-- Card 1: Pedidos del día -->
+    <div class="fm-card p-5 flex items-center justify-between animate-fade-in-up anim-delay-100 group hover:-translate-y-1 transition-all duration-300">
       <div>
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Pedidos del día</p>
-        <p class="text-3xl font-extrabold text-[#071938] mt-2">{{ data()?.ordersToday ?? 0 }}</p>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Pedidos del día</p>
+        <p class="text-3xl font-extrabold text-[#071938] mt-2 group-hover:text-[#0055FF] transition-colors">{{ data()?.ordersToday ?? 0 }}</p>
       </div>
-      <div class="w-12 h-12 rounded-xl bg-blue-50 text-[#0055FF] flex items-center justify-center text-xl">📋</div>
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500/10 to-blue-600/20 text-[#0055FF] flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+      </div>
     </div>
-    <div class="fm-card p-5 flex items-center justify-between">
+
+    <!-- Card 2: Despachos pendientes -->
+    <div class="fm-card p-5 flex items-center justify-between animate-fade-in-up anim-delay-200 group hover:-translate-y-1 transition-all duration-300">
       <div>
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Despachos pendientes</p>
-        <p class="text-3xl font-extrabold text-[#071938] mt-2">{{ data()?.pendingDispatches ?? 0 }}</p>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Despachos pendientes</p>
+        <p class="text-3xl font-extrabold text-[#071938] mt-2 group-hover:text-amber-600 transition-colors">{{ data()?.pendingDispatches ?? 0 }}</p>
       </div>
-      <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">🚚</div>
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-500/10 to-amber-600/20 text-amber-600 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/></svg>
+      </div>
     </div>
-    <div class="fm-card p-5 flex items-center justify-between">
+
+    <!-- Card 3: Productos inventario -->
+    <div class="fm-card p-5 flex items-center justify-between animate-fade-in-up anim-delay-300 group hover:-translate-y-1 transition-all duration-300">
       <div>
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Productos inventario</p>
-        <p class="text-3xl font-extrabold text-[#071938] mt-2">{{ data()?.totalProducts ?? 0 }}</p>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Productos inventario</p>
+        <p class="text-3xl font-extrabold text-[#071938] mt-2 group-hover:text-emerald-600 transition-colors">{{ data()?.totalProducts ?? 0 }}</p>
       </div>
-      <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">📦</div>
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/20 text-emerald-600 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      </div>
     </div>
-    <div class="fm-card p-5 flex items-center justify-between">
+
+    <!-- Card 4: Clientes registrados -->
+    <div class="fm-card p-5 flex items-center justify-between animate-fade-in-up anim-delay-400 group hover:-translate-y-1 transition-all duration-300">
       <div>
-        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Clientes registrados</p>
-        <p class="text-3xl font-extrabold text-[#071938] mt-2">{{ data()?.totalCustomers ?? 0 }}</p>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Clientes registrados</p>
+        <p class="text-3xl font-extrabold text-[#071938] mt-2 group-hover:text-purple-600 transition-colors">{{ data()?.totalCustomers ?? 0 }}</p>
       </div>
-      <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">👥</div>
+      <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/10 to-purple-600/20 text-purple-600 flex items-center justify-center shadow-xs group-hover:scale-110 transition-transform">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      </div>
     </div>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-5 gap-5 mb-6">
-    <div class="lg:col-span-3 fm-card p-5">
+    <!-- Gráfica de barras -->
+    <div class="lg:col-span-3 fm-card p-5 animate-fade-in-up anim-delay-300">
       <div class="flex items-center justify-between mb-5">
-        <h3 class="font-bold text-[#071938]">Ventas por mes</h3>
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#0055FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <h3 class="font-bold text-[#071938] text-base">Ventas por mes</h3>
+        </div>
+        <span class="text-xs text-gray-400 font-medium">Año en curso</span>
       </div>
-      <div class="flex items-end gap-2 h-44">
+      <div class="flex items-end gap-2 h-44 pt-4 px-2 border-b border-gray-100">
         @for (bar of monthlyBars(); track bar.month) {
-          <div class="flex-1 flex flex-col items-center gap-1">
-            <span class="text-[10px] text-gray-400 font-semibold">{{ bar.count }}</span>
+          <div class="flex-1 flex flex-col items-center gap-1 group relative">
+            <!-- Tooltip -->
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-[#071938] text-white text-[10px] font-bold py-1 px-2 rounded shadow-md pointer-events-none z-10 whitespace-nowrap">
+              {{ bar.count }} pedidos
+            </div>
+            <span class="text-[10px] text-gray-400 font-semibold group-hover:text-[#0055FF] transition-colors">{{ bar.count }}</span>
             <div
-              class="w-full rounded-t bg-[#0055FF] transition-all hover:bg-[#0044DD]"
+              class="w-full rounded-t-lg bg-gradient-to-t from-[#47679d] to-[#0055FF] transition-all duration-300 group-hover:brightness-110 shadow-xs animate-bar-grow"
               [style.height.%]="bar.percent"
             ></div>
-            <span class="text-[10px] text-gray-500 font-semibold">{{ bar.month }}</span>
+            <span class="text-[10px] text-gray-500 font-semibold mt-1 group-hover:text-[#071938] transition-colors">{{ bar.month }}</span>
           </div>
         }
       </div>
     </div>
 
-    <div class="lg:col-span-2 fm-card p-5">
+    <!-- Gráfica Donut -->
+    <div class="lg:col-span-2 fm-card p-5 animate-fade-in-up anim-delay-400">
       <div class="flex items-center justify-between mb-5">
-        <h3 class="font-bold text-[#071938]">Pedidos por estado</h3>
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#0055FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+          <h3 class="font-bold text-[#071938] text-base">Pedidos por estado</h3>
+        </div>
       </div>
       @if (ordersByStatus().length > 0) {
-        <div class="flex items-center gap-6">
+        <div class="flex items-center justify-around gap-4 py-2">
           <div
-            class="w-32 h-32 rounded-full flex-shrink-0 relative flex items-center justify-center"
+            class="w-36 h-36 rounded-full flex-shrink-0 relative flex items-center justify-center shadow-inner transition-transform hover:scale-105 animate-donut-reveal"
             [style.background]="donutConic()"
           >
-            <div class="w-20 h-20 bg-white rounded-full"></div>
+            <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center flex-col shadow-xs">
+              <span class="text-xs text-gray-400 font-medium">Total</span>
+              <span class="text-lg font-extrabold text-[#071938]">{{ totalOrdersCount() }}</span>
+            </div>
           </div>
           <div class="flex flex-col gap-2.5 text-xs">
             @for (item of ordersByStatus(); track item.status) {
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full" [style.background]="statusColor(item.status)"></span>
+              <div class="flex items-center gap-2.5 p-1 rounded-lg hover:bg-gray-50 transition-colors cursor-default">
+                <span class="w-3 h-3 rounded-full shadow-xs shrink-0" [style.background]="statusColor(item.status)"></span>
                 <span class="text-gray-600 font-medium">{{ statusLabel(item.status) }}</span>
-                <span class="ml-auto font-bold text-[#071938]">{{ item.count }}</span>
+                <span class="ml-auto font-bold text-[#071938] bg-gray-100 px-2 py-0.5 rounded-full text-[11px]">{{ item.count }}</span>
               </div>
             }
           </div>
         </div>
       } @else {
-        <p class="text-sm text-gray-400 py-8 text-center">Sin pedidos registrados</p>
+        <div class="fm-empty py-8">
+          <p class="fm-empty__title">Sin pedidos registrados</p>
+        </div>
       }
     </div>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-    <div class="fm-card p-5">
+    <!-- Productos más vendidos -->
+    <div class="fm-card p-5 animate-fade-in-up anim-delay-500">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-[#071938]">Productos más vendidos</h3>
+        <h3 class="font-bold text-[#071938] text-base">Productos más vendidos</h3>
       </div>
       <div class="fm-table-wrapper -mx-2">
         <table class="fm-table">
@@ -124,10 +175,10 @@
           </thead>
           <tbody>
             @for (p of data()?.topProducts ?? []; track p.code) {
-              <tr>
+              <tr class="hover:bg-blue-50/50">
                 <td class="font-semibold text-[#071938] text-xs">{{ p.name }}</td>
-                <td><span class="font-mono text-sm font-semibold text-[#071938]">{{ p.code }}</span></td>
-                <td class="text-right font-bold text-[#071938]">{{ p.units }}</td>
+                <td><span class="font-mono text-xs font-bold text-[#47679d] bg-blue-50 px-2 py-0.5 rounded">{{ p.code }}</span></td>
+                <td class="text-right font-extrabold text-[#071938]">{{ p.units }}</td>
               </tr>
             } @empty {
               <tr><td colspan="3" class="!text-center"><div class="fm-empty"><p class="fm-empty__title">Sin datos</p></div></td></tr>
@@ -137,9 +188,10 @@
       </div>
     </div>
 
-    <div class="fm-card p-5">
+    <!-- Últimos pedidos -->
+    <div class="fm-card p-5 animate-fade-in-up anim-delay-600">
       <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-[#071938]">Últimos pedidos</h3>
+        <h3 class="font-bold text-[#071938] text-base">Últimos pedidos</h3>
       </div>
       <div class="fm-table-wrapper -mx-2">
         <table class="fm-table">
@@ -153,13 +205,13 @@
           </thead>
           <tbody>
             @for (o of data()?.recentOrders ?? []; track o.id) {
-              <tr>
-                <td class="font-mono text-xs font-bold text-[#071938]">{{ o.id }}</td>
-                <td class="text-gray-600 text-xs font-medium">{{ o.client }}</td>
+              <tr class="hover:bg-blue-50/50">
+                <td class="font-mono text-xs font-bold text-[#0055FF]">{{ o.id }}</td>
+                <td class="text-gray-700 text-xs font-medium">{{ o.client }}</td>
                 <td>
                   <span class="status-badge" [class]="statusBadgeClass(o.status)">{{ statusLabel(o.status) }}</span>
                 </td>
-                <td class="text-right text-gray-500 text-xs">{{ o.date }}</td>
+                <td class="text-right text-gray-500 text-xs font-medium">{{ o.date }}</td>
               </tr>
             } @empty {
               <tr><td colspan="4" class="!text-center"><div class="fm-empty"><p class="fm-empty__title">Sin pedidos</p></div></td></tr>
@@ -170,4 +222,5 @@
     </div>
   </div>
 }
+
 

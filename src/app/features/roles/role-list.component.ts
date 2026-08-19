@@ -17,11 +17,16 @@ export class RoleListComponent {
   private router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 5;
   openMenuId = signal<number | null>(null);
 
   constructor() {
-    this.roleService.loadRoles();
+    this.roleService.pageSize.set(5);
+    this.roleService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.roleService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -29,13 +34,8 @@ export class RoleListComponent {
     this.roleService.setSearchTerm(value);
   }
 
-  filteredList = computed(() => this.roleService.filteredRoles());
-  totalPages = computed(() => Math.ceil(this.filteredList().length / this.pageSize) || 1);
-
-  paginatedRoles = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.filteredList().slice(start, start + this.pageSize);
-  });
+  paginatedRoles = computed(() => this.roleService.items());
+  totalPages = computed(() => this.roleService.totalPages() || 1);
 
 
   toggleMenu(id: number) {
@@ -51,7 +51,7 @@ export class RoleListComponent {
     this.openMenuId.set(null);
     if (!confirm(`¿Estás seguro de eliminar el rol "${role.name}"?`)) return;
     this.roleService.delete(role.id).subscribe({
-      next: () => this.roleService.loadRoles(),
+      next: () => this.roleService.load(),
     });
   }
 }

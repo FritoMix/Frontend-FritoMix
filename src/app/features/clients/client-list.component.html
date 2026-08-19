@@ -31,7 +31,7 @@
         </div>
         <p class="font-semibold text-[#071938] mb-1">No se pudieron cargar los clientes</p>
         <p class="text-sm text-gray-500 mb-4">Verifica la conexión con el servidor</p>
-        <button (click)="clientService.loadClients()" class="bg-[#0055FF] text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-[#0044DD] transition-colors">
+        <button (click)="clientService.load()" class="bg-[#0055FF] text-white text-sm font-bold py-2 px-4 rounded-lg hover:bg-[#0044DD] transition-colors">
           Reintentar
         </button>
       </div>
@@ -110,7 +110,7 @@
     </div>
 
     @if (totalPages() > 1) {
-      <app-pagination [totalPages]="totalPages()" [(currentPage)]="currentPage"></app-pagination>
+      <app-pagination [totalPages]="totalPages()" [currentPage]="currentPage()" (currentPageChange)="onPageChange($event)"></app-pagination>
     }
   }
 </div>
