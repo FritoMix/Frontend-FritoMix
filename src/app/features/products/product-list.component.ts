@@ -17,19 +17,17 @@ export class ProductListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 10;
 
-  filteredList = computed(() => this.productService.filteredProducts());
-  totalPages = computed(() => Math.ceil(this.filteredList().length / this.pageSize) || 1);
-
-  paginatedProducts = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.filteredList().slice(start, start + this.pageSize);
-  });
-
+  paginatedProducts = computed(() => this.productService.items());
+  totalPages = computed(() => this.productService.totalPages() || 1);
 
   ngOnInit() {
-    this.productService.loadProducts();
+    this.productService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.productService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -44,7 +42,7 @@ export class ProductListComponent implements OnInit {
   deleteProduct(id: number) {
     if (confirm('¿Estás seguro de eliminar este producto?')) {
       this.productService.delete(id).subscribe({
-        next: () => this.productService.loadProducts(),
+        next: () => this.productService.load(),
       });
     }
   }

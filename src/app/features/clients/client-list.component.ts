@@ -17,18 +17,17 @@ export class ClientListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  pageSize = 10;
 
-  clientsFiltered = computed(() => this.clientService.filteredClients());
-  totalPages = computed(() => Math.ceil(this.clientsFiltered().length / this.pageSize) || 1);
-
-  paginatedClients = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize;
-    return this.clientsFiltered().slice(start, start + this.pageSize);
-  });
+  paginatedClients = computed(() => this.clientService.items());
+  totalPages = computed(() => this.clientService.totalPages() || 1);
 
   ngOnInit() {
-    this.clientService.loadClients();
+    this.clientService.load();
+  }
+
+  onPageChange(page: number) {
+    this.currentPage.set(page);
+    this.clientService.setPage(page - 1);
   }
 
   onSearchChange(value: string) {
@@ -43,7 +42,7 @@ export class ClientListComponent implements OnInit {
   deleteClient(id: number) {
     if (confirm('¿Estás seguro de eliminar este cliente?')) {
       this.clientService.delete(id).subscribe({
-        next: () => this.clientService.loadClients(),
+        next: () => this.clientService.load(),
       });
     }
   }

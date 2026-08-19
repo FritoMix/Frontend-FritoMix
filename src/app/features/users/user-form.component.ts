@@ -142,7 +142,7 @@ export class UserFormComponent implements OnInit {
 
       this.userService.update(this.userId, body).subscribe({
         next: () => {
-          this.userService.loadUsers();
+          this.userService.loadAll();
           this.saving.set(false);
           this.toastService.success('Usuario actualizado exitosamente.');
           this.router.navigate(['/usuarios']);
@@ -161,7 +161,7 @@ export class UserFormComponent implements OnInit {
         role: roleUppercase,
       }).subscribe({
         next: () => {
-          this.userService.loadUsers();
+          this.userService.loadAll();
           this.saving.set(false);
           this.toastService.success('Usuario creado exitosamente.');
           this.router.navigate(['/usuarios']);
