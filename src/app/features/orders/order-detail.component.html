@@ -336,7 +336,7 @@
     [message]="dialog.message"
     [confirmLabel]="dialog.confirmLabel"
     [type]="dialog.type"
-    (confirm)="closeConfirm(); changeStatus(dialog.status)"
-    (cancel)="closeConfirm()"
+    (confirmed)="closeConfirm(); changeStatus(dialog.status)"
+    (cancelled)="closeConfirm()"
   ></app-confirm-dialog>
 }

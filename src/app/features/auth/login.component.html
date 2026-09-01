@@ -56,9 +56,10 @@
 
         <form (ngSubmit)="onLogin()" class="space-y-5">
           <div>
-            <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Usuario / Correo</label>
+            <label for="login-email" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Usuario / Correo</label>
             <div class="relative">
               <input
+                id="login-email"
                 type="email"
                 [(ngModel)]="email"
                 name="email"
@@ -70,9 +71,10 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Contraseña</label>
+            <label for="login-password" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Contraseña</label>
             <div class="relative">
               <input
+                id="login-password"
                 [type]="showPassword() ? 'text' : 'password'"
                 [(ngModel)]="password"
                 name="password"

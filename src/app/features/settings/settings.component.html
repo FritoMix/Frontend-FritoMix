@@ -34,20 +34,20 @@
           <h3 class="font-bold text-[#071938] text-base mb-5">Parámetros Generales</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Nombre Empresa</label>
-              <input type="text" [(ngModel)]="companyName" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-[#071938]" />
+              <label for="settings-companyName" class="block text-xs font-semibold text-gray-500 mb-1">Nombre Empresa</label>
+              <input id="settings-companyName" type="text" [(ngModel)]="companyName" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-semibold text-[#071938]" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">NIT</label>
-              <input type="text" [(ngModel)]="nit" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono" />
+              <label for="settings-nit" class="block text-xs font-semibold text-gray-500 mb-1">NIT</label>
+              <input id="settings-nit" type="text" [(ngModel)]="nit" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none font-mono" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Email Administrador</label>
-              <input type="email" [(ngModel)]="adminEmail" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-adminEmail" class="block text-xs font-semibold text-gray-500 mb-1">Email Administrador</label>
+              <input id="settings-adminEmail" type="email" [(ngModel)]="adminEmail" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Teléfono</label>
-              <input type="text" [(ngModel)]="phone" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-phone" class="block text-xs font-semibold text-gray-500 mb-1">Teléfono</label>
+              <input id="settings-phone" type="text" [(ngModel)]="phone" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
         }
@@ -56,20 +56,20 @@
           <h3 class="font-bold text-[#071938] text-base mb-5">Datos de la Empresa</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Dirección</label>
-              <input type="text" [(ngModel)]="address" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-address" class="block text-xs font-semibold text-gray-500 mb-1">Dirección</label>
+              <input id="settings-address" type="text" [(ngModel)]="address" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Ciudad</label>
-              <input type="text" [(ngModel)]="city" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-city" class="block text-xs font-semibold text-gray-500 mb-1">Ciudad</label>
+              <input id="settings-city" type="text" [(ngModel)]="city" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Departamento</label>
-              <input type="text" [(ngModel)]="department" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-department" class="block text-xs font-semibold text-gray-500 mb-1">Departamento</label>
+              <input id="settings-department" type="text" [(ngModel)]="department" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Actividad Económica</label>
-              <input type="text" [(ngModel)]="economicActivity" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-economicActivity" class="block text-xs font-semibold text-gray-500 mb-1">Actividad Económica</label>
+              <input id="settings-economicActivity" type="text" [(ngModel)]="economicActivity" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
         }
@@ -78,13 +78,14 @@
           <h3 class="font-bold text-[#071938] text-base mb-5">Políticas de Seguridad</h3>
           <div class="space-y-4">
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Longitud mínima de contraseña</label>
-              <input type="number" [(ngModel)]="passwordMinLength" min="4" max="32" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-passwordMinLength" class="block text-xs font-semibold text-gray-500 mb-1">Longitud mínima de contraseña</label>
+              <input id="settings-passwordMinLength" type="number" [(ngModel)]="passwordMinLength" min="4" max="32" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Exigir caracteres especiales</label>
+              <label for="settings-passwordRequireSpecial" class="block text-xs font-semibold text-gray-500 mb-1">Exigir caracteres especiales</label>
               <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
                 <input
+                  id="settings-passwordRequireSpecial"
                   type="checkbox"
                   [(ngModel)]="passwordRequireSpecial"
                   class="w-5 h-5 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF] cursor-pointer"
@@ -93,17 +94,17 @@
               </div>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Expiración de contraseña (días)</label>
-              <input type="number" [(ngModel)]="passwordExpirationDays" min="0" max="365" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-passwordExpirationDays" class="block text-xs font-semibold text-gray-500 mb-1">Expiración de contraseña (días)</label>
+              <input id="settings-passwordExpirationDays" type="number" [(ngModel)]="passwordExpirationDays" min="0" max="365" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
               <p class="text-xs text-gray-400 mt-1">0 = nunca expira</p>
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Timeout de sesión (minutos)</label>
-              <input type="number" [(ngModel)]="sessionTimeoutMinutes" min="5" max="480" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-sessionTimeoutMinutes" class="block text-xs font-semibold text-gray-500 mb-1">Timeout de sesión (minutos)</label>
+              <input id="settings-sessionTimeoutMinutes" type="number" [(ngModel)]="sessionTimeoutMinutes" min="5" max="480" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
             <div>
-              <label class="block text-xs font-semibold text-gray-500 mb-1">Intentos máximos de inicio de sesión</label>
-              <input type="number" [(ngModel)]="maxLoginAttempts" min="1" max="20" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+              <label for="settings-maxLoginAttempts" class="block text-xs font-semibold text-gray-500 mb-1">Intentos máximos de inicio de sesión</label>
+              <input id="settings-maxLoginAttempts" type="number" [(ngModel)]="maxLoginAttempts" min="1" max="20" class="w-full border border-gray-300 rounded-lg py-2.5 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
             </div>
           </div>
         }

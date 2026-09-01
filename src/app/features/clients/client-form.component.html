@@ -35,10 +35,11 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <!-- NIT/CC -->
         <div>
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="document" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             NIT/CC <span class="text-red-500">*</span>
           </label>
           <input
+            id="document"
             type="text"
             name="document"
             [(ngModel)]="form.document"
@@ -55,10 +56,11 @@
 
         <!-- Contacto -->
         <div>
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="contactName" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Nombre de contacto
           </label>
           <input
+            id="contactName"
             type="text"
             name="contactName"
             [(ngModel)]="form.contactName"
@@ -69,10 +71,11 @@
 
         <!-- Nombre / Razón social -->
         <div class="md:col-span-2">
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="businessName" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Nombre completo / Razón social <span class="text-red-500">*</span>
           </label>
           <input
+            id="businessName"
             type="text"
             name="businessName"
             [(ngModel)]="form.businessName"
@@ -99,10 +102,11 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
         <!-- Departamento -->
         <div>
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="departmentId" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Departamento <span class="text-red-500">*</span>
           </label>
           <select
+            id="departmentId"
             name="departmentId"
             [(ngModel)]="selectedDepartmentId"
             (ngModelChange)="onDepartmentChange()"
@@ -118,10 +122,11 @@
 
         <!-- Ciudad -->
         <div>
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="cityId" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Ciudad <span class="text-red-500">*</span>
           </label>
           <select
+            id="cityId"
             name="cityId"
             [(ngModel)]="form.cityId"
             required
@@ -141,10 +146,11 @@
 
         <!-- Dirección -->
         <div class="md:col-span-2">
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="address" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Dirección
           </label>
           <input
+            id="address"
             type="text"
             name="address"
             [(ngModel)]="form.address"
@@ -155,10 +161,11 @@
 
         <!-- Teléfono -->
         <div>
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="phone" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Teléfono
           </label>
           <input
+            id="phone"
             type="text"
             name="phone"
             [(ngModel)]="form.phone"
@@ -169,10 +176,11 @@
 
         <!-- Email -->
         <div>
-          <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
+          <label for="email" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-1.5">
             Email
           </label>
           <input
+            id="email"
             type="email"
             name="email"
             [(ngModel)]="form.email"
