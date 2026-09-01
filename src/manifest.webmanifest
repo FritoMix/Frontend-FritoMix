@@ -1,0 +1,85 @@
+{
+  "name": "FritoMix S.A.S - Gestión de Ventas y Despachos",
+  "short_name": "FritoMix",
+  "description": "Sistema de gestión de ventas, despachos e inventario para Pasabocas FritoMix S.A.S",
+  "id": "/",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": [
+    "standalone",
+    "window-controls-overlay"
+  ],
+  "orientation": "any",
+  "background_color": "#071938",
+  "theme_color": "#071938",
+  "lang": "es",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "splash_screens": [
+    {
+      "src": "pwa-icons/splash/splash-640x1136.png",
+      "sizes": "640x1136",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "FritoMix",
+      "background_color": "#071938",
+      "dark_background_color": "#071938"
+    },
+    {
+      "src": "pwa-icons/splash/splash-750x1334.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "FritoMix",
+      "background_color": "#071938",
+      "dark_background_color": "#071938"
+    },
+    {
+      "src": "pwa-icons/splash/splash-1125x2436.png",
+      "sizes": "1125x2436",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "FritoMix",
+      "background_color": "#071938",
+      "dark_background_color": "#071938"
+    },
+    {
+      "src": "pwa-icons/splash/splash-1242x2688.png",
+      "sizes": "1242x2688",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "FritoMix",
+      "background_color": "#071938",
+      "dark_background_color": "#071938"
+    }
+  ],
+  "icons": [
+    {
+      "src": "pwa-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "pwa-icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "pwa-icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
