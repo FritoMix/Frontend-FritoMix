@@ -12,8 +12,8 @@ export class ConfirmDialogComponent {
   cancelLabel = input('Cancelar');
   type = input<'info' | 'danger'>('info');
   singleButton = input(false);
-  confirm = output<void>();
-  cancel = output<void>();
+  confirmed = output<void>();
+  cancelled = output<void>();
 
   isDanger = computed(() => this.type() === 'danger');
 

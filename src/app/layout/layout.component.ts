@@ -1,10 +1,11 @@
-import { Component, computed, inject, signal, HostListener, OnInit } from '@angular/core';
+import { Component, computed, inject, signal, HostListener, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { DatePipe } from '@angular/common';
 import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../core/services/auth.service';
 import { NotificationService } from '../core/services/notification.service';
 import { UserRole } from '../core/models/user.model';
+import { Notification } from '../core/models/notification.model';
 import { PwaBannerComponent } from '../shared/components/pwa-banner.component';
 
 @Component({
@@ -24,11 +25,21 @@ export class LayoutComponent implements OnInit {
   sidebarOpen = signal(false);
   showNotifications = signal(false);
   showUserMenu = signal(false);
-  notifications = signal<any[]>([]);
+  notifications = signal<Notification[]>([]);
   notificationUnread = this.notificationService.unreadCount;
 
-  @HostListener('document:click')
-  closeDropdowns() {
+  @ViewChild('notifArea') notifArea?: ElementRef<HTMLElement>;
+  @ViewChild('userArea') userArea?: ElementRef<HTMLElement>;
+
+  @HostListener('document:click', ['$event'])
+  closeDropdowns(event?: MouseEvent) {
+    const target = event?.target as Node | null;
+    if (target && this.notifArea?.nativeElement.contains(target)) {
+      return;
+    }
+    if (target && this.userArea?.nativeElement.contains(target)) {
+      return;
+    }
     this.showNotifications.set(false);
     this.showUserMenu.set(false);
   }
@@ -53,7 +64,7 @@ export class LayoutComponent implements OnInit {
     this.showUserMenu.set(!this.showUserMenu());
   }
 
-  markOneRead(n: any) {
+  markOneRead(n: Notification) {
     if (n.link) {
       this.router.navigate([n.link]);
     }

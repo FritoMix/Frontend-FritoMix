@@ -44,8 +44,9 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombres</label>
+            <label for="profile-firstName" class="block text-sm font-semibold text-gray-700 mb-1.5">Nombres</label>
             <input
+              id="profile-firstName"
               type="text"
               [(ngModel)]="firstName"
               placeholder="Tus nombres"
@@ -53,8 +54,9 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Apellidos</label>
+            <label for="profile-lastName" class="block text-sm font-semibold text-gray-700 mb-1.5">Apellidos</label>
             <input
+              id="profile-lastName"
               type="text"
               [(ngModel)]="lastName"
               placeholder="Tus apellidos"
@@ -62,8 +64,9 @@
             />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
+            <label for="profile-email" class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
             <input
+              id="profile-email"
               type="email"
               [(ngModel)]="email"
               placeholder="tu@correo.com"
@@ -86,8 +89,9 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div class="sm:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nueva contraseña</label>
+            <label for="profile-password" class="block text-sm font-semibold text-gray-700 mb-1.5">Nueva contraseña</label>
             <input
+              id="profile-password"
               type="password"
               [(ngModel)]="password"
               placeholder="Mínimo 6 caracteres"
@@ -95,8 +99,9 @@
             />
           </div>
           <div class="sm:col-span-2">
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar contraseña</label>
+            <label for="profile-confirmPassword" class="block text-sm font-semibold text-gray-700 mb-1.5">Confirmar contraseña</label>
             <input
+              id="profile-confirmPassword"
               type="password"
               [(ngModel)]="confirmPassword"
               placeholder="Repite la contraseña"

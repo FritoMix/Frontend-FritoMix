@@ -26,10 +26,11 @@
   <form (ngSubmit)="onSave()" #vehicleForm="ngForm" class="space-y-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="vehicleNumber" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Nº Vehículo <span class="text-red-500">*</span>
         </label>
         <input
+          id="vehicleNumber"
           type="text"
           name="vehicleNumber"
           [(ngModel)]="form.vehicleNumber"
@@ -45,10 +46,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="type" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Tipo <span class="text-red-500">*</span>
         </label>
         <input
+          id="type"
           type="text"
           name="type"
           [(ngModel)]="form.type"
@@ -64,10 +66,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="capacity" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Capacidad (kg) <span class="text-red-500">*</span>
         </label>
         <input
+          id="capacity"
           type="number"
           name="capacity"
           [(ngModel)]="form.capacity"
@@ -79,10 +82,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="dimension" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Dimensión (m³) <span class="text-red-500">*</span>
         </label>
         <input
+          id="dimension"
           type="number"
           name="dimension"
           [(ngModel)]="form.dimension"
