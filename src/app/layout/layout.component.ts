@@ -5,11 +5,12 @@ import { Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/rou
 import { AuthService } from '../core/services/auth.service';
 import { NotificationService } from '../core/services/notification.service';
 import { UserRole } from '../core/models/user.model';
+import { PwaBannerComponent } from '../shared/components/pwa-banner.component';
 
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DatePipe, PwaBannerComponent],
   templateUrl: 'layout.component.html',
   styleUrls: ['layout.component.css']
 })
