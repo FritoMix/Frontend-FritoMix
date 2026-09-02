@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { ToastService } from '../../core/services/toast.service';
-import { CategoryDTO } from '../../core/models/product.model';
+import { CategoryGroupDTO, CategoryDTO } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-product-form',
@@ -22,6 +22,7 @@ export class ProductFormComponent implements OnInit {
   isEdit = false;
   editId: number | null = null;
 
+  groups = signal<CategoryGroupDTO[]>([]);
   categories = signal<CategoryDTO[]>([]);
 
   form = {
@@ -31,13 +32,26 @@ export class ProductFormComponent implements OnInit {
     unit: 'BULTO',
     weight: '',
     weightGrams: 0,
+    groupId: null as number | null,
     categoryId: null as number | null,
     active: true,
   };
 
+  pendingCategoryId: number | null = null;
+
   ngOnInit() {
     this.productService.getCategories().subscribe({
-      next: (res) => this.categories.set(res),
+      next: (res) => {
+        this.groups.set(res);
+        if (this.pendingCategoryId !== null) {
+          this.form.groupId = this.groupOfCategory(this.pendingCategoryId);
+          if (this.form.groupId !== null) {
+            this.productService.getCategoriesByGroup(this.form.groupId).subscribe({
+              next: (cats) => this.categories.set(cats),
+            });
+          }
+        }
+      },
     });
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -54,9 +68,36 @@ export class ProductFormComponent implements OnInit {
           this.form.weightGrams = res.weightGrams;
           this.form.categoryId = res.categoryId;
           this.form.active = res.active;
+
+          if (res.categoryId != null) {
+            this.pendingCategoryId = res.categoryId;
+            this.form.groupId = this.groupOfCategory(res.categoryId);
+            if (this.form.groupId !== null) {
+              this.productService.getCategoriesByGroup(this.form.groupId).subscribe({
+                next: (cats) => this.categories.set(cats),
+              });
+            }
+          }
         },
       });
     }
+  }
+
+  groupOfCategory(categoryId: number | null): number | null {
+    if (categoryId === null) return null; 
+    const g = this.groups().find((group) =>
+      group.children.some((c) => c.id === categoryId)
+    );
+    return g ? g.id : null;
+  }
+
+  onGroupChange() {
+    this.form.categoryId = null;
+    this.categories.set([]);
+    if (this.form.groupId === null) return;
+    this.productService.getCategoriesByGroup(this.form.groupId).subscribe({
+      next: (res) => this.categories.set(res),
+    });
   }
 
   esValido(): boolean {

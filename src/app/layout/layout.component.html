@@ -1,10 +1,12 @@
 
 <!-- Overlay for mobile sidebar -->
 @if (sidebarOpen()) {
-  <div
+  <button
+    type="button"
+    aria-label="Cerrar menú"
     class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden animate-fade-in"
     (click)="sidebarOpen.set(false)"
-  ></div>
+  ></button>
 }
 
 <!-- Sidebar -->
@@ -71,7 +73,7 @@
 
     <div class="flex items-center gap-4">
       <!-- Notifications -->
-      <div class="relative" (click)="$event.stopPropagation()">
+      <div class="relative" #notifArea>
         <button
           (click)="toggleNotifications()"
           class="relative text-gray-500 hover:text-gray-700 p-2 rounded-xl hover:bg-gray-100/80 transition-all duration-200 active:scale-95"
@@ -96,8 +98,9 @@
                 <div class="px-4 py-8 text-center text-gray-400 text-sm">Sin notificaciones</div>
               }
               @for (n of notifications(); track n.id) {
-                <div
-                  class="px-4 py-3 border-b border-gray-50 hover:bg-gray-50/80 cursor-pointer transition-colors"
+                <button
+                  type="button"
+                  class="w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50/80 cursor-pointer transition-colors"
                   [class.bg-blue-50/60]="!n.isRead"
                   (click)="markOneRead(n)"
                 >
@@ -119,7 +122,7 @@
                       <p class="text-[10px] text-gray-400 mt-1">{{ n.createdAt | date:'short' }}</p>
                     </div>
                   </div>
-                </div>
+                </button>
               }
             </div>
           </div>
@@ -127,8 +130,9 @@
       </div>
 
       <!-- User Dropdown -->
-      <div class="relative" (click)="$event.stopPropagation()">
-        <div
+      <div class="relative" #userArea>
+        <button
+          type="button"
           (click)="toggleUserMenu()"
           class="flex items-center gap-2.5 cursor-pointer pl-3 border-l border-gray-200/80 select-none group"
         >
@@ -140,7 +144,7 @@
             <p class="text-[11px] text-gray-500">{{ user()?.email || 'admin@fritomix.com' }}</p>
           </div>
           <svg class="w-4 h-4 text-gray-400 hidden sm:block transition-transform duration-200" [class.rotate-180]="showUserMenu()" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-        </div>
+        </button>
 
         @if (showUserMenu()) {
           <div class="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 py-1.5 animate-scale-in origin-top-right">

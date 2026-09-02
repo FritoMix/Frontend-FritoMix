@@ -110,8 +110,8 @@
     [message]="dialog.message"
     [confirmLabel]="dialog.confirmLabel"
     [type]="dialog.type"
-    (confirm)="closeConfirm(); dialog.action()"
-    (cancel)="closeConfirm()"
+    (confirmed)="closeConfirm(); dialog.action()"
+    (cancelled)="closeConfirm()"
   ></app-confirm-dialog>
 }
 
