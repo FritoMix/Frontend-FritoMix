@@ -53,6 +53,21 @@ export interface Product {
 export interface CategoryDTO {
   id: number;
   name: string;
+  description: string | null;
+  parentId: number | null;
+}
+
+export interface CategoryGroupDTO {
+  id: number;
+  name: string;
+  description: string | null;
+  children: CategoryDTO[];
+}
+
+export interface CategoryCreateRequest {
+  name: string;
+  description?: string;
+  parentId?: number | null;
 }
 
 export function toProductDisplay(resp: ProductResponse): Product {

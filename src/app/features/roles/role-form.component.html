@@ -4,7 +4,7 @@
     <div>
       <nav class="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
         <a
-          (click)="router.navigate(['/roles'])"
+          routerLink="/roles"
           class="hover:text-[#0055FF] cursor-pointer transition-colors"
         >Roles</a>
         <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -42,8 +42,9 @@
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre del rol <span class="text-red-500">*</span></label>
+            <label for="role-name" class="block text-sm font-semibold text-gray-700 mb-1.5">Nombre del rol <span class="text-red-500">*</span></label>
             <input
+              id="role-name"
               type="text"
               [(ngModel)]="name"
               placeholder="Ej: ADMIN, CARTERA..."
@@ -52,8 +53,9 @@
             />
           </div>
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Descripción <span class="text-gray-400 text-xs font-normal">(opcional)</span></label>
+            <label for="role-description" class="block text-sm font-semibold text-gray-700 mb-1.5">Descripción <span class="text-gray-400 text-xs font-normal">(opcional)</span></label>
             <input
+              id="role-description"
               type="text"
               [(ngModel)]="description"
               placeholder="Ej: Rol con todos los permisos"

@@ -22,9 +22,10 @@
 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
   <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
     <div>
-      <label class="block text-sm font-semibold text-[#071938] mb-1.5">Cliente</label>
+      <label for="order-client" class="block text-sm font-semibold text-[#071938] mb-1.5">Cliente</label>
       <div class="relative">
         <input
+          id="order-client"
           type="text"
           [value]="clientQuery()"
           (input)="onClientSearch($event)"
@@ -52,9 +53,9 @@
       </div>
     </div>
     <div>
-      <label class="block text-sm font-semibold text-[#071938] mb-1.5">N° Pedido</label>
+      <label for="order-number" class="block text-sm font-semibold text-[#071938] mb-1.5">N° Pedido</label>
       <div class="flex items-center">
-        <input type="text" [ngModel]="orderNumber" readonly
+        <input id="order-number" type="text" [ngModel]="orderNumber" readonly
           class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm bg-gray-100 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
         @if (loadingNumber()) {
           <span class="ml-2 text-xs text-gray-400">...</span>
@@ -63,7 +64,7 @@
       <p class="text-[11px] text-gray-400 mt-1">Consecutivo automático</p>
     </div>
     <div>
-      <label class="block text-sm font-semibold text-[#071938] mb-1.5">Estado</label>
+      <span class="block text-sm font-semibold text-[#071938] mb-1.5">Estado</span>
       <span class="status-badge" [class]="badgeClass(status)">{{ status }}</span>
     </div>
   </div>
@@ -109,8 +110,8 @@
   </button>
 
   <div class="mb-6">
-    <label class="block text-sm font-semibold text-[#071938] mb-1.5">Observaciones del pedido</label>
-    <textarea [(ngModel)]="notes" rows="3" placeholder="Escribe aquí cualquier observación sobre el pedido..."
+    <label for="order-notes" class="block text-sm font-semibold text-[#071938] mb-1.5">Observaciones del pedido</label>
+    <textarea id="order-notes" [(ngModel)]="notes" rows="3" placeholder="Escribe aquí cualquier observación sobre el pedido..."
       class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-y"></textarea>
   </div>
 
