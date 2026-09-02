@@ -102,6 +102,12 @@ export class UserFormComponent implements OnInit {
       cartera: 'Cartera',
       coordinador: 'Coordinador',
       despachador: 'Despachador',
+      produccion: 'Producción',
+      camara: 'Cámara',
+      facturacion: 'Facturación',
+      despachador1: 'Despachador 1',
+      despachador2: 'Despachador 2',
+      despachador3: 'Despachador 3',
     };
     return labels[role] || role;
   }
@@ -112,6 +118,12 @@ export class UserFormComponent implements OnInit {
       cartera: 'bg-purple-100 text-purple-700',
       coordinador: 'bg-amber-100 text-amber-700',
       despachador: 'bg-rose-100 text-rose-700',
+      produccion: 'bg-indigo-100 text-indigo-700',
+      camara: 'bg-cyan-100 text-cyan-700',
+      facturacion: 'bg-emerald-100 text-emerald-700',
+      despachador1: 'bg-rose-100 text-rose-700',
+      despachador2: 'bg-pink-100 text-pink-700',
+      despachador3: 'bg-orange-100 text-orange-700',
     };
     return classes[role] || 'bg-gray-100 text-gray-700';
   }
@@ -181,6 +193,12 @@ function mapFormRole(role: string): UserRole {
     'CARTERA': 'cartera',
     'COORDINADOR': 'coordinador',
     'DESPACHADOR': 'despachador',
+    'PRODUCCION': 'produccion',
+    'CAMARA': 'camara',
+    'FACTURACION': 'facturacion',
+    'DESPACHADOR1': 'despachador1',
+    'DESPACHADOR2': 'despachador2',
+    'DESPACHADOR3': 'despachador3',
   };
   return map[role] || 'admin';
 }
