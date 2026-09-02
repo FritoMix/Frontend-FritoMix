@@ -1,7 +1,7 @@
 import { Component, inject, computed, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { RoleService } from '../../core/services/role.service';
 
 interface PermissionGroup {
@@ -14,7 +14,7 @@ interface PermissionGroup {
 @Component({
   selector: 'app-role-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: 'role-form.component.html'
 })
 export class RoleFormComponent implements OnInit {

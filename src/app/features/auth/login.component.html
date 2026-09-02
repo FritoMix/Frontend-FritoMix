@@ -56,9 +56,10 @@
 
         <form (ngSubmit)="onLogin()" class="space-y-5">
           <div>
-            <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Usuario / Correo</label>
+            <label for="login-email" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Usuario / Correo</label>
             <div class="relative">
               <input
+                id="login-email"
                 type="email"
                 [(ngModel)]="email"
                 name="email"
@@ -70,9 +71,10 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Contraseña</label>
+            <label for="login-password" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Contraseña</label>
             <div class="relative">
               <input
+                id="login-password"
                 [type]="showPassword() ? 'text' : 'password'"
                 [(ngModel)]="password"
                 name="password"
@@ -101,7 +103,7 @@
               <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#0055FF] focus:ring-[#0055FF] cursor-pointer" />
               <span class="text-xs text-gray-600 group-hover:text-gray-900 transition-colors">Recordarme</span>
             </label>
-            <a href="#" (click)="$event.preventDefault()" class="text-xs text-[#0055FF] hover:text-[#0044DD] font-semibold transition-colors">¿Olvidaste tu contraseña?</a>
+            <a href="javascript:void(0)" (click)="openReset()" class="text-xs text-[#0055FF] hover:text-[#0044DD] font-semibold transition-colors">¿Olvidaste tu contraseña?</a>
           </div>
 
           <button
@@ -126,5 +128,172 @@
     <p class="text-gray-300 text-xs font-medium">&copy; 2026 FritoMix S.A.S — Todos los derechos reservados</p>
   </footer>
 </div>
+
+@if (showReset()) {
+  <!-- Full-screen overlay -->
+  <div class="fixed inset-0 z-[100] flex items-center justify-center px-4">
+    <button
+      type="button"
+      class="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-default"
+      (click)="closeReset()"
+      aria-label="Cerrar diálogo de recuperación"
+    ></button>
+
+    <div class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md p-8 sm:p-10 animate-scale-in max-h-[90vh] overflow-y-auto">
+      <button
+        type="button"
+        (click)="closeReset()"
+        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors p-1"
+        aria-label="Cerrar"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+
+      <div class="mb-6">
+        <h2 class="text-2xl font-extrabold text-[#071938] tracking-tight">Recuperar contraseña</h2>
+        <p class="text-gray-500 text-sm mt-1.5">Te enviaremos un código a tu correo para restablecer tu acceso</p>
+      </div>
+
+      <!-- Progress steps indicator -->
+      <div class="flex items-center gap-2 mb-6">
+        @for (step of ['email', 'code', 'password']; track step; let i = $index) {
+          <div class="flex-1">
+            <div
+              class="h-1.5 rounded-full transition-all duration-300"
+              [class.bg-[#0055FF]]="i <= resetStepIndex()"
+              [class.bg-gray-200]="i > resetStepIndex()"
+            ></div>
+          </div>
+        }
+      </div>
+
+      @if (resetSuccess()) {
+        <div class="text-center py-6 animate-fade-in-up">
+          <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h3 class="text-lg font-bold text-[#071938] mb-1">¡Contraseña actualizada!</h3>
+          <p class="text-sm text-gray-500 mb-6">Tu contraseña fue restablecida correctamente.</p>
+          <button
+            type="button"
+            (click)="backToLogin()"
+            class="w-full bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-3 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-blue-500/25"
+          >
+            Volver a Iniciar Sesión
+          </button>
+        </div>
+      } @else {
+        @if (resetError()) {
+          <div class="mb-5 p-3.5 bg-red-50 border border-red-200 rounded-xl text-xs sm:text-sm text-red-700 flex items-center gap-2.5 animate-fade-in-up">
+            <svg class="w-4 h-4 text-red-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ resetError() }}</span>
+          </div>
+        }
+
+        @if (resetStep() === 'email') {
+          <form (ngSubmit)="onRequestCode()" class="space-y-5">
+            <div>
+              <label for="reset-email" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Correo electrónico</label>
+              <input
+                id="reset-email"
+                type="email"
+                [(ngModel)]="resetEmail"
+                name="resetEmail"
+                placeholder="usuario@fritomix.com"
+                class="w-full px-4 py-3.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0055FF]/30 focus:border-[#0055FF] transition-all duration-200 bg-gray-50/50 focus:bg-white"
+                required
+              />
+            </div>
+            <p class="text-xs text-gray-500 -mt-2">Ingresa tu correo y te enviaremos un código de 6 dígitos.</p>
+            <button
+              type="submit"
+              [disabled]="resetLoading()"
+              class="w-full bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-blue-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+            >
+              @if (resetLoading()) {
+                <span class="animate-spin">⏳</span> Enviando...
+              } @else {
+                Enviar código
+              }
+            </button>
+          </form>
+        }
+
+        @if (resetStep() === 'code') {
+          <form (ngSubmit)="onVerifyCode()" class="space-y-5">
+            <p class="text-sm text-gray-600">Hemos enviado un código a <span class="font-semibold text-[#071938]">{{ resetEmail }}</span>. Revisa tu bandeja de entrada.</p>
+            <div>
+              <label for="reset-code" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Código de verificación</label>
+              <input
+                id="reset-code"
+                type="text"
+                inputmode="numeric"
+                maxlength="6"
+                pattern="\d*"
+                [(ngModel)]="resetCode"
+                name="resetCode"
+                placeholder="000000"
+                class="w-full text-center text-2xl font-bold tracking-[0.5em] px-4 py-3.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#0055FF]/30 focus:border-[#0055FF] transition-all duration-200 bg-gray-50/50 focus:bg-white"
+                required
+              />
+            </div>
+            <div class="flex gap-3">
+              <button
+                type="button"
+                (click)="resetStep.set('email')"
+                class="flex-1 px-4 py-3.5 rounded-xl text-sm font-bold text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 transition-colors"
+              >
+                ← Atrás
+              </button>
+              <button
+                type="submit"
+                [disabled]="resetLoading()"
+                class="flex-1 bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-blue-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-blue-500/25"
+              >
+                @if (resetLoading()) { Verificando... } @else { Verificar código }
+              </button>
+            </div>
+          </form>
+        }
+
+        @if (resetStep() === 'password') {
+          <form (ngSubmit)="onResetPassword()" class="space-y-5">
+            <div>
+              <label for="reset-new-password" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Nueva contraseña</label>
+              <input
+                id="reset-new-password"
+                type="password"
+                [(ngModel)]="newPassword"
+                name="newPassword"
+                placeholder="••••••••"
+                class="w-full px-4 py-3.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0055FF]/30 focus:border-[#0055FF] transition-all duration-200 bg-gray-50/50 focus:bg-white"
+                required
+              />
+            </div>
+            <div>
+              <label for="reset-confirm-password" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">Confirmar contraseña</label>
+              <input
+                id="reset-confirm-password"
+                type="password"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                placeholder="••••••••"
+                class="w-full px-4 py-3.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0055FF]/30 focus:border-[#0055FF] transition-all duration-200 bg-gray-50/50 focus:bg-white"
+                required
+              />
+            </div>
+            <button
+              type="submit"
+              [disabled]="resetLoading()"
+              class="w-full bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-blue-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all duration-200 shadow-lg shadow-blue-500/25"
+            >
+              @if (resetLoading()) { Guardando... } @else { Restablecer contraseña }
+            </button>
+          </form>
+        }
+      }
+    </div>
+  </div>
+}
 
 

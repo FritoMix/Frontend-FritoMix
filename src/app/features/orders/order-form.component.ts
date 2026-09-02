@@ -6,7 +6,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { OrderService } from '../../core/services/order.service';
 import { ClientService } from '../../core/services/client.service';
 import { ProductService } from '../../core/services/product.service';
-import { OrderItem, OrderStatus } from '../../core/models/order.model';
+import { OrderStatus } from '../../core/models/order.model';
 import { Client } from '../../core/models/client.model';
 import { ToastService } from '../../core/services/toast.service';
 import { forkJoin } from 'rxjs';
@@ -108,7 +108,9 @@ export class OrderFormComponent implements OnInit {
     this.items.update(list => list.filter((_, i) => i !== index));
   }
 
-  updateItem(index: number) {}
+  updateItem(index: number) {
+    this.items.update(list => list.map((it, i) => (i === index ? { ...it } : it)));
+  }
 
   badgeClass(status: string): string {
     const map: Record<string, string> = {

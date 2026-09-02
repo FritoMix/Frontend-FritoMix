@@ -79,6 +79,12 @@ export class UserListComponent {
       cartera: 'Cartera',
       coordinador: 'Coordinador',
       despachador: 'Despachador',
+      produccion: 'Producción',
+      camara: 'Cámara',
+      facturacion: 'Facturación',
+      despachador1: 'Despachador 1',
+      despachador2: 'Despachador 2',
+      despachador3: 'Despachador 3',
     };
     return labels[role] || role;
   }
@@ -89,6 +95,12 @@ export class UserListComponent {
       cartera: 'bg-purple-50 text-purple-700 border-purple-200',
       coordinador: 'bg-amber-50 text-amber-700 border-amber-200',
       despachador: 'bg-rose-50 text-rose-700 border-rose-200',
+      produccion: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      camara: 'bg-cyan-50 text-cyan-700 border-cyan-200',
+      facturacion: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      despachador1: 'bg-rose-50 text-rose-700 border-rose-200',
+      despachador2: 'bg-pink-50 text-pink-700 border-pink-200',
+      despachador3: 'bg-orange-50 text-orange-700 border-orange-200',
     };
     return classes[role] || 'bg-gray-100 text-gray-700 border-gray-200';
   }

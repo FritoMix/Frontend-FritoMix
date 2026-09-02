@@ -14,7 +14,7 @@ export class DispatchProductsDetailComponent {
   delivered = model<Record<number, number>>({});
   observations = model<Record<number, string>>({});
 
-  onDeliveredChange(productId: number, value: any) {
+  onDeliveredChange(productId: number, value: string | number | null) {
     this.delivered.update(map => ({ ...map, [productId]: Number(value) }));
   }
 

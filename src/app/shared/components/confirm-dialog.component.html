@@ -21,7 +21,7 @@
       @if (!singleButton()) {
         <button
           type="button"
-          (click)="cancel.emit()"
+          (click)="cancelled.emit()"
           class="py-2.5 px-5 rounded-xl text-xs sm:text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 transition-all shadow-xs active:scale-95"
         >
           {{ cancelLabel() }}
@@ -29,7 +29,7 @@
       }
       <button
         type="button"
-        (click)="confirm.emit()"
+        (click)="confirmed.emit()"
         [class]="confirmClasses()"
         class="text-white font-bold py-2.5 px-5 rounded-xl text-xs sm:text-sm transition-all shadow-md active:scale-95 btn-shimmer"
       >

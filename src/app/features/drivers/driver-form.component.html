@@ -26,10 +26,11 @@
   <form (ngSubmit)="onSave()" #driverForm="ngForm" class="space-y-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="document" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Documento <span class="text-red-500">*</span>
         </label>
         <input
+          id="document"
           type="text"
           name="document"
           [(ngModel)]="form.document"
@@ -45,10 +46,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="licenseNumber" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Número de licencia <span class="text-red-500">*</span>
         </label>
         <input
+          id="licenseNumber"
           type="text"
           name="licenseNumber"
           [(ngModel)]="form.licenseNumber"
@@ -64,10 +66,11 @@
       </div>
 
       <div class="md:col-span-2">
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="name" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Nombre completo <span class="text-red-500">*</span>
         </label>
         <input
+          id="name"
           type="text"
           name="name"
           [(ngModel)]="form.name"
@@ -83,10 +86,11 @@
       </div>
 
       <div>
-        <label class="block text-sm font-semibold text-[#071938] mb-1.5">
+        <label for="phone" class="block text-sm font-semibold text-[#071938] mb-1.5">
           Teléfono
         </label>
         <input
+          id="phone"
           type="text"
           name="phone"
           [(ngModel)]="form.phone"
