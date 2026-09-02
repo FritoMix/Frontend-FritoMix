@@ -142,6 +142,7 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     background-color: #F8FAFC;
     color: #1E293B;
+    color-scheme: light;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -165,6 +166,25 @@
   /* Smooth scrolling globally */
   html {
     scroll-behavior: smooth;
+  }
+
+  /* Force light color-scheme on form controls so text stays visible
+     regardless of the OS/browser dark mode. */
+  input,
+  select,
+  textarea {
+    color: #1E293B;
+    background-color: #FFFFFF;
+    color-scheme: light;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #94A3B8;
+    opacity: 1;
+  }
+  select option {
+    color: #1E293B;
+    background-color: #FFFFFF;
   }
 
   /* Better focus outlines */
