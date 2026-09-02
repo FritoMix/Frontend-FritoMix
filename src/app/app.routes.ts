@@ -48,6 +48,11 @@ export const routes: Routes = [
         canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
       },
       {
+        path: 'categorias',
+        loadComponent: () => import('./features/categories/category-list.component').then(m => m.CategoryListComponent),
+        canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
+      },
+      {
         path: 'usuarios',
         loadComponent: () => import('./features/users/user-list.component').then(m => m.UserListComponent),
         canActivate: [roleGuard(['admin'])]

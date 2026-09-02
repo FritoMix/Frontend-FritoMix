@@ -1,4 +1,14 @@
-export type UserRole = 'admin' | 'cartera' | 'coordinador' | 'despachador';
+export type UserRole =
+  | 'admin'
+  | 'cartera'
+  | 'coordinador'
+  | 'despachador'
+  | 'produccion'
+  | 'camara'
+  | 'facturacion'
+  | 'despachador1'
+  | 'despachador2'
+  | 'despachador3';
 
 export interface UserResponse {
   id: number;
@@ -67,6 +77,12 @@ export function mapRole(role: string): UserRole {
     'CARTERA': 'cartera',
     'COORDINADOR': 'coordinador',
     'DESPACHADOR': 'despachador',
+    'PRODUCCION': 'produccion',
+    'CAMARA': 'camara',
+    'FACTURACION': 'facturacion',
+    'DESPACHADOR1': 'despachador1',
+    'DESPACHADOR2': 'despachador2',
+    'DESPACHADOR3': 'despachador3',
   };
   return map[role] || 'admin';
 }
