@@ -67,47 +67,141 @@
       <span class="block text-sm font-semibold text-[#071938] mb-1.5">Estado</span>
       <span class="status-badge" [class]="badgeClass(status)">{{ status }}</span>
     </div>
+    <div>
+      <label for="order-city" class="block text-sm font-semibold text-[#071938] mb-1.5">Ciudad</label>
+      <input id="order-city" type="text" [value]="selectedCity" readonly
+        placeholder="Se autocompleta con el cliente"
+        class="w-full border border-gray-300 rounded-lg py-2.5 px-3.5 text-sm bg-gray-50 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+      <p class="text-[11px] text-gray-400 mt-1">Se asigna automáticamente al seleccionar el cliente</p>
+    </div>
   </div>
 
-  <h3 class="font-bold text-[#071938] text-sm mb-3">Productos</h3>
-  <div class="overflow-x-auto mb-4">
-    <table class="fm-table">
-      <thead>
-        <tr class="bg-gray-50/60">
-          <th class="!pl-6">#</th>
-          <th>Producto</th>
-          <th>Cantidad</th>
-          <th class="text-right !pr-6"></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of items(); track $index; let i = $index) {
-          <tr>
-            <td class="!pl-6">{{ i + 1 }}</td>
-            <td>
-              <select [(ngModel)]="item.productId" (ngModelChange)="updateItem(i)"
-                class="w-full border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none bg-white">
-                <option value="">Seleccionar</option>
-                @for (p of productService.items(); track p.id) {
-                  <option [value]="p.id">{{ p.name }} ({{ p.code }})</option>
-                }
-              </select>
-            </td>
-            <td><input type="number" [(ngModel)]="item.quantity" (ngModelChange)="updateItem(i)" min="0" class="w-24 border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></td>
-            <td class="text-right !pr-6">
-              <button (click)="removeItem(i)" class="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-              </button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="font-bold text-[#071938] text-sm">Productos</h3>
+    @if (selectedGroup()) {
+      <span class="text-[11px] text-gray-400">{{ groupProductCount(selectedGroup()!) }} productos</span>
+    }
   </div>
-  <button (click)="addItem()" class="text-sm font-semibold text-[#0055FF] hover:text-[#0044DD] mb-6 inline-flex items-center gap-1">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-    Agregar producto
-  </button>
+  <p class="text-xs text-gray-500 mb-4">Explora por categoría y toca un producto para agregarlo al pedido</p>
+
+  @if (!selectedGroup()) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+      @for (group of groups(); track group.id) {
+        <button type="button" (click)="selectGroup(group)"
+          [ngStyle]="{ 'background': groupGradient(group.name), 'color': groupTextColor(group.name) }"
+          class="group relative flex flex-col items-center p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 overflow-hidden">
+          <div class="relative w-14 h-14 rounded-full bg-white/25 flex items-center justify-center text-2xl shadow-lg transition-all overflow-hidden">
+            @if (group.image) {
+              <img [src]="group.image" alt="{{ group.name }}" class="w-full h-full object-cover" />
+            } @else {
+              {{ groupIcon(group.name) }}
+            }
+          </div>
+          <div class="relative mt-3 font-bold text-sm text-center leading-tight">{{ group.name }}</div>
+          <div class="relative mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/25 text-[11px] font-bold">
+            {{ groupProductCount(group) }} productos
+          </div>
+        </button>
+      } @empty {
+        <div class="col-span-full p-6 text-center rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">
+          <p class="text-sm">No hay categorías configuradas.</p>
+        </div>
+      }
+    </div>
+  } @else if (!selectedSubcategory() && hasSubcategories) {
+    <div class="flex items-center gap-2 mb-4">
+      <button type="button" (click)="backToGroups()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:border-[#0055FF] hover:text-[#0055FF] text-xs font-semibold shadow-sm transition-colors">
+        <span>←</span> Categorías
+      </button>
+      <span class="text-xs text-gray-300">/</span>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold" [ngStyle]="{ 'background': groupGradient(selectedGroup()?.name || ''), 'color': groupTextColor(selectedGroup()?.name || '') }">
+        {{ groupIcon(selectedGroup()?.name || '') }} {{ selectedGroup()?.name }}
+      </span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+      @for (sub of subcategories; track sub.id) {
+        <button type="button" (click)="selectSubcategory(sub)"
+          [ngStyle]="{ 'background': groupGradient(selectedGroup()?.name || ''), 'color': groupTextColor(selectedGroup()?.name || '') }"
+          class="group relative flex flex-col items-center p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 overflow-hidden">
+          <div class="relative w-14 h-14 rounded-full bg-white/25 text-2xl flex items-center justify-center shadow-lg transition-all">
+            {{ initials(sub.name) }}
+          </div>
+          <div class="relative mt-3 font-bold text-sm text-center leading-tight">{{ sub.name }}</div>
+          <div class="relative mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/25 text-[11px] font-bold">
+            {{ productCount(sub.id) }} productos
+          </div>
+        </button>
+      } @empty {
+        <div class="col-span-full p-6 text-center rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">
+          <p class="text-sm">Esta categoría no tiene subcategorías.</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="flex items-center gap-2 mb-4 flex-wrap">
+      <button type="button" (click)="hasSubcategories ? backToSubcategories() : backToGroups()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-gray-200 text-gray-600 hover:border-[#0055FF] hover:text-[#0055FF] text-xs font-semibold shadow-sm transition-colors">
+        <span>←</span> {{ hasSubcategories ? selectedGroup()?.name : 'Categorías' }}
+      </button>
+      <span class="text-xs text-gray-300">/</span>
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm" [ngStyle]="{ 'background': groupGradient(selectedGroup()?.name || ''), 'color': groupTextColor(selectedGroup()?.name || '') }">
+        {{ groupIcon(selectedGroup()?.name || '') }} {{ hasSubcategories ? selectedSubcategory()?.name : selectedGroup()?.name }}
+      </span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-4">
+      @for (p of productsBySubcategory(); track p.id) {
+        <button type="button" (click)="addProductToOrder(p)"
+          title="Agregar {{ p.name }}"
+          [ngStyle]="{ 'background': groupGradient(selectedGroup()?.name || ''), 'color': groupTextColor(selectedGroup()?.name || '') }"
+          class="group relative flex flex-col items-center p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 overflow-hidden">
+          <div class="relative w-14 h-14 rounded-full bg-white/25 text-2xl flex items-center justify-center shadow-lg transition-all">
+            {{ initials(p.name) }}
+          </div>
+          <div class="relative mt-3 font-bold text-sm text-center leading-tight line-clamp-2">{{ p.name }}</div>
+          <div class="relative mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/25 text-[11px] font-bold">
+            {{ p.code }}
+          </div>
+          <span class="absolute -top-2 -right-2 w-7 h-7 rounded-full bg-white/40 text-2xl flex items-center justify-center shadow-sm">+</span>
+        </button>
+      } @empty {
+        <div class="col-span-full p-6 text-center rounded-2xl border-2 border-dashed border-gray-200 text-gray-400">
+          <p class="text-sm">No hay productos en esta subcategoría.</p>
+        </div>
+      }
+    </div>
+  }
+
+  @if (items().length > 0) {
+    <div class="overflow-x-auto mb-4">
+      <table class="fm-table">
+        <thead>
+          <tr class="bg-gray-50/60">
+            <th class="!pl-6">#</th>
+            <th>Producto</th>
+            <th>Cantidad</th>
+            <th class="text-right !pr-6"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track $index; let i = $index) {
+            <tr>
+              <td class="!pl-6">{{ i + 1 }}</td>
+              <td>{{ productName(item.productId) }}</td>
+              <td><input type="number" [(ngModel)]="item.quantity" (ngModelChange)="updateItem(i)" min="0" class="w-24 border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" /></td>
+              <td class="text-right !pr-6">
+                <button (click)="removeItem(i)" class="p-1 rounded-md hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="text-sm text-gray-400 mb-4">Aún no has agregado productos al pedido.</p>
+  }
 
   <div class="mb-6">
     <label for="order-notes" class="block text-sm font-semibold text-[#071938] mb-1.5">Observaciones del pedido</label>
