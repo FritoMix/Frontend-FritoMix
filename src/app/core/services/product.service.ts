@@ -33,6 +33,10 @@ export class ProductService extends BaseCrudService<ProductResponse, Product, Cr
     return this.http.put<CategoryDTO>(`${this.categoriesUrl}/${id}`, data);
   }
 
+  updateCategoryImage(id: number, image: string): Observable<CategoryDTO> {
+    return this.http.put<CategoryDTO>(`${this.categoriesUrl}/${id}/image`, { image });
+  }
+
   deleteCategory(id: number): Observable<void> {
     return this.http.delete<void>(`${this.categoriesUrl}/${id}`);
   }

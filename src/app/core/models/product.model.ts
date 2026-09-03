@@ -54,6 +54,7 @@ export interface CategoryDTO {
   id: number;
   name: string;
   description: string | null;
+  image?: string | null;
   parentId: number | null;
 }
 
@@ -61,6 +62,7 @@ export interface CategoryGroupDTO {
   id: number;
   name: string;
   description: string | null;
+  image?: string | null;
   children: CategoryDTO[];
 }
 

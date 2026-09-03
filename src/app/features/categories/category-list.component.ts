@@ -140,6 +140,65 @@ export class CategoryListComponent implements OnInit {
     });
   }
 
+  imageDraft = signal<Record<number, string | null>>({});
+  imageEditing = signal<Record<number, boolean>>({});
+  imageSaving = signal<Record<number, boolean>>({});
+
+  startImageEdit(id: number, current: string | null) {
+    this.imageDraft.update((m) => ({ ...m, [id]: current }));
+    this.imageEditing.update((m) => ({ ...m, [id]: true }));
+  }
+
+  cancelImageEdit(id: number) {
+    this.imageEditing.update((m) => {
+      const n = { ...m };
+      delete n[id];
+      return n;
+    });
+    this.imageDraft.update((m) => {
+      const n = { ...m };
+      delete n[id];
+      return n;
+    });
+  }
+
+  onImageSelected(event: Event, id: number) {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.toastService.error('Seleccioná un archivo de imagen válido.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.imageDraft.update((m) => ({ ...m, [id]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  saveImage(id: number) {
+    const draft = this.imageDraft()[id];
+    if (draft == null || this.imageSaving()[id]) return;
+    this.imageSaving.update((m) => ({ ...m, [id]: true }));
+    this.productService.updateCategoryImage(id, draft).subscribe({
+      next: () => {
+        this.imageSaving.update((m) => ({ ...m, [id]: false }));
+        this.toastService.success('Imagen actualizada exitosamente.');
+        this.cancelImageEdit(id);
+        this.load();
+      },
+      error: (err) => {
+        this.imageSaving.update((m) => ({ ...m, [id]: false }));
+        this.toastService.error(err.error?.message || err.error?.error || 'Error al guardar la imagen.');
+      },
+    });
+  }
+
+  removeImage(id: number) {
+    this.imageDraft.update((m) => ({ ...m, [id]: null }));
+    this.saveImage(id);
+  }
+
   askDelete(item: { id: number; name: string; isGroup: boolean }) {
     this.deleteTarget.set(item);
   }
