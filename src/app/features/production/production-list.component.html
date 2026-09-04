@@ -1,0 +1,98 @@
+<app-page-header badge="9." color="purple" title="Producción"></app-page-header>
+
+<div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
+  <app-search-input
+    (valueChange)="onSearchChange($event)"
+    placeholder="Buscar pedido por código o cliente..."
+  ></app-search-input>
+</div>
+
+<div class="fm-card overflow-hidden">
+  @if (productionService.loading()) {
+    <div class="flex items-center justify-center py-16">
+      <span class="text-gray-500 text-sm">Cargando pedidos...</span>
+    </div>
+  } @else {
+    <div class="overflow-x-auto">
+      <table class="fm-table">
+        <thead>
+          <tr class="bg-gray-50/60">
+            <th class="!pl-6">Pedido</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Estado</th>
+            <th class="text-right !pr-6">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.id) {
+            <tr>
+              <td class="!pl-6">
+                <span class="font-mono text-sm font-semibold text-[#071938]">{{ order.orderNumber }}</span>
+              </td>
+              <td>
+                <span class="font-semibold text-[#071938]">{{ order.clientName }}</span>
+              </td>
+              <td>
+                <span class="text-gray-600 text-sm">{{ order.date }}</span>
+              </td>
+              <td>
+                <span class="status-badge" [class]="badgeClass(order.status)">{{ order.status }}</span>
+              </td>
+              <td class="text-right !pr-6">
+                <div class="flex items-center justify-end gap-2">
+                  @if (order.status === 'APROBADO') {
+                    <button (click)="startProduction(order.id)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors"
+                      title="Iniciar producción">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      Iniciar producción
+                    </button>
+                  }
+                  @if (order.status === 'EN_PRODUCCION') {
+                    <button (click)="markReady(order.id)"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-50 text-cyan-700 hover:bg-cyan-100 transition-colors"
+                      title="Marcar listo para despacho">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                      Finalizar producción
+                    </button>
+                  }
+                  <button (click)="viewOrder(order.id)"
+                    class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
+                    title="Ver detalle">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="py-16 text-center">
+                <div class="flex flex-col items-center gap-2">
+                  <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                  <p class="text-sm font-semibold text-[#071938]">No hay pedidos para producción</p>
+                  <p class="text-xs text-gray-500">Los pedidos aprobados por cartera aparecerán aquí</p>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    @if (totalPages() > 1) {
+      <app-pagination [totalPages]="totalPages()" [currentPage]="currentPage()" (currentPageChange)="onPageChange($event)"></app-pagination>
+    }
+  }
+</div>
+
+@if (confirmDialog(); as dialog) {
+  <app-confirm-dialog
+    [title]="dialog.title"
+    [message]="dialog.message"
+    [confirmLabel]="dialog.confirmLabel"
+    [type]="dialog.type"
+    (confirmed)="closeConfirm(); dialog.action()"
+    (cancelled)="closeConfirm()"
+  ></app-confirm-dialog>
+}
