@@ -1,4 +1,4 @@
-export type OrderStatus = 'APROBADO' | 'CANCELADO' | 'PENDIENTE';
+export type OrderStatus = 'APROBADO' | 'CANCELADO' | 'PENDIENTE' | 'EN_PRODUCCION' | 'LISTO_PRODUCCION';
 
 export interface OrderItem {
   item: number;
@@ -58,6 +58,9 @@ export interface OrderResponse {
   departmentName?: string;
   userId: number;
   coordinatorName?: string;
+  approvedById?: number;
+  approvedByName?: string;
+  approvedAt?: string;
   orderDate: string;
   status: string;
   total: number;

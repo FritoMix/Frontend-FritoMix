@@ -35,22 +35,22 @@ export const routes: Routes = [
       {
         path: 'productos',
         loadComponent: () => import('./features/products/product-list.component').then(m => m.ProductListComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
+        canActivate: [roleGuard(['admin', 'coordinador'])]
       },
       {
         path: 'productos/nuevo',
         loadComponent: () => import('./features/products/product-form.component').then(m => m.ProductFormComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
+        canActivate: [roleGuard(['admin', 'coordinador'])]
       },
       {
         path: 'productos/:id',
         loadComponent: () => import('./features/products/product-form.component').then(m => m.ProductFormComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
+        canActivate: [roleGuard(['admin', 'coordinador'])]
       },
       {
         path: 'categorias',
         loadComponent: () => import('./features/categories/category-list.component').then(m => m.CategoryListComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
+        canActivate: [roleGuard(['admin', 'coordinador'])]
       },
       {
         path: 'usuarios',
@@ -95,7 +95,7 @@ export const routes: Routes = [
       {
         path: 'pedidos/:id',
         loadComponent: () => import('./features/orders/order-detail.component').then(m => m.OrderDetailComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador'])]
+        canActivate: [roleGuard(['admin', 'cartera', 'coordinador', 'produccion'])]
       },
       {
         path: 'pedidos/:id/editar',
@@ -103,9 +103,14 @@ export const routes: Routes = [
         canActivate: [roleGuard(['admin', 'coordinador'])]
       },
       {
+        path: 'produccion',
+        loadComponent: () => import('./features/production/production-list.component').then(m => m.ProductionListComponent),
+        canActivate: [roleGuard(['admin', 'produccion'])]
+      },
+      {
         path: 'despachos',
         loadComponent: () => import('./features/dispatchs/dispatch-list.component').then(m => m.DispatchListComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'coordinador', 'despachador'])]
       },
       {
         path: 'despachos/nuevo',
@@ -115,7 +120,7 @@ export const routes: Routes = [
       {
         path: 'despachos/:id',
         loadComponent: () => import('./features/dispatchs/dispatch-detail.component').then(m => m.DispatchDetailComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'coordinador', 'despachador'])]
       },
       {
         path: 'despachos/:id/editar',
