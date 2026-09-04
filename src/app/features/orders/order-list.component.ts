@@ -50,6 +50,8 @@ export class OrderListComponent implements OnInit {
       'PENDIENTE': 'bg-yellow-50 text-yellow-700 border-yellow-200',
       'APROBADO': 'bg-green-50 text-green-700 border-green-200',
       'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
+      'EN_PRODUCCION': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      'LISTO_PRODUCCION': 'bg-cyan-50 text-cyan-700 border-cyan-200',
     };
     return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
   }
