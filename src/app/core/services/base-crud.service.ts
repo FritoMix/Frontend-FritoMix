@@ -42,6 +42,7 @@ export abstract class BaseCrudService<TResponse, TDisplay, TCreate = never, TUpd
       .set('size', this.pageSize());
     const term = this.searchTerm();
     if (term) params = params.set('search', term);
+    params = this.applyExtraParams(params);
     this.http.get<PageResponse<TResponse>>(this.apiUrl, { params }).subscribe({
       next: (res) => {
         if (res.content.length === 0 && res.page > 0 && res.totalElements > 0) {
@@ -63,6 +64,10 @@ export abstract class BaseCrudService<TResponse, TDisplay, TCreate = never, TUpd
 
   protected onLoadError(): void {
     // Hook para que las subclases reaccionen a errores de carga.
+  }
+
+  protected applyExtraParams(params: HttpParams): HttpParams {
+    return params;
   }
 
   loadAll(): void {

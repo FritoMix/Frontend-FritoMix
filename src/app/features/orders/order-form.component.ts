@@ -36,6 +36,7 @@ export class OrderFormComponent implements OnInit {
   loadingNumber = signal(false);
   status: OrderStatus = 'PENDIENTE';
   notes = '';
+  showPreview = false;
 
   clientQuery = signal('');
   clientDropdownOpen = false;
@@ -50,6 +51,24 @@ export class OrderFormComponent implements OnInit {
     const sub = this.selectedSubcategory();
     if (!sub) return [];
     return this.productService.items().filter(p => p.categoryId === sub.id && p.active !== false);
+  });
+
+  totalWeight = computed(() => {
+    const items = this.items();
+    const products = this.productService.items();
+    return items.reduce((total, item) => {
+      const product = products.find(p => p.id === item.productId);
+      return total + (product?.pesoUnidad ?? 0) * item.quantity;
+    }, 0);
+  });
+
+  totalDimension = computed(() => {
+    const items = this.items();
+    const products = this.productService.items();
+    return items.reduce((total, item) => {
+      const product = products.find(p => p.id === item.productId);
+      return total + (product?.dimension ?? 0) * item.quantity;
+    }, 0);
   });
 
   get subcategories(): CategoryDTO[] {
@@ -255,11 +274,22 @@ export class OrderFormComponent implements OnInit {
       'PENDIENTE': 'bg-yellow-50 text-yellow-700 border-yellow-200',
       'APROBADO': 'bg-green-50 text-green-700 border-green-200',
       'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
+      'EN_PRODUCCION': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      'LISTO_PRODUCCION': 'bg-cyan-50 text-cyan-700 border-cyan-200',
     };
     return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
   }
 
   onSave() {
+    if (this.saving || !this.selectedClientId || !this.orderNumber) return;
+
+    const details = this.items().filter(i => i.productId);
+    if (details.length === 0) return;
+
+    this.showPreview = true;
+  }
+
+  confirmSave() {
     if (this.saving || !this.selectedClientId || !this.orderNumber) return;
     this.saving = true;
 
@@ -272,6 +302,7 @@ export class OrderFormComponent implements OnInit {
 
     if (details.length === 0) {
       this.saving = false;
+      this.showPreview = false;
       return;
     }
 
@@ -292,6 +323,7 @@ export class OrderFormComponent implements OnInit {
       next: () => {
         this.orderService.loadAll();
         this.saving = false;
+        this.showPreview = false;
         this.toastService.success(this.isEdit ? 'Pedido actualizado exitosamente.' : 'Pedido creado exitosamente.');
         this.router.navigate(['/pedidos']);
       },
@@ -301,5 +333,15 @@ export class OrderFormComponent implements OnInit {
         this.toastService.error(msg);
       },
     });
+  }
+
+  cancelPreview() {
+    if (this.saving) return;
+    this.showPreview = false;
+  }
+
+  get previewClientName(): string {
+    const c = this.clientService.items().find(x => x.id === this.selectedClientId);
+    return c?.businessName ?? '';
   }
 }
