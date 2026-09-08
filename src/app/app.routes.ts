@@ -108,9 +108,19 @@ export const routes: Routes = [
         canActivate: [roleGuard(['admin', 'produccion'])]
       },
       {
+        path: 'despacho1',
+        loadComponent: () => import('./features/dispatchs/despacho1.component').then(m => m.Despacho1Component),
+        canActivate: [roleGuard(['despachador1', 'admin'])]
+      },
+      {
+        path: 'despacho2',
+        loadComponent: () => import('./features/dispatchs/despacho2.component').then(m => m.Despacho2Component),
+        canActivate: [roleGuard(['despachador2', 'admin'])]
+      },
+      {
         path: 'despachos',
         loadComponent: () => import('./features/dispatchs/dispatch-list.component').then(m => m.DispatchListComponent),
-        canActivate: [roleGuard(['admin', 'coordinador', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'coordinador', 'despachador', 'despachador3'])]
       },
       {
         path: 'despachos/nuevo',
@@ -120,42 +130,42 @@ export const routes: Routes = [
       {
         path: 'despachos/:id',
         loadComponent: () => import('./features/dispatchs/dispatch-detail.component').then(m => m.DispatchDetailComponent),
-        canActivate: [roleGuard(['admin', 'coordinador', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'coordinador', 'despachador', 'despachador1', 'despachador2', 'despachador3'])]
       },
       {
         path: 'despachos/:id/editar',
         loadComponent: () => import('./features/dispatchs/dispatch-form.component').then(m => m.DispatchFormComponent),
-        canActivate: [roleGuard(['admin', 'coordinador', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'coordinador', 'despachador', 'despachador1', 'despachador2', 'despachador3'])]
       },
       {
         path: 'conductores',
         loadComponent: () => import('./features/drivers/driver-list.component').then(m => m.DriverListComponent),
-        canActivate: [roleGuard(['admin', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'despachador', 'despachador2'])]
       },
       {
         path: 'conductores/nuevo',
         loadComponent: () => import('./features/drivers/driver-form.component').then(m => m.DriverFormComponent),
-        canActivate: [roleGuard(['admin', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'despachador', 'despachador2'])]
       },
       {
         path: 'conductores/:id',
         loadComponent: () => import('./features/drivers/driver-form.component').then(m => m.DriverFormComponent),
-        canActivate: [roleGuard(['admin', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'despachador', 'despachador2'])]
       },
       {
         path: 'vehiculos',
         loadComponent: () => import('./features/vehicles/vehicle-list.component').then(m => m.VehicleListComponent),
-        canActivate: [roleGuard(['admin', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'despachador', 'despachador1'])]
       },
       {
         path: 'vehiculos/nuevo',
         loadComponent: () => import('./features/vehicles/vehicle-form.component').then(m => m.VehicleFormComponent),
-        canActivate: [roleGuard(['admin', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'despachador', 'despachador1'])]
       },
       {
         path: 'vehiculos/:id',
         loadComponent: () => import('./features/vehicles/vehicle-form.component').then(m => m.VehicleFormComponent),
-        canActivate: [roleGuard(['admin', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'despachador', 'despachador1'])]
       },
       {
         path: 'reportes',
@@ -165,7 +175,7 @@ export const routes: Routes = [
       {
         path: 'mi-perfil',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
-        canActivate: [roleGuard(['admin', 'cartera', 'coordinador', 'despachador'])]
+        canActivate: [roleGuard(['admin', 'cartera', 'coordinador', 'despachador', 'despachador1', 'despachador2', 'despachador3', 'produccion', 'camara', 'facturacion'])]
       },
       {
         path: 'configuracion',
