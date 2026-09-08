@@ -1,7 +1,7 @@
-export type DispatchStatus = 'PENDIENTE' | 'ELABORACION' | 'PRODUCCION' | 'LISTO_CARGUE' | 'DESPACHADO';
+export type DispatchStatus = 'PENDIENTE' | 'ELABORACION' | 'PRODUCCION' | 'LISTO_CARGUE' | 'VEHICULO_ASIGNADO' | 'CONDUCTOR_ASIGNADO' | 'DESPACHADO';
 
 export const DISPATCH_STATUS_FLOW: DispatchStatus[] = [
-  'PENDIENTE', 'ELABORACION', 'PRODUCCION', 'LISTO_CARGUE', 'DESPACHADO'
+  'PENDIENTE', 'VEHICULO_ASIGNADO', 'CONDUCTOR_ASIGNADO', 'DESPACHADO'
 ];
 
 export function nextDispatchStatus(status: DispatchStatus): DispatchStatus | null {
@@ -63,17 +63,23 @@ export interface DispatchResponse {
   pesoTotal: number | null;
   totalDimension: number | null;
   pesoTotalCargue: number | null;
-  driverId: number;
-  driverName: string;
-  driverDocument: string;
-  vehicleId: number;
-  vehicleNumber: string;
-  vehicleType: string;
+  driverId: number | null;
+  driverName: string | null;
+  driverDocument: string | null;
+  vehicleId: number | null;
+  vehicleNumber: string | null;
+  vehiclePlate: string | null;
+  vehicleType: string | null;
   dispatchDate: string;
   status: string;
   cumplimiento?: string | null;
   notes: string;
   dispatchUserName?: string;
+  despachadorUserId?: number | null;
+  despachadorNombre?: string | null;
+  confirmadoPorUserId?: number | null;
+  confirmadoPorNombre?: string | null;
+  placaObservacion?: string | null;
   details: DispatchDetailResponse[];
   arrumes: ArrumeResponse[];
   createdAt: string;
@@ -101,10 +107,10 @@ export interface DispatchDetailResponse {
 
 export interface CreateDispatchRequest {
   tipoPedido: string;
-  orderIds: number[];
+  orderIds?: number[];
   orderId?: number;
-  driverId: number;
-  vehicleId: number;
+  driverId?: number | null;
+  vehicleId?: number | null;
   userId: number | null;
   dispatchNumber: string;
   dispatchDate?: string;
@@ -112,7 +118,7 @@ export interface CreateDispatchRequest {
   notes?: string;
   numeroFactura?: string;
   orderFacturas?: OrderFacturaRequest[];
-  details: CreateDispatchDetailRequest[];
+  details?: CreateDispatchDetailRequest[];
   arrumes?: CreateArrumeRequest[];
 }
 
@@ -149,6 +155,18 @@ export interface CreateDispatchDetailRequest {
 
 export type UpdateDispatchRequest = CreateDispatchRequest;
 
+export interface DespachadorDto {
+  id: number;
+  nombre: string;
+  email: string;
+}
+
+export interface ConfirmarPlacaRequest {
+  despachadorId: number | null;
+  placa: string;
+  observacionPlaca?: string;
+}
+
 export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
   const clientes = (resp.orders ?? [])
     .map(o => o.clientName)
@@ -166,11 +184,11 @@ export function toDispatchDisplay(resp: DispatchResponse): Dispatch {
     numeroFactura: resp.numeroFactura || null,
     pesoTotal: resp.pesoTotal,
     totalDimension: resp.totalDimension,
-    driverName: resp.driverName,
-    driverDocument: resp.driverDocument,
+    driverName: resp.driverName || '',
+    driverDocument: resp.driverDocument || '',
     driverPhone: '',
-    vehicleNumber: resp.vehicleNumber,
-    vehicleType: resp.vehicleType,
+    vehicleNumber: resp.vehicleNumber || '',
+    vehicleType: resp.vehicleType || '',
     route: '',
     estimatedArrival: '',
     checklist: [],

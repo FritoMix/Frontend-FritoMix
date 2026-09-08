@@ -1,84 +1,82 @@
 
-<div class="p-6">
+<div class="max-w-5xl mx-auto pb-10 animate-fade-in-up">
+  <!-- Header & Navigation -->
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
     <div>
-      <nav class="text-xs text-gray-500 mb-2 flex items-center gap-1.5">
-        <a routerLink="/dashboard" class="hover:text-[#0055FF] transition-colors">Dashboard</a>
-        <span>/</span>
-        <a routerLink="/productos" class="hover:text-[#0055FF] transition-colors">Productos</a>
-        <span>/</span>
-        <span class="text-gray-700 font-medium">{{ isEdit ? 'Editar producto' : 'Nuevo producto' }}</span>
+      <nav class="text-xs text-gray-500 mb-2 flex items-center gap-2">
+        <a routerLink="/dashboard" class="hover:text-[#0055FF] transition-colors font-medium">Dashboard</a>
+        <span class="text-gray-300">/</span>
+        <a routerLink="/productos" class="hover:text-[#0055FF] transition-colors font-medium">Catálogo de Productos</a>
+        <span class="text-gray-300">/</span>
+        <span class="text-[#071938] font-bold">{{ isEdit ? 'Editar Producto' : 'Nuevo Producto' }}</span>
       </nav>
-      <h1 class="text-2xl font-extrabold text-[#071938]">{{ isEdit ? 'Editar producto' : 'Nuevo producto' }}</h1>
-      <p class="text-sm text-gray-500 mt-0.5">{{ isEdit ? 'Actualiza la información del producto' : 'Completa la información para registrar un producto en el sistema' }}</p>
+      <h1 class="text-2xl font-black text-[#071938] tracking-tight">
+        {{ isEdit ? 'Editar Producto #' + form.code : 'Registrar Nuevo Producto' }}
+      </h1>
+      <p class="text-xs sm:text-sm text-gray-500 mt-1">
+        {{ isEdit ? 'Actualiza las especificaciones, presentación o estado del producto en catálogo.' : 'Completa la información clave para agregar un producto al catálogo principal de ventas.' }}
+      </p>
     </div>
     <button
+      type="button"
       routerLink="/productos"
-      class="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-[#071938] border border-gray-200 hover:border-gray-300 bg-white px-4 py-2.5 rounded-lg transition-colors"
+      class="inline-flex items-center justify-center gap-2 text-xs font-bold text-gray-700 hover:text-[#071938] border border-gray-200 hover:border-gray-300 bg-white hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-all shadow-xs shrink-0"
     >
-      <span>←</span>
-      Volver
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      <span>Volver a Productos</span>
     </button>
   </div>
 
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 mb-5">
-    <div class="flex items-center gap-2 mb-5 pb-3 border-b border-gray-100">
-      <span class="w-7 h-7 rounded-lg bg-[#0055FF] text-white flex items-center justify-center text-xs font-bold">1</span>
-      <h3 class="font-bold text-gray-800">Información básica</h3>
-    </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  <!-- Form Container Card 1: Identificación y Clasificación -->
+  <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-6 mb-6">
+    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+      <span class="w-8 h-8 rounded-xl bg-[#0055FF] text-white flex items-center justify-center text-xs font-black shadow-md shadow-blue-500/20">1</span>
       <div>
-        <label for="product-code" class="block text-xs font-semibold text-gray-700 mb-1.5">Código <span class="text-red-500">*</span></label>
-        <input
-          id="product-code"
-          type="text"
-          [(ngModel)]="form.code"
-          required
-          placeholder="Ej: PR-200"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-        />
+        <h3 class="font-black text-[#071938] text-base">Identificación y Clasificación</h3>
+        <p class="text-xs text-gray-400">Código interno, nombre representativo y grupo categórico</p>
       </div>
-      <div class="md:col-span-2 lg:col-span-2">
-        <label for="product-name" class="block text-xs font-semibold text-gray-700 mb-1.5">Nombre <span class="text-red-500">*</span></label>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+      <div>
+        <label for="product-code" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Código SK / Referencia <span class="text-red-500">*</span>
+        </label>
+        <div class="relative">
+          <input
+            id="product-code"
+            type="text"
+            [(ngModel)]="form.code"
+            required
+            placeholder="Ej: PR-200"
+            class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all"
+          />
+        </div>
+      </div>
+
+      <div class="md:col-span-2">
+        <label for="product-name" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Nombre del Producto <span class="text-red-500">*</span>
+        </label>
         <input
           id="product-name"
           type="text"
           [(ngModel)]="form.name"
           required
           placeholder="Ej: MANÍ SALADO JUMBO 150 G Bx50"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all"
         />
       </div>
+
       <div>
-        <label for="product-presentation" class="block text-xs font-semibold text-gray-700 mb-1.5">Presentación (cantidad por caja)</label>
-        <input
-          id="product-presentation"
-          type="number"
-          [(ngModel)]="form.presentation"
-          placeholder="Ej: 24"
-          min="0"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
-        />
-      </div>
-      <div>
-        <label for="product-unit" class="block text-xs font-semibold text-gray-700 mb-1.5">Unidad</label>
-        <select
-          id="product-unit"
-          [(ngModel)]="form.unit"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
-        >
-          <option value="BULTO">Bulto</option>
-          <option value="CAJA">Caja</option>
-          <option value="PACA">Paca</option>
-        </select>
-      </div>
-      <div>
-        <label for="product-groupId" class="block text-xs font-semibold text-gray-700 mb-1.5">Grupo</label>
+        <label for="product-groupId" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Grupo
+        </label>
         <select
           id="product-groupId"
           [ngModel]="form.groupId"
           (ngModelChange)="form.groupId = $event; onGroupChange()"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all cursor-pointer"
         >
           <option [ngValue]="null">Seleccionar grupo</option>
           @for (group of groups(); track group.id) {
@@ -86,63 +84,130 @@
           }
         </select>
       </div>
+
       <div>
-        <label for="product-categoryId" class="block text-xs font-semibold text-gray-700 mb-1.5">Categoría <span class="text-red-500">*</span></label>
+        <label for="product-categoryId" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Categoría Final <span class="text-red-500">*</span>
+        </label>
         <select
           id="product-categoryId"
           [(ngModel)]="form.categoryId"
           [disabled]="form.groupId === null"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white disabled:bg-gray-100 disabled:text-gray-400"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all cursor-pointer disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed"
         >
-          <option [ngValue]="null">Seleccionar categoría</option>
+          <option [ngValue]="null">
+            {{ form.groupId === null ? 'Primero elige un Grupo' : 'Seleccionar categoría' }}
+          </option>
           @for (cat of categories(); track cat.id) {
             <option [ngValue]="cat.id">{{ cat.name }}</option>
           }
         </select>
       </div>
+    </div>
+  </div>
+
+  <!-- Form Container Card 2: Especificaciones Técnicas y Presentación -->
+  <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-6 mb-6">
+    <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+      <span class="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center text-xs font-black shadow-md shadow-purple-500/20">2</span>
       <div>
-        <label for="product-weight" class="block text-xs font-semibold text-gray-700 mb-1.5">Peso (etiqueta)</label>
+        <h3 class="font-black text-[#071938] text-base">Presentación y Pesos</h3>
+        <p class="text-xs text-gray-400">Tipo de unidad de empaque, peso en gramos y contenido por paquete</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div>
+        <label for="product-presentation" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Unidades por Empaque
+        </label>
+        <input
+          id="product-presentation"
+          type="number"
+          [(ngModel)]="form.presentation"
+          placeholder="Ej: 24"
+          min="0"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all"
+        />
+      </div>
+
+      <div>
+        <label for="product-unit" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Tipo de Unidad
+        </label>
+        <select
+          id="product-unit"
+          [(ngModel)]="form.unit"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all cursor-pointer"
+        >
+          <option value="BULTO">Bulto</option>
+          <option value="CAJA">Caja</option>
+          <option value="PACA">Paca</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="product-weight" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Etiqueta de Peso
+        </label>
         <input
           id="product-weight"
           type="text"
           [(ngModel)]="form.weight"
           placeholder="Ej: 250g"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all"
         />
       </div>
+
       <div>
-        <label for="product-weightGrams" class="block text-xs font-semibold text-gray-700 mb-1.5">Peso en gramos</label>
+        <label for="product-weightGrams" class="block text-xs font-bold text-[#071938] uppercase tracking-wider mb-2">
+          Peso Exacto (Gramos)
+        </label>
         <input
           id="product-weightGrams"
           type="number"
           [(ngModel)]="form.weightGrams"
           placeholder="Ej: 250"
           min="0"
-          class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all"
+          class="w-full px-4 py-3 bg-gray-50/50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm font-semibold text-[#071938] transition-all"
         />
       </div>
     </div>
   </div>
 
-    <div class="flex items-end">
-      <label class="inline-flex items-center gap-2.5 cursor-pointer select-none p-2.5 rounded-lg hover:bg-gray-50 transition-colors border border-gray-100 w-full">
-        <input
-          type="checkbox"
-          [(ngModel)]="form.active"
-          class="w-4 h-4 text-[#0055FF] border-gray-300 rounded focus:ring-blue-500"
-        />
+  <!-- Form Container Card 3: Estado de Disponibilidad -->
+  <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-6 mb-8">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="w-8 h-8 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-xs font-black shadow-md shadow-emerald-500/20">3</span>
         <div>
-          <span class="text-xs font-semibold text-gray-700 block">Producto activo</span>
-          <span class="text-[11px] text-gray-500">Podrá ser usado en pedidos</span>
+          <h3 class="font-black text-[#071938] text-base">Estado del Producto</h3>
+          <p class="text-xs text-gray-400">Activa o desactiva la visibilidad de este producto en el módulo de pedidos</p>
         </div>
+      </div>
+
+      <!-- Modern Switch -->
+      <label class="flex items-center gap-3 cursor-pointer select-none">
+        <div class="fm-switch">
+          <input
+            type="checkbox"
+            [(ngModel)]="form.active"
+          />
+          <span class="fm-switch__slider"></span>
+        </div>
+        <span class="text-sm font-black" [class.text-emerald-600]="form.active" [class.text-gray-400]="!form.active">
+          {{ form.active ? 'ACTIVO EN CATÁLOGO' : 'INACTIVO' }}
+        </span>
       </label>
     </div>
+  </div>
 
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+  <!-- Footer Actions -->
+  <div class="flex items-center justify-end gap-3 pt-2">
     <button
       type="button"
       (click)="router.navigate(['/productos'])"
-      class="px-5 py-2.5 rounded-lg text-sm font-bold text-gray-600 border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-colors"
+      class="px-6 py-3 rounded-xl text-xs sm:text-sm font-bold text-gray-700 hover:text-[#071938] border border-gray-200 bg-white hover:bg-gray-50 transition-all shadow-xs"
     >
       Cancelar
     </button>
@@ -150,16 +215,17 @@
       type="button"
       (click)="onSave()"
       [disabled]="!esValido() || isSubmitting"
-      class="bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center gap-2 transition-colors"
+      class="bg-[#0055FF] hover:bg-[#0044DD] disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold py-3 px-7 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2.5 transition-all shadow-lg shadow-blue-500/25 active:scale-95 btn-shimmer"
     >
       @if (isSubmitting) {
-        <span class="animate-spin">⏳</span>
-        Guardando...
+        <div class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        <span>Guardando cambios...</span>
       } @else {
-        <span>💾</span>
-        {{ isEdit ? 'Actualizar producto' : 'Guardar producto' }}
+        <svg class="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span>{{ isEdit ? 'Actualizar Producto' : 'Guardar Producto' }}</span>
       }
     </button>
   </div>
 </div>
+
 
