@@ -51,8 +51,52 @@ describe('validateDispatchForm', () => {
     expect(validateDispatchForm({ ...baseState, tipoPedido: '' })).toContain('tipo de pedido');
   });
 
-  it('rechaza sin conductor o vehículo', () => {
-    expect(validateDispatchForm({ ...baseState, selectedDriverId: null })).toContain('conductor');
+  it('acepta crear sin conductor ni vehículo (los asignan D1/D2)', () => {
+    expect(validateDispatchForm({ ...baseState, selectedDriverId: null, selectedVehicleId: null })).toBeNull();
+  });
+
+  it('rechaza despachador1 sin vehículo asignado', () => {
+    expect(validateDispatchForm({ ...baseState, esDespachador1: true, selectedVehicleId: null }))
+      .toContain('vehículo');
+  });
+
+  it('acepta despachador1 con vehículo sin conductor', () => {
+    expect(validateDispatchForm({
+      ...baseState,
+      esDespachador1: true,
+      selectedDriverId: null,
+      selectedVehicleId: 2,
+    })).toBeNull();
+  });
+
+  it('rechaza despachador2 sin confirmar placa', () => {
+    expect(validateDispatchForm({
+      ...baseState,
+      esDespachador2: true,
+      confirmaPlaca: false,
+      selectedDriverId: 1,
+      selectedVehicleId: 2,
+    })).toContain('placa');
+  });
+
+  it('rechaza despachador2 sin conductor asignado', () => {
+    expect(validateDispatchForm({
+      ...baseState,
+      esDespachador2: true,
+      confirmaPlaca: true,
+      selectedDriverId: null,
+      selectedVehicleId: 2,
+    })).toContain('conductor');
+  });
+
+  it('acepta despachador2 con placa confirmada y conductor', () => {
+    expect(validateDispatchForm({
+      ...baseState,
+      esDespachador2: true,
+      confirmaPlaca: true,
+      selectedDriverId: 1,
+      selectedVehicleId: 2,
+    })).toBeNull();
   });
 
   it('rechaza pedido único sin pedido seleccionado', () => {
@@ -155,5 +199,30 @@ describe('buildDispatchPayload', () => {
     const state = { ...baseState, itemDelivered: { 10: 1 } };
     const payload = buildDispatchPayload(state, [{ productId: 10, description: 'Papas', qty: 3 }]);
     expect(payload.details[0].delivered).toBe(1);
+  });
+
+  it('despachador1 envía vehicleId sin tocar details/arrumes/orderIds', () => {
+    const state = { ...baseState, esDespachador1: true, selectedDriverId: null, selectedVehicleId: 2 };
+    const payload = buildDispatchPayload(state, [{ productId: 10, description: 'Papas', qty: 3 }]);
+    expect(payload.vehicleId).toBe(2);
+    expect(payload.driverId).toBeNull();
+    expect(payload.details).toBeUndefined();
+    expect(payload.arrumes).toBeUndefined();
+    expect(payload.orderIds).toBeUndefined();
+  });
+
+  it('despachador2 envía driverId y vehicleId sin details', () => {
+    const state = {
+      ...baseState,
+      esDespachador2: true,
+      confirmaPlaca: true,
+      selectedDriverId: 1,
+      selectedVehicleId: 2,
+    };
+    const payload = buildDispatchPayload(state, [{ productId: 10, description: 'Papas', qty: 3 }]);
+    expect(payload.vehicleId).toBe(2);
+    expect(payload.driverId).toBe(1);
+    expect(payload.details).toBeUndefined();
+    expect(payload.arrumes).toBeUndefined();
   });
 });

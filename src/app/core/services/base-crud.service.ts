@@ -35,7 +35,15 @@ export abstract class BaseCrudService<TResponse, TDisplay, TCreate = never, TUpd
     this.load();
   }
 
+  protected loadFromEndpoint(endpoint: string): void {
+    this.getPage(`${this.apiUrl}${endpoint}`, endpoint);
+  }
+
   load(): void {
+    this.loadFromEndpoint('');
+  }
+
+  private getPage(url: string, endpoint: string): void {
     this.loading.set(true);
     let params = new HttpParams()
       .set('page', this.currentPage())
@@ -43,11 +51,11 @@ export abstract class BaseCrudService<TResponse, TDisplay, TCreate = never, TUpd
     const term = this.searchTerm();
     if (term) params = params.set('search', term);
     params = this.applyExtraParams(params);
-    this.http.get<PageResponse<TResponse>>(this.apiUrl, { params }).subscribe({
+    this.http.get<PageResponse<TResponse>>(url, { params }).subscribe({
       next: (res) => {
         if (res.content.length === 0 && res.page > 0 && res.totalElements > 0) {
           this.currentPage.set(res.page - 1);
-          this.load();
+          this.loadFromEndpoint(endpoint);
           return;
         }
         this.itemsSignal.set(res.content.map((item) => this.toDisplay(item)));
@@ -71,8 +79,12 @@ export abstract class BaseCrudService<TResponse, TDisplay, TCreate = never, TUpd
   }
 
   loadAll(): void {
+    this.loadAllFromEndpoint('');
+  }
+
+  protected loadAllFromEndpoint(endpoint: string): void {
     const params = new HttpParams().set('page', 0).set('size', 10000);
-    this.http.get<PageResponse<TResponse>>(this.apiUrl, { params }).subscribe({
+    this.http.get<PageResponse<TResponse>>(`${this.apiUrl}${endpoint}`, { params }).subscribe({
       next: (res) => this.itemsSignal.set(res.content.map((item) => this.toDisplay(item))),
       error: () => undefined,
     });

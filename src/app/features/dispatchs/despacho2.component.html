@@ -1,0 +1,204 @@
+<!-- Page Header -->
+<app-page-header badge="10." color="purple" title="Despacho 2 · Confirmar Placa y Despachador"></app-page-header>
+
+    <!-- Info banner -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div class="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl max-w-2xl">
+        <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        <p class="text-sm text-blue-800 leading-relaxed">
+          Solamente los despachos con <strong>placa asignada</strong> (estado <strong>VEHICULO_ASIGNADO</strong>) aparecen
+          aquí. Confirme la placa (puede <strong>corregirla si no cumple los requerimientos del pedido</strong> y deje la
+          observación del cambio) y asigne el <strong>despachador (Despacho 3)</strong> que llevará el cargue.
+        </p>
+      </div>
+      <app-search-input
+        (valueChange)="onSearchChange($event)"
+        placeholder="Buscar pedido o placa..."
+      ></app-search-input>
+    </div>
+
+    <!-- Por confirmar -->
+    <div class="fm-card overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div>
+          <h2 class="font-bold text-[#071938] text-base">Despachos por confirmar</h2>
+          <p class="text-xs text-gray-500 mt-0.5">Despachos con placa asignada por Despacho 1 que esperan confirmación.</p>
+        </div>
+        <span class="text-xs font-bold text-gray-400 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-1">{{ pendientes().length }}</span>
+      </div>
+      @if (loading()) {
+        <div class="flex items-center justify-center py-16">
+          <span class="text-gray-500 text-sm">Cargando despachos por confirmar...</span>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="fm-table">
+            <thead>
+              <tr class="bg-gray-50/60">
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Placa asignada</th>
+                <th>Confirmación de placa</th>
+                <th>Observación del cambio</th>
+                <th>Despachador (Despacho 3)</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of filtered(); track d.id) {
+                <tr>
+                  <td>
+                    <span class="font-mono text-sm font-semibold text-[#071938]">{{ d.orderNumber || 'Múltiples pedidos' }}</span>
+                  </td>
+                  <td>
+                    <span class="text-sm text-gray-600">{{ d.orders?.[0]?.clientName || '—' }}</span>
+                  </td>
+                  <td>
+                    <span class="font-mono text-sm font-bold text-[#071938] uppercase">{{ placaAsignada(d) || '—' }}</span>
+                  </td>
+                  <td>
+                    @if (confirmandoId() === d.id) {
+                      <span class="text-xs text-blue-600 font-medium">Confirmando...</span>
+                    } @else {
+                      <input
+                        type="text"
+                        class="w-36 border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                        placeholder="Misma u otra placa"
+                        [value]="placaConfirmadaDe(d.id)"
+                        (input)="setPlacaConfirmacion(d.id, $any($event.target).value)"
+                        (keyup.enter)="confirmar(d)"
+                      />
+                    }
+                  </td>
+                  <td>
+                    <input
+                      type="text"
+                      class="w-56 border border-gray-300 rounded-lg py-2 px-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                      placeholder="Ej. la placa no cumple los requerimientos del pedido"
+                      [value]="observacionDe(d.id)"
+                      (input)="setObservacion(d.id, $any($event.target).value)"
+                    />
+                  </td>
+                  <td>
+                    <select
+                      class="w-52 border border-gray-300 rounded-lg py-2 px-3 text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      [ngModel]="despachadorDe(d.id) || ''"
+                      (ngModelChange)="setDespachador(d.id, $event)"
+                    >
+                      <option [ngValue]="''" selected>Seleccione...</option>
+                      @for (dp of despachadores(); track dp.id) {
+                        <option [ngValue]="dp.id">{{ dp.nombre }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="text-right">
+                    <button
+                      (click)="confirmar(d)"
+                      [disabled]="confirmandoId() === d.id"
+                      class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium rounded-lg px-4 py-2 transition-colors"
+                    >
+                      Confirmar placa y asignar despachador
+                    </button>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="py-16 text-center">
+                    <div class="flex flex-col items-center gap-2">
+                      <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 13l4 4L19 7"/></svg>
+                      <p class="text-sm font-semibold text-[#071938]">No hay despachos por confirmar</p>
+                      <p class="text-xs text-gray-500">Cuando Despacho 1 asigne una placa aparecerá aquí.</p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Placas confirmadas -->
+    <div class="fm-card overflow-hidden mt-6">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div>
+          <h2 class="font-bold text-[#071938] text-base">Placas confirmadas</h2>
+          <p class="text-xs text-gray-500 mt-0.5">Despachos que confirmaste y el avance de su proceso.</p>
+        </div>
+        <span class="text-xs font-bold text-gray-400 bg-gray-100 border border-gray-200 rounded-full px-2.5 py-1">{{ confirmados().length }}</span>
+      </div>
+      @if (cargandoConfirmados()) {
+        <div class="flex items-center justify-center py-16">
+          <span class="text-gray-500 text-sm">Cargando placas confirmadas...</span>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="fm-table">
+            <thead>
+              <tr class="bg-gray-50/60">
+                <th>Pedido</th>
+                <th>Cliente</th>
+                <th>Placa confirmada</th>
+                <th>Despachador</th>
+                <th>Observación</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Proceso</th>
+                <th class="text-right">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (d of confirmados(); track d.id) {
+                <tr>
+                  <td>
+                    <span class="font-mono text-sm font-semibold text-[#071938]">{{ d.orderNumber || 'Múltiples pedidos' }}</span>
+                  </td>
+                  <td>
+                    <span class="text-sm text-gray-600">{{ d.orders?.[0]?.clientName || '—' }}</span>
+                  </td>
+                  <td>
+                    <span class="font-mono text-sm font-bold text-[#071938] uppercase">{{ d.vehicleNumber || '—' }}</span>
+                  </td>
+                  <td>
+                    <span class="text-sm text-gray-600">{{ d.despachadorNombre || '—' }}</span>
+                  </td>
+                  <td>
+                    @if (d.placaObservacion) {
+                      <span class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">{{ d.placaObservacion }}</span>
+                    } @else {
+                      <span class="text-xs text-gray-400">Sin cambios</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="text-gray-600 text-sm">{{ (d.dispatchDate || '').split('T')[0] }}</span>
+                  </td>
+                  <td>
+                    <span class="status-badge" [class]="estadoClase(d.status)">{{ estadoEtiqueta(d.status) }}</span>
+                  </td>
+                  <td>
+                    <app-dispatch-stepper [status]="d.status" [compact]="true"></app-dispatch-stepper>
+                  </td>
+                  <td class="text-right">
+                    <a [routerLink]="['/despachos', d.id]"
+                      class="p-1.5 rounded-md hover:bg-blue-50 text-gray-500 hover:text-[#0055FF] transition-colors inline-flex"
+                      title="Ver detalles">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6-3.11A10.96 10.96 0 0012 4c-5.06 0-9.42 2.89-11 7 1.58 4.11 5.94 7 11 7 5.06 0 9.42-2.89 11-7-.28-.58-.6-1.14-.99-1.66z"/></svg>
+                    </a>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="9" class="py-16 text-center">
+                    <div class="flex flex-col items-center gap-2">
+                      <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <p class="text-sm font-semibold text-[#071938]">Aún no has confirmado placas</p>
+                      <p class="text-xs text-gray-500">Las placas que confirmes aparecerán aquí con su avance.</p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
