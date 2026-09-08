@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../core/services/product.service';
@@ -36,6 +36,12 @@ export class CategoryListComponent implements OnInit {
   editingDesc = signal<Record<number, string>>({});
 
   deleteTarget = signal<{ id: number; name: string; isGroup: boolean } | null>(null);
+
+  // Computed Stats for KPI header
+  totalGroups = computed(() => this.groups().length);
+  totalSubcategories = computed(() => this.groups().reduce((acc, g) => acc + g.children.length, 0));
+  groupsWithImages = computed(() => this.groups().filter(g => !!g.image).length);
+
 
   ngOnInit() {
     this.load();

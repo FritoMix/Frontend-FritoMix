@@ -4,15 +4,17 @@ import { Router, RouterLink } from '@angular/router';
 import { DispatchService } from '../../core/services/dispatch.service';
 import { AuthService } from '../../core/services/auth.service';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
+import { DispatchStepperComponent } from '../../shared/components/dispatch-stepper.component';
 import { SearchInputComponent } from '../../shared/components/search-input.component';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { Dispatch, DispatchStatus, nextDispatchStatus } from '../../core/models/dispatch.model';
 import { ToastService } from '../../core/services/toast.service';
+import { dispatchStatusClass, dispatchStatusLabel } from './dispatch-status';
 
 @Component({
   selector: 'app-dispatch-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent],
+  imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent, DispatchStepperComponent],
   templateUrl: 'dispatch-list.component.html'
 })
 export class DispatchListComponent implements OnInit {
@@ -23,15 +25,47 @@ export class DispatchListComponent implements OnInit {
 
   currentPage = signal(1);
 
-  isCartera = computed(() => this.authService.currentUser()?.role === 'cartera');
+  role = computed(() => this.authService.currentUser()?.role);
+  isCartera = computed(() => this.role() === 'cartera');
+
+  esDespachador1 = computed(() => this.role() === 'despachador1');
+  esDespachador2 = computed(() => this.role() === 'despachador2');
+  esDespachador3 = computed(() => this.role() === 'despachador3');
+  enModulo1 = computed(() => this.router.url.startsWith('/despacho1'));
+  enModulo2 = computed(() => this.router.url.startsWith('/despacho2'));
 
   puedeAvanzar = computed(() => {
-    const role = this.authService.currentUser()?.role;
+    const role = this.role();
     return role === 'despachador' || role === 'admin';
   });
 
+  puedeCrear = computed(() => {
+    const role = this.role();
+    return role === 'despachador' || role === 'admin' || role === 'coordinador';
+  });
+
+  puedeEliminar = computed(() =>
+    !this.isCartera() && !this.esDespachador1() && !this.esDespachador2() && !this.esDespachador3()
+  );
+
   ngOnInit() {
-    this.dispatchService.load();
+    if (this.enModulo1()) {
+      this.dispatchService.setStatusFilter(['PENDIENTE']);
+    } else if (this.enModulo2()) {
+      this.dispatchService.setStatusFilter(['VEHICULO_ASIGNADO', 'CONDUCTOR_ASIGNADO']);
+    } else if (this.esDespachador3()) {
+      this.dispatchService.setStatusFilter([]);
+      this.dispatchService.loadAssigned();
+    } else {
+      this.dispatchService.setStatusFilter([]);
+    }
+  }
+
+  tituloModulo(): string {
+    if (this.enModulo1()) return 'Despacho 1 · Asignar Vehículo';
+    if (this.enModulo2()) return 'Despacho 2 · Confirmar Placa y Despachador';
+    if (this.esDespachador3()) return 'Despacho 3 · Cargue del Camión';
+    return 'Gestión de Despachos';
   }
 
   onPageChange(page: number) {
@@ -49,25 +83,11 @@ export class DispatchListComponent implements OnInit {
 
 
   statusClass(status: DispatchStatus): string {
-    const map: Record<DispatchStatus, string> = {
-      'PENDIENTE': 'bg-gray-100 text-gray-700 border-gray-300',
-      'ELABORACION': 'bg-amber-50 text-amber-700 border-amber-200',
-      'PRODUCCION': 'bg-blue-50 text-blue-700 border-blue-200',
-      'LISTO_CARGUE': 'bg-teal-50 text-teal-700 border-teal-200',
-      'DESPACHADO': 'bg-green-50 text-green-700 border-green-200'
-    };
-    return map[status] || 'bg-gray-100 text-gray-700 border-gray-300';
+    return dispatchStatusClass(status);
   }
 
   statusLabel(status: DispatchStatus): string {
-    const map: Record<DispatchStatus, string> = {
-      'PENDIENTE': 'PENDIENTE',
-      'ELABORACION': 'ELABORACIÓN',
-      'PRODUCCION': 'PRODUCCIÓN',
-      'LISTO_CARGUE': 'LISTO CARGUE',
-      'DESPACHADO': 'DESPACHADO'
-    };
-    return map[status] || status;
+    return dispatchStatusLabel(status);
   }
 
   eliminar(id: string) {
@@ -82,8 +102,19 @@ export class DispatchListComponent implements OnInit {
     }
   }
 
+  puedeCargar(d: Dispatch): boolean {
+    return this.esDespachador3() && d.status !== 'DESPACHADO';
+  }
+
   editDispatch(d: Dispatch) {
     this.router.navigate(['/despachos', d.id, 'editar']);
+  }
+
+  editTitle(): string {
+    if (this.enModulo1()) return 'Asignar vehículo';
+    if (this.enModulo2()) return 'Confirmar placa y despachador';
+    if (this.esDespachador3()) return 'Cargar camión';
+    return 'Editar';
   }
 
   verDetalle(id: string) {

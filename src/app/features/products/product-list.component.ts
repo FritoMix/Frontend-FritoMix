@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ProductService } from '../../core/services/product.service';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { SearchInputComponent } from '../../shared/components/search-input.component';
@@ -9,7 +10,7 @@ import { PaginationComponent } from '../../shared/components/pagination.componen
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, PageHeaderComponent, SearchInputComponent, PaginationComponent],
+  imports: [CommonModule, RouterLink, FormsModule, PageHeaderComponent, SearchInputComponent, PaginationComponent],
   templateUrl: 'product-list.component.html'
 })
 export class ProductListComponent implements OnInit {
@@ -17,9 +18,40 @@ export class ProductListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
+  selectedCategory = signal<string>('ALL');
+  selectedStatus = signal<'ALL' | 'ACTIVE' | 'INACTIVE'>('ALL');
 
-  paginatedProducts = computed(() => this.productService.items());
+  paginatedProducts = computed(() => {
+    let list = this.productService.items();
+    const cat = this.selectedCategory();
+    const status = this.selectedStatus();
+
+    if (cat !== 'ALL') {
+      list = list.filter(p => p.categoryName === cat);
+    }
+    if (status === 'ACTIVE') {
+      list = list.filter(p => p.active);
+    } else if (status === 'INACTIVE') {
+      list = list.filter(p => !p.active);
+    }
+    return list;
+  });
+
   totalPages = computed(() => this.productService.totalPages() || 1);
+
+  // Stats / KPIs
+  allProducts = computed(() => this.productService.items());
+  totalProductsCount = computed(() => this.allProducts().length);
+  activeProductsCount = computed(() => this.allProducts().filter(p => p.active).length);
+  inactiveProductsCount = computed(() => this.allProducts().filter(p => !p.active).length);
+  
+  availableCategories = computed(() => {
+    const cats = new Set<string>();
+    this.allProducts().forEach(p => {
+      if (p.categoryName) cats.add(p.categoryName);
+    });
+    return Array.from(cats);
+  });
 
   ngOnInit() {
     this.productService.load();
@@ -55,9 +87,10 @@ export class ProductListComponent implements OnInit {
       'Maíz': 'bg-purple-50 text-purple-700 border-purple-200',
       'Maní': 'bg-orange-50 text-orange-700 border-orange-200',
       'Nachos & Totopos': 'bg-red-50 text-red-700 border-red-200',
-      'Dulces': 'bg-pink-50 text-pink-700 border-pink-200',
+      'Dulces': 'bg-[#0055FF]/10 text-[#0055FF] border-[#0055FF]/20',
       'Otros': 'bg-gray-100 text-gray-700 border-gray-200'
     };
-    return map[category] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return map[category] || 'bg-blue-50 text-[#0055FF] border-blue-200';
   }
 }
+

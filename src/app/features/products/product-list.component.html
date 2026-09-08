@@ -1,97 +1,200 @@
 
-<app-page-header badge="3." color="amber" title="Productos"></app-page-header>
+<app-page-header badge="PROD" color="blue" title="Catálogo de Productos" subtitle="Gestión completa de los productos, presentaciones y categorías del sistema"></app-page-header>
 
-    <div class="fm-search-row">
+<!-- KPI Metrics Section -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6 animate-fade-in-up">
+  <div class="catalog-metric-card">
+    <div class="catalog-metric-card__glow bg-[#0055FF]"></div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Productos</span>
+      <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#0055FF]">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-black text-[#071938]">{{ totalProductsCount() }}</p>
+    <p class="text-[11px] text-gray-500 mt-1 font-medium">Registrados en catálogo</p>
+  </div>
+
+  <div class="catalog-metric-card">
+    <div class="catalog-metric-card__glow bg-emerald-500"></div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Activos</span>
+      <div class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center text-emerald-600">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-black text-emerald-600">{{ activeProductsCount() }}</p>
+    <p class="text-[11px] text-gray-500 mt-1 font-medium">Disponibles para venta</p>
+  </div>
+
+  <div class="catalog-metric-card">
+    <div class="catalog-metric-card__glow bg-amber-500"></div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Inactivos</span>
+      <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center text-amber-600">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-black text-amber-600">{{ inactiveProductsCount() }}</p>
+    <p class="text-[11px] text-gray-500 mt-1 font-medium">Fuera de circulación</p>
+  </div>
+
+  <div class="catalog-metric-card">
+    <div class="catalog-metric-card__glow bg-purple-500"></div>
+    <div class="flex items-center justify-between mb-2">
+      <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Categorías</span>
+      <div class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M19 7h.01M19 11h.01M19 15h.01"/></svg>
+      </div>
+    </div>
+    <p class="text-2xl font-black text-purple-600">{{ availableCategories().length }}</p>
+    <p class="text-[11px] text-gray-500 mt-1 font-medium">Grupos categorizados</p>
+  </div>
+</div>
+
+<!-- Toolbar & Search Filters Row -->
+<div class="bg-white rounded-2xl p-4 border border-gray-200/80 shadow-xs mb-6 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 animate-fade-in-up delay-100">
+  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+    <div class="flex-1 min-w-[240px]">
       <app-search-input
-        (valueChange)="productService.setSearchTerm($event)"
-        placeholder="Buscar por código, descripción o categoría..."
+        (valueChange)="onSearchChange($event)"
+        placeholder="Buscar por código, nombre o categoría..."
       ></app-search-input>
-      <button
-        routerLink="/productos/nuevo"
-        class="bg-[#0055FF] hover:bg-[#0044DD] text-white font-bold py-2.5 px-5 rounded-lg text-sm inline-flex items-center justify-center sm:justify-center gap-2 transition-colors shadow-sm whitespace-nowrap"
-      >
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-        Nuevo producto
-      </button>
     </div>
 
-    <div class="fm-card overflow-hidden">
-      @if (productService.loading()) {
-        <div class="flex items-center justify-center py-16">
-          <span class="text-gray-500 text-sm">Cargando productos...</span>
-        </div>
-      } @else {
-        <div class="fm-table-wrapper">
-          <table class="fm-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Descripción</th>
-                <th>Categoría</th>
-                <th>Presentación</th>
-                <th>Estado</th>
-                <th class="text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (p of paginatedProducts(); track p.id) {
-                <tr>
-                  <td>
-                    <span class="font-mono text-sm font-semibold text-[#071938]">{{ p.code }}</span>
-                  </td>
-                  <td>
-                    <span class="font-semibold text-[#071938]">{{ p.name }}</span>
-                  </td>
-                  <td>
-                    <span class="status-badge" [class]="categoryBadgeClass(p.categoryName)">{{ p.categoryName }}</span>
-                  </td>
-                  <td>
-                    <span class="text-gray-600 text-sm">{{ p.presentation }} {{ p.unit }}</span>
-                  </td>
-                  <td>
-                    @if (p.active) {
-                      <span class="status-badge bg-green-50 text-green-700 border-green-200">Activo</span>
-                    } @else {
-                      <span class="status-badge bg-red-50 text-red-600 border-red-200">Inactivo</span>
-                    }
-                  </td>
-                  <td>
-                    <div class="fm-actions-cell">
-                      <button
-                        (click)="editProduct(p.id)"
-                        class="p-1.5 rounded-md hover:bg-gray-100 text-gray-500 hover:text-[#0055FF] transition-colors"
-                        title="Editar"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                      </button>
-                      <button
-                        (click)="deleteProduct(p.id)"
-                        class="p-1.5 rounded-md hover:bg-red-50 text-gray-500 hover:text-red-600 transition-colors"
-                        title="Eliminar"
-                      >
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              } @empty {
-                <tr>
-                  <td colspan="7" class="!text-center">
-                    <div class="fm-empty">
-                      <svg class="fm-empty__icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
-                      <p class="fm-empty__title">No se encontraron productos</p>
-                      <p class="fm-empty__subtitle">Intenta con otro término de búsqueda</p>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
+    <!-- Category Filter Dropdown -->
+    <select
+      [ngModel]="selectedCategory()"
+      (ngModelChange)="selectedCategory.set($event)"
+      class="px-3.5 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-[#071938] outline-none focus:border-[#0055FF] transition-all cursor-pointer"
+    >
+      <option value="ALL">Todas las Categorías</option>
+      @for (cat of availableCategories(); track cat) {
+        <option [value]="cat">{{ cat }}</option>
+      }
+    </select>
+
+    <!-- Status Filter -->
+    <div class="inline-flex bg-gray-100 p-1 rounded-xl gap-1 shrink-0">
+      <button
+        type="button"
+        (click)="selectedStatus.set('ALL')"
+        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+        [class.bg-white]="selectedStatus() === 'ALL'"
+        [class.text-[#071938]]="selectedStatus() === 'ALL'"
+        [class.shadow-xs]="selectedStatus() === 'ALL'"
+        [class.text-gray-500]="selectedStatus() !== 'ALL'"
+      >
+        Todos
+      </button>
+      <button
+        type="button"
+        (click)="selectedStatus.set('ACTIVE')"
+        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+        [class.bg-white]="selectedStatus() === 'ACTIVE'"
+        [class.text-emerald-700]="selectedStatus() === 'ACTIVE'"
+        [class.shadow-xs]="selectedStatus() === 'ACTIVE'"
+        [class.text-gray-500]="selectedStatus() !== 'ACTIVE'"
+      >
+        Activos
+      </button>
+    </div>
+  </div>
+
+  <div class="flex items-center justify-between sm:justify-end gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100">
+    <!-- Create Button -->
+    <button
+      routerLink="/productos/nuevo"
+      class="bg-[#0055FF] hover:bg-[#0044DD] active:scale-95 text-white font-bold py-2.5 px-5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 transition-all shadow-md shadow-blue-500/20 whitespace-nowrap btn-shimmer"
+    >
+      <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+      <span>Nuevo producto</span>
+    </button>
+  </div>
+</div>
+
+<!-- Main Content Area -->
+<div class="animate-fade-in-up delay-200">
+  @if (productService.loading()) {
+    <div class="fm-card flex flex-col items-center justify-center py-20">
+      <div class="w-10 h-10 border-4 border-blue-200 border-t-[#0055FF] rounded-full animate-spin mb-3"></div>
+      <span class="text-gray-500 text-sm font-semibold">Cargando catálogo de productos...</span>
+    </div>
+  } @else {
+    <!-- Grid / Cards View -->
+    <div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mb-6">
+          @for (p of paginatedProducts(); track p.id) {
+            <div class="catalog-product-card p-5 group">
+              <!-- Card Header -->
+              <div class="flex items-start justify-between gap-3 mb-3">
+                <span class="code-badge bg-blue-50 text-[#0055FF] border-blue-200/80">{{ p.code }}</span>
+                @if (p.active) {
+                  <span class="status-badge bg-emerald-50 text-emerald-700 border-emerald-200">Activo</span>
+                } @else {
+                  <span class="status-badge bg-amber-50 text-amber-700 border-amber-200">Inactivo</span>
+                }
+              </div>
+
+              <!-- Content -->
+              <div class="mb-4 flex-1">
+                <h3 class="font-black text-[#071938] text-base group-hover:text-[#0055FF] transition-colors leading-tight mb-2">
+                  {{ p.name }}
+                </h3>
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="status-badge text-[11px]" [class]="categoryBadgeClass(p.categoryName)">
+                    {{ p.categoryName || 'Sin categoría' }}
+                  </span>
+                  @if (p.weight || p.weightGrams) {
+                    <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                      ⚖️ {{ p.weight || (p.weightGrams + 'g') }}
+                    </span>
+                  }
+                </div>
+              </div>
+
+              <!-- Footer Spec & Actions -->
+              <div class="pt-3 border-t border-gray-100 flex items-center justify-between mt-auto">
+                <div>
+                  <span class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Presentación</span>
+                  <span class="text-xs font-bold text-gray-700">{{ p.presentation }} {{ p.unit }}</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <button
+                    (click)="editProduct(p.id)"
+                    class="p-2 rounded-xl bg-gray-50 hover:bg-blue-50 text-gray-600 hover:text-[#0055FF] border border-gray-200/70 transition-all active:scale-95"
+                    title="Editar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </button>
+                  <button
+                    (click)="deleteProduct(p.id)"
+                    class="p-2 rounded-xl bg-gray-50 hover:bg-red-50 text-gray-600 hover:text-red-600 border border-gray-200/70 transition-all active:scale-95"
+                    title="Eliminar"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div class="col-span-full fm-card py-16 text-center">
+              <div class="w-16 h-16 rounded-full bg-blue-50 flex items-center justify-center text-[#0055FF] mx-auto mb-3">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/></svg>
+              </div>
+              <p class="font-bold text-[#071938]">No hay productos que coincidan</p>
+              <p class="text-sm text-gray-500 mt-1">Prueba seleccionando otra categoría o cambiando la búsqueda</p>
+            </div>
+          }
         </div>
 
         @if (totalPages() > 1) {
-          <app-pagination [totalPages]="totalPages()" [currentPage]="currentPage()" (currentPageChange)="onPageChange($event)"></app-pagination>
+          <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs p-2">
+            <app-pagination [totalPages]="totalPages()" [currentPage]="currentPage()" (currentPageChange)="onPageChange($event)"></app-pagination>
+          </div>
         }
-      }
-    </div>
+      </div>
+  }
+</div>
+
 

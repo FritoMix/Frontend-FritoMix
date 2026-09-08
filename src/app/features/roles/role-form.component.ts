@@ -82,6 +82,7 @@ export class RoleFormComponent implements OnInit {
       CUSTOMERS: { module: 'CUSTOMERS', label: 'Clientes', perms: [] },
       DISPATCHES: { module: 'DISPATCHES', label: 'Despachos', perms: [] },
       NOTIFICATIONS: { module: 'NOTIFICATIONS', label: 'Notificaciones', perms: [] },
+      REPORTS: { module: 'REPORTS', label: 'Reportes', perms: [] },
       SETTINGS: { module: 'SETTINGS', label: 'Configuración', perms: [] },
     };
 
@@ -163,6 +164,8 @@ export class RoleFormComponent implements OnInit {
       ORDERS_CREATE: 'Crear pedidos',
       ORDERS_EDIT: 'Editar pedidos',
       ORDERS_DELETE: 'Eliminar pedidos',
+      ORDERS_CHANGE_STATUS: 'Cambiar estado de pedidos',
+      ORDERS_PRODUCTION: 'Gestionar producción',
       DRIVERS_VIEW: 'Ver conductores',
       DRIVERS_CREATE: 'Crear conductores',
       DRIVERS_EDIT: 'Editar conductores',
@@ -179,8 +182,10 @@ export class RoleFormComponent implements OnInit {
       DISPATCHES_CREATE: 'Crear despachos',
       DISPATCHES_EDIT: 'Editar despachos',
       DISPATCHES_DELETE: 'Eliminar despachos',
+      DISPATCHES_CHANGE_STATUS: 'Cambiar estado de despachos',
       NOTIFICATIONS_VIEW: 'Ver notificaciones',
       NOTIFICATIONS_MARK_READ: 'Marcar notificaciones',
+      REPORTS_VIEW: 'Ver reportes',
       SETTINGS_VIEW: 'Ver configuración',
       SETTINGS_EDIT: 'Editar configuración',
     };
