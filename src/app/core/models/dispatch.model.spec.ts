@@ -3,15 +3,20 @@ import { nextDispatchStatus, toDispatchDisplay } from './dispatch.model';
 import type { DispatchResponse } from './dispatch.model';
 
 describe('nextDispatchStatus', () => {
-  it('avanza un paso en el flujo de despacho', () => {
-    expect(nextDispatchStatus('PENDIENTE')).toBe('ELABORACION');
-    expect(nextDispatchStatus('ELABORACION')).toBe('PRODUCCION');
-    expect(nextDispatchStatus('PRODUCCION')).toBe('LISTO_CARGUE');
-    expect(nextDispatchStatus('LISTO_CARGUE')).toBe('DESPACHADO');
+  it('avanza un paso en el flujo de despacho de 3 pasos', () => {
+    expect(nextDispatchStatus('PENDIENTE')).toBe('VEHICULO_ASIGNADO');
+    expect(nextDispatchStatus('VEHICULO_ASIGNADO')).toBe('CONDUCTOR_ASIGNADO');
+    expect(nextDispatchStatus('CONDUCTOR_ASIGNADO')).toBe('DESPACHADO');
   });
 
   it('devuelve null al estar en el último estado', () => {
     expect(nextDispatchStatus('DESPACHADO')).toBeNull();
+  });
+
+  it('devuelve null en estados legados que ya no avanzan', () => {
+    expect(nextDispatchStatus('ELABORACION')).toBeNull();
+    expect(nextDispatchStatus('PRODUCCION')).toBeNull();
+    expect(nextDispatchStatus('LISTO_CARGUE')).toBeNull();
   });
 
   it('devuelve null ante un estado desconocido', () => {

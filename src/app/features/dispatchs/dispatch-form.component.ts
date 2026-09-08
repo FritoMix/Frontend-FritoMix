@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -7,9 +7,10 @@ import { OrderService } from '../../core/services/order.service';
 import { DriverService } from '../../core/services/driver.service';
 import { VehicleService } from '../../core/services/vehicle.service';
 import { ProductService } from '../../core/services/product.service';
-import { ChecklistItem, DispatchStatus, DispatchResponse, CreateArrumeRequest } from '../../core/models/dispatch.model';
+import { ChecklistItem, DispatchStatus, DispatchResponse, CreateArrumeRequest, DispatchPreviewItem } from '../../core/models/dispatch.model';
 import { Order } from '../../core/models/order.model';
 import { AuthService } from '../../core/services/auth.service';
+import { DispatchStepperComponent } from '../../shared/components/dispatch-stepper.component';
 import { DispatchArrumesFormComponent } from './dispatch-arrumes-form.component';
 import { DispatchProductsDetailComponent } from './dispatch-products-detail.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
@@ -27,7 +28,7 @@ import {
 @Component({
   selector: 'app-dispatch-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, DispatchArrumesFormComponent, DispatchProductsDetailComponent, ConfirmDialogComponent],
+  imports: [CommonModule, FormsModule, RouterLink, DispatchArrumesFormComponent, DispatchProductsDetailComponent, ConfirmDialogComponent, DispatchStepperComponent],
   templateUrl: 'dispatch-form.component.html'
 })
 export class DispatchFormComponent {
@@ -49,6 +50,12 @@ export class DispatchFormComponent {
   facturasPorPedido: Record<string, string> = {};
   selectedDriverId: number | null = null;
 
+  role = computed(() => this.authService.currentUser()?.role);
+  esDespachador1 = computed(() => this.role() === 'despachador1');
+  esDespachador2 = computed(() => this.role() === 'despachador2');
+  esDespachador3 = computed(() => this.role() === 'despachador3');
+  confirmaPlaca = signal(false);
+
   selectedVehicleId: number | null = null;
   pesoTotalCargue = 0;
   totalDimension = 0;
@@ -56,6 +63,9 @@ export class DispatchFormComponent {
   itemObservations: Record<number, string> = {};
   itemDelivered: Record<number, number> = {};
   arrumes = signal<CreateArrumeRequest[]>([]);
+  respDetailItems = signal<DispatchPreviewItem[] | null>(null);
+  private despachoPendiente: DispatchResponse | null = null;
+  private reintentosPedido = 0;
   message = signal('');
   messageType = signal<'success' | 'error'>('success');
   errorDialog = signal<string>('');
@@ -97,8 +107,10 @@ export class DispatchFormComponent {
   ];
 
   constructor() {
+    if (this.authService.currentUser()?.role !== 'despachador1') {
+      this.driverService.loadAll();
+    }
     this.orderService.loadAll();
-    this.driverService.loadAll();
     this.vehicleService.loadAll();
     this.productService.loadAll();
     this.dispatchService.loadAll();
@@ -129,6 +141,7 @@ export class DispatchFormComponent {
 
   onTipoPedido(tipo: TipoPedido) {
     this.tipoPedido = tipo;
+    this.respDetailItems.set(null);
     if (tipo === 'pedido_unico') {
       this.selectedOrderIds = [];
       this.facturasPorPedido = {};
@@ -145,8 +158,20 @@ export class DispatchFormComponent {
         .filter(o => !!o.dispatchDate)
         .map(o => o.id)
     );
-    return this.orderService.items()
+    const elegibles = this.orderService.items()
       .filter(o => o.status === 'APROBADO' && !dispatched.has(o.id));
+
+    if (!this.editId) return elegibles;
+
+    const idsActuales = this.isMulti()
+      ? this.selectedOrderIds
+      : (this.selectedOrderId ? [this.selectedOrderId] : []);
+    const actuales: Order[] = [];
+    for (const id of idsActuales) {
+      const found = this.orderService.items().find(o => o.id === id);
+      if (found && !elegibles.some(e => e.id === found.id)) actuales.push(found);
+    }
+    return [...actuales, ...elegibles];
   }
 
   previewRows(): Order[] {
@@ -174,6 +199,8 @@ export class DispatchFormComponent {
   }
 
   aggregatedItems() {
+    const fallback = this.respDetailItems();
+    if (fallback) return fallback;
     return aggregateItems(this.isUnico(), this.selectedOrder, this.previewRows());
   }
 
@@ -193,14 +220,8 @@ export class DispatchFormComponent {
     this.tipoPedido = (resp.tipoPedido || 'pedido_unico') as TipoPedido;
     this.selectedDriverId = resp.driverId;
     this.selectedVehicleId = resp.vehicleId;
-    this.numeroFactura = resp.numeroFactura || '';
-
+    this.numeroFactura = '';
     this.facturasPorPedido = {};
-    (resp.orders ?? []).forEach(o => {
-      if (o.id && o.numeroFactura) {
-        this.facturasPorPedido[String(o.id)] = o.numeroFactura;
-      }
-    });
 
     if (resp.dispatchDate) {
       this.form.dispatchDate = resp.dispatchDate.split('T')[0];
@@ -219,6 +240,22 @@ export class DispatchFormComponent {
         this.selectedOrder = order;
         this.form.route = `${order.city} - ${order.address}`;
       }
+    }
+
+    const orderResuelto = this.isUnico()
+      ? !!(this.selectedOrder && (this.selectedOrder.items?.length ?? 0) > 0)
+      : this.selectedOrderIds.length > 0 && orderList.some(o => this.selectedOrderIds.includes(o.id));
+    if (orderResuelto) {
+      this.respDetailItems.set(null);
+    } else if ((resp.details?.length ?? 0) > 0) {
+      this.respDetailItems.set(resp.details.map(d => ({
+        productId: d.productId,
+        description: d.productName || d.productCode || 'Producto',
+        lot: d.lote ?? '',
+        qty: d.quantity ?? 0
+      })));
+    } else {
+      this.reprogramarPedido(resp);
     }
 
     this.recalcWeight();
@@ -246,6 +283,27 @@ export class DispatchFormComponent {
     })));
   }
 
+  private reprogramarPedido(resp: DispatchResponse) {
+    this.despachoPendiente = resp;
+    this.reintentosPedido = 0;
+    setTimeout(() => this.reintentarPedido(), 400);
+  }
+
+  private reintentarPedido() {
+    if (!this.despachoPendiente) return;
+    if (this.orderService.items().length > 0) {
+      const resp = this.despachoPendiente;
+      this.despachoPendiente = null;
+      this.cargarDespacho(resp);
+      return;
+    }
+    if (++this.reintentosPedido > 8) {
+      this.despachoPendiente = null;
+      return;
+    }
+    setTimeout(() => this.reintentarPedido(), 400);
+  }
+
   getLotCode(itemLot?: string, itemNum?: number): string {
     if (itemLot) return itemLot;
     const dateFormatted = this.form.dispatchDate ? this.form.dispatchDate.replace(/-/g, '') : '20260725';
@@ -266,6 +324,7 @@ export class DispatchFormComponent {
   onOrderChange() {
     const order = this.orderService.items().find(o => o.id === this.selectedOrderId) || null;
     this.selectedOrder = order;
+    this.respDetailItems.set(null);
     if (order) {
       this.form.orderNumber = order.orderNumber;
       this.form.route = `${order.city} - ${order.address}`;
@@ -351,10 +410,39 @@ export class DispatchFormComponent {
       checklist: this.checklist,
       arrumes: this.arrumes(),
       userId: this.authService.currentUser()?.id ?? null,
+      esDespachador1: this.esDespachador1(),
+      esDespachador2: this.esDespachador2(),
+      confirmaPlaca: this.confirmaPlaca(),
     };
   }
 
+  accionBoton(): string {
+    if (this.esDespachador1()) return 'Asignar vehículo';
+    if (this.esDespachador2()) return 'Confirmar y asignar despachador';
+    if (this.esDespachador3()) return 'Guardar cargue';
+    return this.editId ? 'Actualizar Despacho' : 'Confirmar Despacho';
+  }
+
+  tituloPagina(): string {
+    if (this.esDespachador1()) return 'Asignar Vehículo al Despacho';
+    if (this.esDespachador2()) return 'Confirmar Placa y Despachador';
+    if (this.esDespachador3()) return 'Despacho 3 · Cargue del Camión';
+    return this.editId ? 'Editar Despacho' : 'Confirmación de Despacho';
+  }
+
+  esLeyendaRoles(): boolean {
+    return this.esDespachador1() || this.esDespachador2();
+  }
+
   guardar() {
+    if (this.esDespachador1()) this.form.status = 'VEHICULO_ASIGNADO';
+    if (this.esDespachador2()) this.form.status = 'CONDUCTOR_ASIGNADO';
+
+    if (this.editId && this.form.status === 'DESPACHADO') {
+      this.showMessage('El despacho ya fue despachado y no puede editarse.');
+      return;
+    }
+
     const invalidMsg = validateDispatchForm(this.dispatchState());
     if (invalidMsg) {
       this.showMessage(invalidMsg);
@@ -372,10 +460,56 @@ export class DispatchFormComponent {
         this.orderService.loadAll();
         this.dispatchService.loadAll();
         this.toastService.success(this.editId ? 'Despacho actualizado exitosamente.' : 'Despacho creado exitosamente.');
-        this.router.navigate(['/despachos']);
+        this.router.navigate([this.rutaModulo()]);
       },
       error: (err) => {
         const msg = err.error?.message || err.message || 'Error al guardar el despacho. Verifica los datos e intenta de nuevo.';
+        this.errorDialog.set(msg);
+      }
+    });
+  }
+
+  private rutaModulo(): string {
+    if (this.esDespachador1()) return '/despacho1';
+    if (this.esDespachador2()) return '/despacho2';
+    return '/despachos';
+  }
+
+  puedeConfirmarSalida(): boolean {
+    return this.esDespachador3() && !!this.editId && this.form.status === 'CONDUCTOR_ASIGNADO';
+  }
+
+  confirmarSalida() {
+    if (!this.editId) return;
+    if (this.form.status === 'DESPACHADO') {
+      this.showMessage('El despacho ya fue despachado y no puede editarse.');
+      return;
+    }
+    const invalidMsg = validateDispatchForm(this.dispatchState());
+    if (invalidMsg) {
+      this.showMessage(invalidMsg);
+      return;
+    }
+
+    const payload = buildDispatchPayload(this.dispatchState(), this.aggregatedItems());
+
+    this.dispatchService.update(this.editId, payload).subscribe({
+      next: () => {
+        this.dispatchService.updateStatus(this.editId!, 'DESPACHADO').subscribe({
+          next: () => {
+            this.orderService.loadAll();
+            this.dispatchService.loadAll();
+            this.toastService.success('Cargue guardado y salida confirmada. Despacho marcado como DESPACHADO.');
+            this.router.navigate([this.rutaModulo()]);
+          },
+          error: (err) => {
+            const msg = err.error?.message || err.error?.error || 'Error al confirmar la salida del despacho.';
+            this.errorDialog.set(msg);
+          }
+        });
+      },
+      error: (err) => {
+        const msg = err.error?.message || err.message || 'Error al guardar el cargue del despacho. Verifica los datos e intenta de nuevo.';
         this.errorDialog.set(msg);
       }
     });
