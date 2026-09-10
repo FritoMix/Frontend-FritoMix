@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { OrderService } from '../../core/services/order.service';
@@ -8,15 +7,14 @@ import { ClientService } from '../../core/services/client.service';
 import { ProductService } from '../../core/services/product.service';
 import { OrderStatus } from '../../core/models/order.model';
 import { Client } from '../../core/models/client.model';
-import { Product } from '../../core/models/product.model';
+import { Product, CategoryGroupDTO, CategoryDTO } from '../../core/models/product.model';
 import { ToastService } from '../../core/services/toast.service';
 import { forkJoin } from 'rxjs';
-import { CategoryGroupDTO, CategoryDTO } from '../../core/models/product.model';
 
 @Component({
   selector: 'app-order-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, RouterLink],
   templateUrl: 'order-form.component.html'
 })
 export class OrderFormComponent implements OnInit {
@@ -41,16 +39,46 @@ export class OrderFormComponent implements OnInit {
   clientQuery = signal('');
   clientDropdownOpen = false;
 
+  productSearchQuery = signal('');
+
   items = signal<{ productId: number | null; quantity: number }[]>([]);
 
   groups = signal<CategoryGroupDTO[]>([]);
   selectedGroup = signal<CategoryGroupDTO | null>(null);
   selectedSubcategory = signal<CategoryDTO | null>(null);
 
-  productsBySubcategory = computed(() => {
+  selectedClient = computed(() => {
+    const id = this.selectedClientId;
+    if (!id) return null;
+    return this.clientService.items().find(c => c.id === id) || null;
+  });
+
+  // Returns filtered products based on subcategory, category group, or global search
+  displayedProducts = computed(() => {
+    const query = this.productSearchQuery().toLowerCase().trim();
+    const all = this.productService.items().filter(p => p.active !== false);
+
+    if (query) {
+      return all.filter(p =>
+        p.name?.toLowerCase().includes(query) ||
+        p.code?.toLowerCase().includes(query) ||
+        p.description?.toLowerCase().includes(query)
+      );
+    }
+
     const sub = this.selectedSubcategory();
-    if (!sub) return [];
-    return this.productService.items().filter(p => p.categoryId === sub.id && p.active !== false);
+    if (sub) {
+      return all.filter(p => p.categoryId === sub.id);
+    }
+
+    const group = this.selectedGroup();
+    if (group) {
+      if ((group.children?.length ?? 0) === 0) {
+        return all.filter(p => p.categoryId === group.id);
+      }
+    }
+
+    return [];
   });
 
   totalWeight = computed(() => {
@@ -69,6 +97,10 @@ export class OrderFormComponent implements OnInit {
       const product = products.find(p => p.id === item.productId);
       return total + (product?.dimension ?? 0) * item.quantity;
     }, 0);
+  });
+
+  totalItemsCount = computed(() => {
+    return this.items().reduce((total, item) => total + (item.quantity || 0), 0);
   });
 
   get subcategories(): CategoryDTO[] {
@@ -102,55 +134,143 @@ export class OrderFormComponent implements OnInit {
   }
 
   groupIcon(name: string): string {
+    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const map: Record<string, string> = {
       'bebidas': '🥤',
       'extruido': '🥨',
       'galletas': '🍪',
       'papa': '🍟',
       'platano': '🍌',
-      'panadería': '🥖',
       'panaderia': '🥖',
       'pelet': '🌾',
       'dulces': '🍬',
+      'mani': '🥜',
+      'frutos secos': '🥜',
+      'snacks': '🍿',
     };
-    const key = (name || '').toLowerCase();
-    return map[key] ?? '📦';
+    return map[norm] ?? '📦';
+  }
+
+  groupColor(name: string): string {
+    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const map: Record<string, string> = {
+      'bebidas': '#0284C7',
+      'panaderia': '#EF4444',
+      'pelet': '#F97316',
+      'galletas': '#D97706',
+      'papa': '#EAB308',
+      'platano': '#10B981',
+      'extruido': '#A855F7',
+      'dulces': '#EC4899',
+      'mani': '#B45309',
+      'frutos secos': '#B45309',
+    };
+    return map[norm] ?? '#0055FF';
   }
 
   groupGradient(name: string): string {
+    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const map: Record<string, string> = {
-      'bebidas': 'linear-gradient(135deg, #1f2937, #030712)',
-      'panadería': 'linear-gradient(135deg, #dc2626, #991b1b)',
-      'panaderia': 'linear-gradient(135deg, #dc2626, #991b1b)',
-      'pelet': 'linear-gradient(135deg, #ea580c, #c2410c)',
-      'galletas': 'linear-gradient(135deg, #fef3c7, #fde68a)',
-      'papa': 'linear-gradient(135deg, #fdf6ec, #f5d9b8)',
-      'platano': 'linear-gradient(135deg, #16a34a, #047857)',
-      'extruido': 'linear-gradient(135deg, #fde047, #f59e0b)',
+      'bebidas': 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
+      'panaderia': 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+      'pelet': 'linear-gradient(135deg, #F97316 0%, #C2410C 100%)',
+      'galletas': 'linear-gradient(135deg, #D97706 0%, #78350F 100%)',
+      'papa': 'linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)',
+      'platano': 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
+      'extruido': 'linear-gradient(135deg, #A855F7 0%, #7E22CE 100%)',
+      'dulces': 'linear-gradient(135deg, #EC4899 0%, #9D174D 100%)',
+      'mani': 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
+      'frutos secos': 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
     };
-    const key = (name || '').toLowerCase();
-    return map[key] ?? 'linear-gradient(135deg, #0055FF, #0044DD)';
+    return map[norm] ?? 'linear-gradient(135deg, #0055FF 0%, #0033AA 100%)';
   }
 
-  groupTextColor(name: string): string {
-    const light = ['galletas', 'papa', 'extruido'];
-    const key = (name || '').toLowerCase();
-    return light.includes(key) ? '#7c4a12' : '#ffffff';
+  groupShadow(name: string): string {
+    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const map: Record<string, string> = {
+      'bebidas': 'rgba(2, 132, 199, 0.3)',
+      'panaderia': 'rgba(239, 68, 68, 0.3)',
+      'pelet': 'rgba(249, 115, 22, 0.3)',
+      'galletas': 'rgba(217, 119, 6, 0.3)',
+      'papa': 'rgba(234, 179, 8, 0.35)',
+      'platano': 'rgba(16, 185, 129, 0.3)',
+      'extruido': 'rgba(168, 85, 247, 0.3)',
+      'dulces': 'rgba(236, 72, 153, 0.3)',
+      'mani': 'rgba(180, 83, 9, 0.3)',
+    };
+    return map[norm] ?? 'rgba(0, 85, 255, 0.25)';
   }
 
-  groupBadge(name: string): string {
-    const map: Record<string, string> = {
-      'bebidas': 'bg-gray-900 text-white',
-      'panadería': 'bg-red-600 text-white',
-      'panaderia': 'bg-red-600 text-white',
-      'pelet': 'bg-orange-500 text-white',
-      'galletas': 'bg-yellow-200 text-amber-800',
-      'papa': 'bg-orange-100 text-amber-800',
-      'platano': 'bg-green-600 text-white',
-      'extruido': 'bg-yellow-400 text-yellow-900',
-    };
-    const key = (name || '').toLowerCase();
-    return map[key] ?? 'bg-blue-50 text-[#0055FF]';
+  productGroupColor(product: Product): string {
+    if (this.selectedGroup()) {
+      return this.groupColor(this.selectedGroup()!.name);
+    }
+    const group = this.groups().find(g =>
+      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
+    );
+    return this.groupColor(group?.name || product.categoryName || '');
+  }
+
+  productGradient(product: Product): string {
+    if (this.selectedGroup()) {
+      return this.groupGradient(this.selectedGroup()!.name);
+    }
+    const group = this.groups().find(g =>
+      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
+    );
+    return this.groupGradient(group?.name || product.categoryName || '');
+  }
+
+  productShadow(product: Product): string {
+    if (this.selectedGroup()) {
+      return this.groupShadow(this.selectedGroup()!.name);
+    }
+    const group = this.groups().find(g =>
+      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
+    );
+    return this.groupShadow(group?.name || product.categoryName || '');
+  }
+
+  productCategoryIcon(product: Product): string {
+    const group = this.groups().find(g =>
+      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
+    );
+    return this.groupIcon(group?.name || product.categoryName || '');
+  }
+
+  productCategoryImage(product: Product): string | null {
+    const group = this.groups().find(g =>
+      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
+    );
+    if (group?.image) return group.image;
+    const child = group?.children?.find(c => c.id === product.categoryId);
+    if (child?.image) return child.image;
+    return null;
+  }
+
+  previewProduct = signal<{
+    image: string | null;
+    icon: string;
+    name: string;
+    code: string;
+    category: string;
+    color: string;
+  } | null>(null);
+
+  showImagePreview(product: Product, event?: MouseEvent) {
+    if (event) event.stopPropagation();
+    this.previewProduct.set({
+      image: this.productCategoryImage(product),
+      icon: this.productCategoryIcon(product),
+      name: product.name,
+      code: product.code,
+      category: product.categoryName || this.selectedGroup()?.name || 'Categoría',
+      color: this.productGroupColor(product)
+    });
+  }
+
+  hideImagePreview() {
+    this.previewProduct.set(null);
   }
 
   filteredClients = computed(() => {
@@ -178,8 +298,23 @@ export class OrderFormComponent implements OnInit {
     this.clientDropdownOpen = false;
   }
 
+  clearSelectedClient() {
+    this.selectedClientId = null;
+    this.clientQuery.set('');
+    this.selectedCity = '';
+    this.clientDropdownOpen = false;
+  }
+
   closeClientDropdown() {
-    setTimeout(() => { this.clientDropdownOpen = false; }, 150);
+    setTimeout(() => { this.clientDropdownOpen = false; }, 200);
+  }
+
+  onProductSearch(event: Event) {
+    this.productSearchQuery.set((event.target as HTMLInputElement).value);
+  }
+
+  clearProductSearch() {
+    this.productSearchQuery.set('');
   }
 
   ngOnInit() {
@@ -218,12 +353,55 @@ export class OrderFormComponent implements OnInit {
     }
   }
 
+  getItemQuantity(productId: number | null): number {
+    if (!productId) return 0;
+    const it = this.items().find(i => i.productId === productId);
+    return it ? it.quantity : 0;
+  }
+
+  addProductToOrder(product: Product) {
+    this.items.update(list => {
+      const existing = list.find(i => i.productId === product.id);
+      if (existing) {
+        return list.map(i =>
+          i.productId === product.id ? { ...i, quantity: (i.quantity || 0) + 1 } : i
+        );
+      }
+      return [...list, { productId: product.id, quantity: 1 }];
+    });
+  }
+
+  decrementProduct(productId: number | null, event?: Event) {
+    if (event) event.stopPropagation();
+    if (!productId) return;
+    this.items.update(list => {
+      const existing = list.find(i => i.productId === productId);
+      if (!existing) return list;
+      if (existing.quantity <= 1) {
+        return list.filter(i => i.productId !== productId);
+      }
+      return list.map(i =>
+        i.productId === productId ? { ...i, quantity: i.quantity - 1 } : i
+      );
+    });
+  }
+
+  updateItemQuantity(index: number, newQty: number) {
+    const val = Math.max(0, Math.floor(newQty || 0));
+    this.items.update(list => {
+      if (val === 0) {
+        return list.filter((_, i) => i !== index);
+      }
+      return list.map((it, i) => i === index ? { ...it, quantity: val } : it);
+    });
+  }
+
   removeItem(index: number) {
     this.items.update(list => list.filter((_, i) => i !== index));
   }
 
-  updateItem(index: number) {
-    this.items.update(list => list.map((it, i) => (i === index ? { ...it } : it)));
+  clearAllItems() {
+    this.items.set([]);
   }
 
   selectGroup(group: CategoryGroupDTO) {
@@ -252,28 +430,25 @@ export class OrderFormComponent implements OnInit {
     this.selectedSubcategory.set(null);
   }
 
-  productName(productId: number | null): string {
-    const p = this.productService.items().find(x => x.id === productId);
-    return p ? `${p.name} (${p.code})` : '';
+  getProduct(productId: number | null): Product | undefined {
+    return this.productService.items().find(x => x.id === productId);
   }
 
-  addProductToOrder(product: Product) {
-    this.items.update(list => {
-      const existing = list.find(i => i.productId === product.id);
-      if (existing) {
-        return list.map(i =>
-          i.productId === product.id ? { ...i, quantity: (i.quantity || 0) + 1 } : i
-        );
-      }
-      return [...list, { productId: product.id, quantity: 1 }];
-    });
+  productName(productId: number | null): string {
+    const p = this.getProduct(productId);
+    return p ? p.name : '';
+  }
+
+  productCode(productId: number | null): string {
+    const p = this.getProduct(productId);
+    return p ? p.code : '';
   }
 
   badgeClass(status: string): string {
     const map: Record<string, string> = {
-      'PENDIENTE': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      'APROBADO': 'bg-green-50 text-green-700 border-green-200',
-      'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
+      'PENDIENTE': 'bg-amber-50 text-amber-700 border-amber-200',
+      'APROBADO': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'CANCELADO': 'bg-rose-50 text-rose-600 border-rose-200',
       'EN_PRODUCCION': 'bg-indigo-50 text-indigo-700 border-indigo-200',
       'LISTO_PRODUCCION': 'bg-cyan-50 text-cyan-700 border-cyan-200',
     };
@@ -281,10 +456,18 @@ export class OrderFormComponent implements OnInit {
   }
 
   onSave() {
-    if (this.saving || !this.selectedClientId || !this.orderNumber) return;
+    if (this.saving || !this.selectedClientId || !this.orderNumber) {
+      if (!this.selectedClientId) {
+        this.toastService.error('Por favor selecciona un cliente');
+      }
+      return;
+    }
 
-    const details = this.items().filter(i => i.productId);
-    if (details.length === 0) return;
+    const details = this.items().filter(i => i.productId && i.quantity > 0);
+    if (details.length === 0) {
+      this.toastService.error('Agrega al menos un producto al pedido');
+      return;
+    }
 
     this.showPreview = true;
   }
@@ -294,7 +477,7 @@ export class OrderFormComponent implements OnInit {
     this.saving = true;
 
     const details = this.items()
-      .filter(i => i.productId)
+      .filter(i => i.productId && i.quantity > 0)
       .map(i => ({
         productId: Number(i.productId),
         quantity: Number(i.quantity),
@@ -343,5 +526,12 @@ export class OrderFormComponent implements OnInit {
   get previewClientName(): string {
     const c = this.clientService.items().find(x => x.id === this.selectedClientId);
     return c?.businessName ?? '';
+  }
+
+  scrollToOrderTray() {
+    const el = document.getElementById('order-tray-panel');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   }
 }

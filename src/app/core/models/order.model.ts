@@ -109,6 +109,27 @@ export interface CreateOrderDetailRequest {
 export type UpdateOrderRequest = CreateOrderRequest;
 
 export function toOrderDisplay(resp: OrderResponse): Order {
+  const items: OrderItem[] = (resp.details || []).map((d, i) => ({
+    item: i + 1,
+    productId: d.productId,
+    description: d.productName,
+    bulto: Math.floor(d.quantity),
+    caja: 0,
+    dcho: 0,
+    group: 1,
+    lot: d.productCode,
+    dimension: d.dimension,
+    pesoUnidad: d.pesoUnidad,
+  }));
+
+  const calculatedWeight = items.reduce((sum, it) => {
+    return sum + (it.pesoUnidad || 0) * (it.bulto || 0);
+  }, 0);
+
+  const realWeight = (resp.pesoTotalCargue && resp.pesoTotalCargue > 0)
+    ? resp.pesoTotalCargue
+    : calculatedWeight;
+
   return {
     id: String(resp.id),
     orderNumber: resp.orderNumber,
@@ -133,22 +154,11 @@ export function toOrderDisplay(resp: OrderResponse): Order {
     dispatchDate: resp.dispatchDate ? resp.dispatchDate.split('T')[0] : '',
     dispatchTime: resp.dispatchDate ? resp.dispatchDate.split('T')[1]?.slice(0, 5) : '',
     status: resp.status as OrderStatus,
-    items: resp.details.map((d, i) => ({
-      item: i + 1,
-      productId: d.productId,
-      description: d.productName,
-      bulto: Math.floor(d.quantity),
-      caja: 0,
-      dcho: 0,
-      group: 1,
-      lot: d.productCode,
-      dimension: d.dimension,
-      pesoUnidad: d.pesoUnidad,
-    })),
+    items,
     totalBultos: Math.floor(resp.total),
     totalCajas: 0,
     totalUnidades: 0,
-    pesoTotalKg: resp.pesoTotalCargue ?? 0,
+    pesoTotalKg: realWeight,
     observations: resp.notes || '',
   };
 }
