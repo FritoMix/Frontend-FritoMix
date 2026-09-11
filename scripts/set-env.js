@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const backendUrl = process.env.BACKEND_URL || 'http://localhost:8080';
+const backendUrl = process.env.BACKEND_URL || '';
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY || 'BBWWvO2cOkrnYnIAq7Q7LZ2toK7idkdP8ez8unCT0_hpXMOF__suZTQb4Nxz9TTc54Ec0l4P6TyUiAa79QPvEd8';
 
 const content = `export const environment = {
