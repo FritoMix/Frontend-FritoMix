@@ -31,6 +31,9 @@
                 <th>Cliente</th>
                 <th>Fecha</th>
                 <th>Estado</th>
+                @if (isCartera()) {
+                  <th>Aprobado por</th>
+                }
                 <th class="text-right !pr-6">Acciones</th>
               </tr>
             </thead>
@@ -49,6 +52,18 @@
                   <td>
                     <span class="status-badge" [class]="badgeClass(order.status)">{{ order.status }}</span>
                   </td>
+                  @if (isCartera()) {
+                    <td>
+                      @if (order.approvedByName) {
+                        <div class="flex items-center gap-1.5">
+                          <svg class="w-3.5 h-3.5 text-emerald-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                          <span class="text-sm font-semibold text-emerald-700">{{ order.approvedByName }}</span>
+                        </div>
+                      } @else {
+                        <span class="text-gray-400 text-sm italic">—</span>
+                      }
+                    </td>
+                  }
                   <td class="text-right !pr-6">
                     <div class="flex items-center justify-end gap-2">
                       @if (isCartera() && order.status === 'PENDIENTE') {

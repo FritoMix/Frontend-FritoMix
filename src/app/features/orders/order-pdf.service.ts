@@ -168,7 +168,7 @@ export class OrderPdfService {
       // ═════════════════════════════════════════════════════════════
       //  SECTION 2 — CLIENT + DISPATCHER INFO
       // ═════════════════════════════════════════════════════════════
-      const INFO_H = 21;
+      const INFO_H = 25;
       const CLI_W  = CW * 0.67;
       const DSP_W  = CW - CLI_W;
       const CLI_H  = 5;   // header strip height
@@ -206,6 +206,7 @@ export class OrderPdfService {
       TC(NAVY); B(6.5); TX('DESPACHADOR / TRANSPORTE', DX + DSP_W / 2, y + 3.6, { align: 'center' });
 
       const dspRows: [string, string][] = [
+        ['Aprobado por:', order.approvedByName || '—'],
         ['Despachador:',    order.dispatchUserName || '—'],
         ['Vehículo:',       order.dispatchVehicleNumber || '—'],
         ['Fecha Despacho:', order.dispatchDate ? order.dispatchDate.split('T')[0].replace(/-/g, '/') : '—'],
@@ -498,7 +499,8 @@ export class OrderPdfService {
       //  SECTION 5 — SIGNATURE FOOTER
       // ═════════════════════════════════════════════════════════════
       const SW = CW / 3;
-      const sigTitles = ['ELABORÓ (COORDINADOR)', 'REVISÓ (DESPACHADOR)', 'RECIBIÓ (CONDUCTOR)'];
+      const approvedLabel = order.approvedByName ? `APROBÓ: ${order.approvedByName}` : 'APROBÓ (CARTERA)';
+      const sigTitles = [approvedLabel, 'REVISÓ (DESPACHADOR)', 'RECIBIÓ (CONDUCTOR)'];
 
       D(HGRAY, 0.35);
       sigTitles.forEach((title, i) => {
