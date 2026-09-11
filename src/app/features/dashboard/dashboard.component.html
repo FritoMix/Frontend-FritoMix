@@ -99,23 +99,39 @@
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-[#0055FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          <h3 class="font-bold text-[#071938] text-base">Ventas por mes</h3>
+          <h3 class="font-bold text-[#071938] text-base">Pedidos por mes</h3>
         </div>
         <span class="text-xs text-gray-400 font-medium">Año en curso</span>
       </div>
-      <div class="flex items-end gap-2 h-44 pt-4 px-2 border-b border-gray-100">
+      <div class="flex items-end gap-2 h-48 pt-6 pb-1 px-2 border-b border-gray-100 relative">
         @for (bar of monthlyBars(); track bar.month) {
-          <div class="flex-1 flex flex-col items-center gap-1 group relative">
+          <div class="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end">
             <!-- Tooltip -->
-            <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-8 bg-[#071938] text-white text-[10px] font-bold py-1 px-2 rounded shadow-md pointer-events-none z-10 whitespace-nowrap">
-              {{ bar.count }} pedidos
+            <div class="opacity-0 group-hover:opacity-100 transition-opacity absolute -top-9 bg-[#071938] text-white text-[11px] font-bold py-1 px-2.5 rounded-lg shadow-lg pointer-events-none z-20 whitespace-nowrap">
+              {{ bar.month }}: {{ bar.count }} {{ bar.count === 1 ? 'pedido' : 'pedidos' }}
             </div>
-            <span class="text-[10px] text-gray-400 font-semibold group-hover:text-[#0055FF] transition-colors">{{ bar.count }}</span>
-            <div
-              class="w-full rounded-t-lg bg-gradient-to-t from-[#47679d] to-[#0055FF] transition-all duration-300 group-hover:brightness-110 shadow-xs animate-bar-grow"
-              [style.height.%]="bar.percent"
-            ></div>
-            <span class="text-[10px] text-gray-500 font-semibold mt-1 group-hover:text-[#071938] transition-colors">{{ bar.month }}</span>
+
+            <!-- Count badge above bar -->
+            <span class="text-[11px] font-extrabold transition-colors"
+                  [class]="bar.count > 0 ? (bar.isMax ? 'text-[#0055FF]' : 'text-gray-700') : 'text-gray-300'">
+              {{ bar.count }}
+            </span>
+
+            <!-- Bar Container & Growing Bar -->
+            <div class="w-full flex-1 flex items-end justify-center">
+              <div
+                class="w-full max-w-[28px] rounded-t-lg transition-all duration-300 group-hover:brightness-110 shadow-sm bar-animated"
+                [class]="bar.isMax ? 'bg-gradient-to-t from-[#0055FF] to-[#3B82F6] shadow-blue-500/30' : (bar.count > 0 ? 'bg-gradient-to-t from-[#47679d] to-[#60A5FA]' : 'bg-gray-100')"
+                [style.height.%]="bar.percent"
+                [style.animation-delay.ms]="bar.delayMs"
+              ></div>
+            </div>
+
+            <!-- Month Label -->
+            <span class="text-[11px] font-semibold mt-1 transition-colors"
+                  [class]="bar.count > 0 ? (bar.isMax ? 'text-[#0055FF] font-black' : 'text-[#071938] font-bold') : 'text-gray-400'">
+              {{ bar.month }}
+            </span>
           </div>
         }
       </div>

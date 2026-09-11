@@ -218,6 +218,8 @@ export class DispatchFormComponent {
     this.form.status = resp.status as DispatchStatus;
     this.form.observations = resp.notes || '';
     this.tipoPedido = (resp.tipoPedido || 'pedido_unico') as TipoPedido;
+    const placaConfirmada = resp.vehiclePlate || resp.vehicleNumber || '';
+    this.form.vehicleNumber = placaConfirmada;
     this.selectedDriverId = resp.driverId;
     this.selectedVehicleId = resp.vehicleId;
     this.numeroFactura = '';
@@ -263,6 +265,9 @@ export class DispatchFormComponent {
     if (resp.totalDimension != null) this.totalDimension = round2(resp.totalDimension);
     this.onDriverChange();
     this.onVehicleChange();
+    if (placaConfirmada) {
+      this.form.vehicleNumber = placaConfirmada;
+    }
 
     if (resp.details) {
       const delivered: Record<number, number> = {};
@@ -341,11 +346,6 @@ export class DispatchFormComponent {
         this.selectedDriverId = driver.id;
         this.onDriverChange();
       }
-      const vehicle = this.vehicleService.items().find(v => v.vehicleNumber === order.vehicle);
-      if (vehicle) {
-        this.selectedVehicleId = vehicle.id;
-        this.onVehicleChange();
-      }
     } else {
       this.form.orderNumber = '';
       this.recalcWeight();
@@ -380,13 +380,11 @@ export class DispatchFormComponent {
 
   onVehicleChange() {
     if (!this.selectedVehicleId) {
-      this.form.vehicleNumber = '';
       this.form.vehicleType = '';
       return;
     }
     const vehicle = this.vehicleService.items().find(v => v.id === this.selectedVehicleId);
     if (vehicle) {
-      this.form.vehicleNumber = vehicle.vehicleNumber;
       this.form.vehicleType = vehicle.type;
     }
   }
