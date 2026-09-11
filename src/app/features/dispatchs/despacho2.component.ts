@@ -58,7 +58,7 @@ export class Despacho2Component implements OnInit {
         this.pendientes.set(list);
         for (const d of list) {
           if (!this.placasConfirmacion.has(d.id)) {
-            this.placasConfirmacion.set(d.id, d.vehicleNumber ?? '');
+            this.placasConfirmacion.set(d.id, d.vehiclePlate || d.vehicleNumber || '');
           }
         }
         this.loading.set(false);
