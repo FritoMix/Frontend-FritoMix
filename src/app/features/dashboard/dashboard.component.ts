@@ -92,12 +92,29 @@ export class DashboardComponent implements OnInit, OnDestroy {
               o.status === 'PENDIENTE' || o.status === 'EN PREPARACIÓN'
             ).length;
 
+            const monthlyCount: Record<string, number> = {};
+            const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+            orders.content.forEach((o: OrderLite) => {
+              if (o.orderDate) {
+                const d = new Date(o.orderDate);
+                if (!isNaN(d.getTime())) {
+                  const mName = monthNames[d.getMonth()];
+                  monthlyCount[mName] = (monthlyCount[mName] || 0) + 1;
+                }
+              }
+            });
+            const monthlySales = Object.entries(monthlyCount).map(([month, count]) => ({
+              month,
+              count,
+              total: count
+            }));
+
             return {
               ordersToday,
               pendingDispatches,
               totalProducts: products.totalElements,
               totalCustomers: customers.totalElements,
-              monthlySales: [],
+              monthlySales,
               ordersByStatus: Object.entries(statusMap).map(([status, count]) => ({ status, count })),
               topProducts: [],
               recentOrders,
@@ -121,13 +138,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
   monthlyBars = computed(() => {
     const sales = this.data()?.monthlySales ?? [];
     const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-    const maxTotal = Math.max(...sales.map(s => s.total), 1);
-    return months.map(m => {
+    const maxCount = Math.max(...sales.map(s => s.count || 0), 1);
+    return months.map((m, index) => {
       const found = sales.find(s => s.month === m);
+      const count = found ? found.count : 0;
+      let percent = 4;
+      if (count > 0) {
+        percent = Math.max(Math.round((count / maxCount) * 100), 15);
+      }
+      const isMax = count > 0 && count === maxCount;
       return {
         month: m,
-        count: found ? found.count : 0,
-        percent: found ? Math.max((found.total / maxTotal) * 100, 2) : 2,
+        count,
+        percent,
+        isMax,
+        delayMs: index * 40
       };
     });
   });

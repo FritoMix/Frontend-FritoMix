@@ -134,7 +134,7 @@
                     <span class="text-sm text-gray-600">{{ d.orders?.[0]?.clientName || '—' }}</span>
                   </td>
                   <td>
-                    <span class="font-mono text-sm font-bold text-[#071938] uppercase">{{ d.vehicleNumber || '—' }}</span>
+                    <span class="font-mono text-sm font-bold text-[#071938] uppercase">{{ d.vehiclePlate || d.vehicleNumber || '—' }}</span>
                   </td>
                   <td>
                     <span class="text-gray-600 text-sm">{{ (d.dispatchDate || '').split('T')[0] }}</span>
