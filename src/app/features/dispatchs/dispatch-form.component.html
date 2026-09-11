@@ -282,6 +282,12 @@
 <div class="fm-card p-6">
   <div class="grid grid-cols-1 md:grid-cols-6 gap-5 items-end">
     <div>
+      <span class="block text-xs font-semibold text-gray-500 mb-1.5">Placa del Vehículo</span>
+      <div class="w-full px-3.5 py-2.5 bg-gray-100 border border-gray-300 rounded-lg text-sm font-extrabold text-[#071938] uppercase">
+        {{ form.vehicleNumber || 'Sin placa asignada' }}
+      </div>
+    </div>
+    <div>
       <label for="select-conductor" class="block text-xs font-semibold text-gray-500 mb-1.5">Conductor</label>
       <select id="select-conductor"
         [(ngModel)]="selectedDriverId"
@@ -295,20 +301,17 @@
       </select>
     </div>
     <div>
-      <label for="select-vehiculo" class="block text-xs font-semibold text-gray-500 mb-1.5">Vehículo</label>
+      <label for="select-vehiculo" class="block text-xs font-semibold text-gray-500 mb-1.5">Tipo de Vehículo</label>
       <select id="select-vehiculo"
         [(ngModel)]="selectedVehicleId"
         (ngModelChange)="onVehicleChange()"
         class="w-full px-3.5 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition-all bg-white"
       >
-        <option value="">Seleccionar vehículo</option>
+        <option value="">Seleccionar tipo</option>
         @for (v of vehicleService.items().filter(veh => veh.active); track v.id) {
-          <option [value]="v.id">{{ v.type }} — {{ v.vehicleNumber }}</option>
+          <option [value]="v.id">{{ v.type }}</option>
         }
       </select>
-      @if (form.vehicleNumber) {
-        <span class="code-badge bg-violet-50 text-violet-700 border-violet-200 mt-2 inline-block font-bold">Placa: {{ form.vehicleNumber }}</span>
-      }
     </div>
     <div>
       <label for="dispatch-pesoTotal" class="block text-xs font-semibold text-gray-500 mb-1.5">Peso Total</label>

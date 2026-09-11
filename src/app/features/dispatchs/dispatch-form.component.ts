@@ -346,11 +346,6 @@ export class DispatchFormComponent {
         this.selectedDriverId = driver.id;
         this.onDriverChange();
       }
-      const vehicle = this.vehicleService.items().find(v => v.vehicleNumber === order.vehicle);
-      if (vehicle) {
-        this.selectedVehicleId = vehicle.id;
-        this.onVehicleChange();
-      }
     } else {
       this.form.orderNumber = '';
       this.recalcWeight();
@@ -391,9 +386,6 @@ export class DispatchFormComponent {
     const vehicle = this.vehicleService.items().find(v => v.id === this.selectedVehicleId);
     if (vehicle) {
       this.form.vehicleType = vehicle.type;
-      if (!this.form.vehicleNumber) {
-        this.form.vehicleNumber = vehicle.vehicleNumber;
-      }
     }
   }
 
