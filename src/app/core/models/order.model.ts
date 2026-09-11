@@ -44,6 +44,8 @@ export interface Order {
   totalUnidades: number;
   pesoTotalKg: number;
   observations?: string;
+  approvedByName?: string;
+  approvedAt?: string;
 }
 
 export interface OrderResponse {
@@ -160,5 +162,7 @@ export function toOrderDisplay(resp: OrderResponse): Order {
     totalUnidades: 0,
     pesoTotalKg: realWeight,
     observations: resp.notes || '',
+    approvedByName: resp.approvedByName || '',
+    approvedAt: resp.approvedAt || '',
   };
 }
