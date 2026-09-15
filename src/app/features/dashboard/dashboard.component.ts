@@ -169,12 +169,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   donutConic = computed(() => {
     const items = this.ordersByStatus();
     const total = items.reduce((s, i) => s + i.count, 0) || 1;
-    const colors = ['#0055FF','#F59E0B','#EF4444','#10B981','#8B5CF6','#EC4899'];
     let degrees = 0;
     const parts: string[] = [];
-    items.forEach((item, idx) => {
+    items.forEach((item) => {
       const pct = (item.count / total) * 360;
-      const color = colors[idx % colors.length];
+      const color = this.statusColor(item.status);
       parts.push(`${color} ${degrees}deg ${degrees + pct}deg`);
       degrees += pct;
     });
@@ -183,8 +182,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   statusColor(status: string): string {
     const map: Record<string, string> = {
-      'PENDIENTE': '#F59E0B', 'EN PREPARACIÓN': '#0055FF',
-      'DESPACHADO': '#8B5CF6', 'ENTREGADO': '#10B981',
+      'PENDIENTE': '#F59E0B', 'APROBADO': '#10B981',
+      'EN_PRODUCCION': '#F97316', 'LISTO_PRODUCCION': '#0055FF',
       'CANCELADO': '#EF4444',
     };
     return map[status] || '#6B7280';
@@ -192,8 +191,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   statusLabel(status: string): string {
     const map: Record<string, string> = {
-      'PENDIENTE': 'Pendiente', 'EN PREPARACIÓN': 'En preparación',
-      'DESPACHADO': 'Despachado', 'ENTREGADO': 'Entregado',
+      'PENDIENTE': 'Pendiente', 'APROBADO': 'Aprobado',
+      'EN_PRODUCCION': 'En producción', 'LISTO_PRODUCCION': 'Listo producción',
       'CANCELADO': 'Cancelado',
     };
     return map[status] || status;
@@ -202,9 +201,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   statusBadgeClass(status: string): string {
     const map: Record<string, string> = {
       'PENDIENTE': 'bg-amber-50 text-amber-700 border-amber-200',
-      'EN PREPARACIÓN': 'bg-blue-50 text-blue-700 border-blue-200',
-      'DESPACHADO': 'bg-purple-50 text-purple-700 border-purple-200',
-      'ENTREGADO': 'bg-green-50 text-green-700 border-green-200',
+      'APROBADO': 'bg-green-50 text-green-700 border-green-200',
+      'EN_PRODUCCION': 'bg-orange-50 text-orange-700 border-orange-200',
+      'LISTO_PRODUCCION': 'bg-blue-50 text-blue-700 border-blue-200',
       'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
     };
     return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
