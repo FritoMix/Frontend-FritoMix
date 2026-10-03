@@ -5,6 +5,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User, mapRole } from '../models/user.model';
 import { TokenStore } from './token-store.service';
+import { homeRouteFor } from '../config/route-access';
 
 export interface AuthResponse {
   accessToken: string;
@@ -71,7 +72,7 @@ export class AuthService {
   handleAuthSuccess(res: AuthResponse) {
     this.tokenStore.setAccessToken(res.accessToken);
     this.setUserFromResponse(res);
-    this.router.navigate(['/dashboard']);
+    this.router.navigate([homeRouteFor(this.currentUser()?.role)]);
   }
 
   private setUserFromResponse(res: AuthResponse) {
@@ -101,7 +102,16 @@ export class AuthService {
   clearLocalSession() {
     this.tokenStore.clear();
     this.currentUser.set(null);
+    this.purgeServiceWorkerCaches();
     this.router.navigate(['/login']);
+  }
+
+  private purgeServiceWorkerCaches() {
+    if (typeof caches === 'undefined') return;
+    caches.keys()
+      .then((keys) => keys.filter((k) => k.startsWith('ngsw')))
+      .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
+      .catch((err) => console.warn('No se pudieron purgar las caches del service worker', err));
   }
 
   isAuthenticated(): boolean {

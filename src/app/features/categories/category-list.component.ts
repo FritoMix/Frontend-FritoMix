@@ -6,6 +6,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { PageHeaderComponent } from '../../shared/components/page-header.component';
 import { CategoryGroupDTO } from '../../core/models/product.model';
+import { categoryTheme } from './category-theme';
 
 interface EditableGroup extends CategoryGroupDTO {
   expanded: boolean;
@@ -41,6 +42,10 @@ export class CategoryListComponent implements OnInit {
   totalGroups = computed(() => this.groups().length);
   totalSubcategories = computed(() => this.groups().reduce((acc, g) => acc + g.children.length, 0));
   groupsWithImages = computed(() => this.groups().filter(g => !!g.image).length);
+
+  getCategoryTheme(name: string) {
+    return categoryTheme(name);
+  }
 
 
   ngOnInit() {

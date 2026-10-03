@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
+import { roleLabel as roleLabelShared, roleSoftClass as roleSoftClassShared } from '../../core/models/role-theme';
 
 @Component({
   selector: 'app-profile',
@@ -38,23 +39,11 @@ export class ProfileComponent implements OnInit {
   }
 
   roleLabel(): string {
-    const labels: Record<string, string> = {
-      admin: 'Administrador',
-      cartera: 'Cartera',
-      coordinador: 'Coordinador',
-      despachador: 'Despachador',
-    };
-    return labels[this.user()?.role || ''] || this.user()?.role || '';
+    return roleLabelShared(this.user()?.role || '');
   }
 
   roleBadge(): string {
-    const classes: Record<string, string> = {
-      admin: 'bg-red-100 text-red-700',
-      cartera: 'bg-purple-100 text-purple-700',
-      coordinador: 'bg-amber-100 text-amber-700',
-      despachador: 'bg-rose-100 text-rose-700',
-    };
-    return classes[this.user()?.role || ''] || 'bg-gray-100 text-gray-700';
+    return roleSoftClassShared(this.user()?.role || '');
   }
 
   cancel() {

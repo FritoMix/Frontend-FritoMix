@@ -31,10 +31,10 @@
             class="w-24 h-24 rounded-full flex items-center justify-center font-extrabold text-2xl mb-4"
             [class]="avatarColor()"
           >{{ avatarInitials() }}</div>
-          <h4 class="font-bold text-gray-800 text-lg">{{ firstName || lastName ? (firstName + ' ' + lastName).trim() : 'Nombre del usuario' }}</h4>
+          <h4 class="font-bold text-gray-800 text-lg">{{ firstName() || lastName() ? (firstName() + ' ' + lastName()).trim() : 'Nombre del usuario' }}</h4>
           <p class="text-sm text-gray-500 mt-0.5">{{ email || 'correo@fritomix.com' }}</p>
-          @if (role) {
-            <span class="mt-3 text-[11px] font-bold px-3 py-1 rounded-full" [class]="getRoleBadgeClass(role)">{{ roleLabel(role) }}</span>
+          @if (role()) {
+            <span class="mt-3 text-[11px] font-bold px-3 py-1 rounded-full" [class]="getRoleBadgeClass(role())">{{ roleLabel(role()) }}</span>
           }
         </div>
         <div class="pt-4 space-y-3 text-sm">

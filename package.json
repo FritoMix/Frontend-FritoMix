@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --proxy-config proxy.conf.json",
     "build": "node scripts/set-env.js && ng build",
     "watch": "ng build --watch --configuration development",
     "lint": "eslint src",
@@ -22,7 +22,6 @@
     "@angular/platform-browser": "22.1.6",
     "@angular/router": "22.1.6",
     "@angular/service-worker": "22.1.6",
-    "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
