@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { UserRole } from '../models/user.model';
+import { homeRouteFor } from '../config/route-access';
 
 export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
   return () => {
@@ -13,6 +14,6 @@ export const roleGuard = (allowedRoles: UserRole[]): CanActivateFn => {
       return true;
     }
 
-    return router.parseUrl('/dashboard');
+    return router.parseUrl(homeRouteFor(userRole));
   };
 };

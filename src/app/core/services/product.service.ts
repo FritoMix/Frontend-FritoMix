@@ -40,12 +40,4 @@ export class ProductService extends BaseCrudService<ProductResponse, Product, Cr
   deleteCategory(id: number): Observable<void> {
     return this.http.delete<void>(`${this.categoriesUrl}/${id}`);
   }
-
-  override create(data: CreateProductRequest): Observable<ProductResponse> {
-    return super.create(data);
-  }
-
-  override update(id: number, data: UpdateProductRequest): Observable<ProductResponse> {
-    return super.update(id, data);
-  }
 }

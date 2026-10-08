@@ -8,6 +8,7 @@ import { PageHeaderComponent } from '../../shared/components/page-header.compone
 import { SearchInputComponent } from '../../shared/components/search-input.component';
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
+import { orderStatusClass } from './order-status';
 
 @Component({
   selector: 'app-order-list',
@@ -46,14 +47,7 @@ export class OrderListComponent implements OnInit {
   }
 
   badgeClass(status: string): string {
-    const map: Record<string, string> = {
-      'PENDIENTE': 'bg-yellow-50 text-yellow-700 border-yellow-200',
-      'APROBADO': 'bg-green-50 text-green-700 border-green-200',
-      'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
-      'EN_PRODUCCION': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      'LISTO_PRODUCCION': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    };
-    return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return orderStatusClass(status);
   }
 
   viewOrder(id: string) {

@@ -9,6 +9,8 @@ import { OrderStatus } from '../../core/models/order.model';
 import { Client } from '../../core/models/client.model';
 import { Product, CategoryGroupDTO, CategoryDTO } from '../../core/models/product.model';
 import { ToastService } from '../../core/services/toast.service';
+import { orderStatusClass } from './order-status';
+import { categoryColor, categoryGradient, categoryIcon, categoryShadow } from '../categories/category-theme';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -134,71 +136,19 @@ export class OrderFormComponent implements OnInit {
   }
 
   groupIcon(name: string): string {
-    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const map: Record<string, string> = {
-      'bebidas': '🥤',
-      'extruido': '🥨',
-      'galletas': '🍪',
-      'papa': '🍟',
-      'platano': '🍌',
-      'panaderia': '🥖',
-      'pelet': '🌾',
-      'dulces': '🍬',
-      'mani': '🥜',
-      'frutos secos': '🥜',
-      'snacks': '🍿',
-    };
-    return map[norm] ?? '📦';
+    return categoryIcon(name);
   }
 
   groupColor(name: string): string {
-    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const map: Record<string, string> = {
-      'bebidas': '#0284C7',
-      'panaderia': '#EF4444',
-      'pelet': '#F97316',
-      'galletas': '#D97706',
-      'papa': '#EAB308',
-      'platano': '#10B981',
-      'extruido': '#A855F7',
-      'dulces': '#EC4899',
-      'mani': '#B45309',
-      'frutos secos': '#B45309',
-    };
-    return map[norm] ?? '#0055FF';
+    return categoryColor(name);
   }
 
   groupGradient(name: string): string {
-    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const map: Record<string, string> = {
-      'bebidas': 'linear-gradient(135deg, #0284C7 0%, #0369A1 100%)',
-      'panaderia': 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
-      'pelet': 'linear-gradient(135deg, #F97316 0%, #C2410C 100%)',
-      'galletas': 'linear-gradient(135deg, #D97706 0%, #78350F 100%)',
-      'papa': 'linear-gradient(135deg, #EAB308 0%, #CA8A04 100%)',
-      'platano': 'linear-gradient(135deg, #10B981 0%, #047857 100%)',
-      'extruido': 'linear-gradient(135deg, #A855F7 0%, #7E22CE 100%)',
-      'dulces': 'linear-gradient(135deg, #EC4899 0%, #9D174D 100%)',
-      'mani': 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
-      'frutos secos': 'linear-gradient(135deg, #B45309 0%, #78350F 100%)',
-    };
-    return map[norm] ?? 'linear-gradient(135deg, #0055FF 0%, #0033AA 100%)';
+    return categoryGradient(name);
   }
 
   groupShadow(name: string): string {
-    const norm = (name || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const map: Record<string, string> = {
-      'bebidas': 'rgba(2, 132, 199, 0.3)',
-      'panaderia': 'rgba(239, 68, 68, 0.3)',
-      'pelet': 'rgba(249, 115, 22, 0.3)',
-      'galletas': 'rgba(217, 119, 6, 0.3)',
-      'papa': 'rgba(234, 179, 8, 0.35)',
-      'platano': 'rgba(16, 185, 129, 0.3)',
-      'extruido': 'rgba(168, 85, 247, 0.3)',
-      'dulces': 'rgba(236, 72, 153, 0.3)',
-      'mani': 'rgba(180, 83, 9, 0.3)',
-    };
-    return map[norm] ?? 'rgba(0, 85, 255, 0.25)';
+    return categoryShadow(name);
   }
 
   productGroupColor(product: Product): string {
@@ -239,6 +189,7 @@ export class OrderFormComponent implements OnInit {
   }
 
   productCategoryImage(product: Product): string | null {
+    if (product.image) return product.image;
     const group = this.groups().find(g =>
       g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
     );
@@ -445,14 +396,7 @@ export class OrderFormComponent implements OnInit {
   }
 
   badgeClass(status: string): string {
-    const map: Record<string, string> = {
-      'PENDIENTE': 'bg-amber-50 text-amber-700 border-amber-200',
-      'APROBADO': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      'CANCELADO': 'bg-rose-50 text-rose-600 border-rose-200',
-      'EN_PRODUCCION': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      'LISTO_PRODUCCION': 'bg-cyan-50 text-cyan-700 border-cyan-200',
-    };
-    return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return orderStatusClass(status);
   }
 
   onSave() {

@@ -17,14 +17,6 @@ export class DispatchService extends BaseCrudService<DispatchResponse, Dispatch,
     return toDispatchDisplay(item);
   }
 
-  override create(data: CreateDispatchRequest): Observable<DispatchResponse> {
-    return super.create(data);
-  }
-
-  override update(id: number, data: UpdateDispatchRequest): Observable<DispatchResponse> {
-    return super.update(id, data);
-  }
-
   setStatusFilter(statuses: string[]): void {
     this.statusFilterSignal.set(statuses);
     this.currentPage.set(0);

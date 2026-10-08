@@ -22,12 +22,4 @@ export class RoleService extends BaseCrudService<RoleResponse, Role, CreateRoleR
   findAllPermissions(): Observable<string[]> {
     return this.http.get<string[]>(`${this.apiUrl}/permissions`);
   }
-
-  override create(data: CreateRoleRequest): Observable<RoleResponse> {
-    return super.create(data);
-  }
-
-  override update(id: number, data: UpdateRoleRequest): Observable<RoleResponse> {
-    return super.update(id, data);
-  }
 }
