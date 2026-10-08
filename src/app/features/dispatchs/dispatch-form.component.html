@@ -42,32 +42,10 @@
 
 @if (!esLeyendaRoles()) {
 <div class="fm-card p-6 mb-5">
-  <h3 class="font-bold text-[#071938] text-base mb-4">Tipo de Pedido</h3>
-  <div class="flex flex-col sm:flex-row gap-3">
-    <label [class]="radioClass('pedido_unico')">
-      <input type="radio" name="tipoPedido" value="pedido_unico" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_unico')" class="accent-[#0055FF]" />
-      <div class="ml-2">
-        <span class="block font-bold text-sm text-[#071938]">Pedido Único</span>
-        <span class="block text-xs text-gray-500">Despacho para un solo cliente</span>
-      </div>
-    </label>
-    <label [class]="radioClass('pedido_multipedido')">
-      <input type="radio" name="tipoPedido" value="pedido_multipedido" [ngModel]="tipoPedido" (ngModelChange)="onTipoPedido('pedido_multipedido')" class="accent-[#0055FF]" />
-      <div class="ml-2">
-        <span class="block font-bold text-sm text-[#071938]">Pedido Multipedido</span>
-        <span class="block text-xs text-gray-500">Despacho consolidado para varios clientes</span>
-      </div>
-    </label>
-  </div>
-  @if (!tipoPedido) {
-    <p class="text-xs text-red-600 mt-2">Debes seleccionar un tipo de pedido para continuar.</p>
-  }
-</div>
-}
+  <div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+    <h3 class="font-bold text-[#071938] text-base">Información del Despacho</h3>
 
-@if (!esLeyendaRoles()) {
-<div class="fm-card p-6 mb-5">
-  <h3 class="font-bold text-[#071938] text-base mb-5">Información del Despacho</h3>
+  </div>
 
   @if (isUnico()) {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5">

@@ -6,6 +6,7 @@ import { UserService } from '../../core/services/user.service';
 import { SettingsService } from '../../core/services/settings.service';
 import { ToastService } from '../../core/services/toast.service';
 import { UserRole } from '../../core/models/user.model';
+import { roleLabel as roleLabelShared, roleSoftClass as roleSoftClassShared } from '../../core/models/role-theme';
 
 @Component({
   selector: 'app-user-form',
@@ -25,11 +26,11 @@ export class UserFormComponent implements OnInit {
   loading = signal(false);
   saving = signal(false);
 
-  firstName = '';
-  lastName = '';
+  firstName = signal('');
+  lastName = signal('');
   email = '';
   password = '';
-  role: UserRole | '' = '';
+  role = signal<UserRole | ''>('');
   enabled = true;
 
   passwordMinLength = 8;
@@ -46,14 +47,15 @@ export class UserFormComponent implements OnInit {
   });
 
   avatarInitials = computed(() => {
-    const f = this.firstName.trim().charAt(0) || '';
-    const l = this.lastName.trim().charAt(0) || '';
+    const f = this.firstName().trim().charAt(0) || '';
+    const l = this.lastName().trim().charAt(0) || '';
     return (f + l).toUpperCase() || '??';
   });
 
   avatarColor = computed(() => {
-    if (!this.role) return 'bg-gray-100 text-gray-700';
-    return this.getRoleBadgeClass(this.role);
+    const role = this.role();
+    if (!role) return 'bg-gray-100 text-gray-700';
+    return this.getRoleBadgeClass(role);
   });
 
   ngOnInit() {
@@ -82,10 +84,17 @@ export class UserFormComponent implements OnInit {
     this.loading.set(true);
     this.userService.findById(this.userId).subscribe({
       next: (user) => {
-        this.firstName = user.firstName;
-        this.lastName = user.lastName;
-        this.email = user.email;
-        this.role = mapFormRole(user.role);
+        try {
+          this.firstName.set(user.firstName);
+          this.lastName.set(user.lastName);
+          this.email = user.email;
+          this.role.set(mapFormRole(user.role));
+        } catch (err) {
+          this.loading.set(false);
+          this.toastService.error(err instanceof Error ? err.message : 'Rol desconocido para este usuario.');
+          this.router.navigate(['/usuarios']);
+          return;
+        }
         this.enabled = user.enabled;
         this.loading.set(false);
       },
@@ -97,39 +106,15 @@ export class UserFormComponent implements OnInit {
   }
 
   roleLabel(role: UserRole | string): string {
-    const labels: Record<string, string> = {
-      admin: 'Administrador',
-      cartera: 'Cartera',
-      coordinador: 'Coordinador',
-      despachador: 'Despachador',
-      produccion: 'Producción',
-      camara: 'Cámara',
-      facturacion: 'Facturación',
-      despachador1: 'Despachador 1',
-      despachador2: 'Despachador 2',
-      despachador3: 'Despachador 3',
-    };
-    return labels[role] || role;
+    return roleLabelShared(role);
   }
 
   getRoleBadgeClass(role: UserRole | string): string {
-    const classes: Record<string, string> = {
-      admin: 'bg-red-100 text-red-700',
-      cartera: 'bg-purple-100 text-purple-700',
-      coordinador: 'bg-amber-100 text-amber-700',
-      despachador: 'bg-rose-100 text-rose-700',
-      produccion: 'bg-indigo-100 text-indigo-700',
-      camara: 'bg-cyan-100 text-cyan-700',
-      facturacion: 'bg-emerald-100 text-emerald-700',
-      despachador1: 'bg-rose-100 text-rose-700',
-      despachador2: 'bg-pink-100 text-pink-700',
-      despachador3: 'bg-orange-100 text-orange-700',
-    };
-    return classes[role] || 'bg-gray-100 text-gray-700';
+    return roleSoftClassShared(role);
   }
 
   isFormValid(): boolean {
-    if (!this.firstName.trim() || !this.lastName.trim() || !this.email.trim() || !this.role) return false;
+    if (!this.firstName().trim() || !this.lastName().trim() || !this.email.trim() || !this.role()) return false;
     if (!this.isEdit && !this.password) return false;
     if (this.password && this.password.length < this.passwordMinLength) return false;
     if (this.password && this.passwordRequireSpecial && !/[^A-Za-z0-9]/.test(this.password)) return false;
@@ -140,12 +125,12 @@ export class UserFormComponent implements OnInit {
     if (!this.isFormValid() || this.saving()) return;
     this.saving.set(true);
 
-    const roleUppercase = (this.role as string).toUpperCase();
+    const roleUppercase = (this.role() as string).toUpperCase();
 
     if (this.isEdit && this.userId) {
       const body: Record<string, unknown> = {
-        firstName: this.firstName.trim(),
-        lastName: this.lastName.trim(),
+        firstName: this.firstName().trim(),
+        lastName: this.lastName().trim(),
         email: this.email.trim(),
         role: roleUppercase,
         enabled: this.enabled,
@@ -166,8 +151,8 @@ export class UserFormComponent implements OnInit {
       });
     } else {
       this.userService.create({
-        firstName: this.firstName.trim(),
-        lastName: this.lastName.trim(),
+        firstName: this.firstName().trim(),
+        lastName: this.lastName().trim(),
         email: this.email.trim(),
         password: this.password,
         role: roleUppercase,
@@ -200,5 +185,9 @@ function mapFormRole(role: string): UserRole {
     'DESPACHADOR2': 'despachador2',
     'DESPACHADOR3': 'despachador3',
   };
-  return map[role] || 'admin';
+  const mapped = map[role];
+  if (!mapped) {
+    throw new Error(`Rol desconocido recibido del servidor: ${role}`);
+  }
+  return mapped;
 }

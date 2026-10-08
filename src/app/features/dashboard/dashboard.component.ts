@@ -1,38 +1,8 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { forkJoin, of, Subscription } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
-import { environment } from '../../../environments/environment';
-import { PageResponse } from '../../core/models/pagination.model';
-
-interface DashboardData {
-  ordersToday: number;
-  pendingDispatches: number;
-  totalProducts: number;
-  totalCustomers: number;
-  monthlySales: { month: string; count: number; total: number }[];
-  ordersByStatus: { status: string; count: number }[];
-  topProducts: { name: string; code: string; units: number }[];
-  recentOrders: { id: string; client: string; status: string; date: string }[];
-}
-
-interface OrderLite {
-  id: number;
-  orderNumber?: string;
-  customerName?: string;
-  status?: string;
-  orderDate?: string;
-}
-
-const EMPTY_PAGE: PageResponse<never> = {
-  content: [],
-  page: 0,
-  size: 0,
-  totalElements: 0,
-  totalPages: 0,
-  last: true,
-};
+import { Subscription } from 'rxjs';
+import { DashboardService, DashboardData } from '../../core/services/dashboard.service';
+import { orderStatusColor, orderStatusLabel, orderStatusClass } from '../orders/order-status';
 
 @Component({
   selector: 'app-dashboard',
@@ -41,7 +11,7 @@ const EMPTY_PAGE: PageResponse<never> = {
   templateUrl: 'dashboard.component.html'
 })
 export class DashboardComponent implements OnInit, OnDestroy {
-  private http = inject(HttpClient);
+  private readonly dashboardService = inject(DashboardService);
 
   data = signal<DashboardData | null>(null);
   loading = signal(true);
@@ -62,67 +32,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loading.set(true);
     this.hasError.set(false);
 
-    const sub = this.http.get<DashboardData>(`${environment.apiUrl}/api/v1/dashboard`).pipe(
-      catchError(() => {
-        return forkJoin({
-          customers: this.http.get<PageResponse<unknown>>(`${environment.apiUrl}/api/v1/customers`).pipe(catchError(() => of(EMPTY_PAGE as PageResponse<unknown>))),
-          products:  this.http.get<PageResponse<unknown>>(`${environment.apiUrl}/api/v1/products`).pipe(catchError(() => of(EMPTY_PAGE as PageResponse<unknown>))),
-          orders:    this.http.get<PageResponse<OrderLite>>(`${environment.apiUrl}/api/v1/orders`).pipe(catchError(() => of(EMPTY_PAGE as PageResponse<OrderLite>))),
-        }).pipe(
-          map(({ customers, products, orders }) => {
-            const statusMap: Record<string, number> = {};
-            orders.content.forEach((o: OrderLite) => {
-              const s = o.status || 'PENDIENTE';
-              statusMap[s] = (statusMap[s] || 0) + 1;
-            });
-
-            const recentOrders = orders.content.slice(-5).reverse().map((o: OrderLite) => ({
-              id: o.orderNumber || String(o.id),
-              client: o.customerName || '—',
-              status: o.status || 'PENDIENTE',
-              date: o.orderDate ? o.orderDate.split('T')[0] : '—',
-            }));
-
-            const today = new Date().toISOString().split('T')[0];
-            const ordersToday = orders.content.filter((o: OrderLite) =>
-              (o.orderDate || '').startsWith(today)
-            ).length;
-
-            const pendingDispatches = orders.content.filter((o: OrderLite) =>
-              o.status === 'PENDIENTE' || o.status === 'EN PREPARACIÓN'
-            ).length;
-
-            const monthlyCount: Record<string, number> = {};
-            const monthNames = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-            orders.content.forEach((o: OrderLite) => {
-              if (o.orderDate) {
-                const d = new Date(o.orderDate);
-                if (!isNaN(d.getTime())) {
-                  const mName = monthNames[d.getMonth()];
-                  monthlyCount[mName] = (monthlyCount[mName] || 0) + 1;
-                }
-              }
-            });
-            const monthlySales = Object.entries(monthlyCount).map(([month, count]) => ({
-              month,
-              count,
-              total: count
-            }));
-
-            return {
-              ordersToday,
-              pendingDispatches,
-              totalProducts: products.totalElements,
-              totalCustomers: customers.totalElements,
-              monthlySales,
-              ordersByStatus: Object.entries(statusMap).map(([status, count]) => ({ status, count })),
-              topProducts: [],
-              recentOrders,
-            } as DashboardData;
-          })
-        );
-      })
-    ).subscribe({
+    const sub = this.dashboardService.load().subscribe({
       next: (res) => {
         this.data.set(res);
         this.loading.set(false);
@@ -181,31 +91,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
   });
 
   statusColor(status: string): string {
-    const map: Record<string, string> = {
-      'PENDIENTE': '#F59E0B', 'APROBADO': '#10B981',
-      'EN_PRODUCCION': '#F97316', 'LISTO_PRODUCCION': '#0055FF',
-      'CANCELADO': '#EF4444',
-    };
-    return map[status] || '#6B7280';
+    return orderStatusColor(status);
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      'PENDIENTE': 'Pendiente', 'APROBADO': 'Aprobado',
-      'EN_PRODUCCION': 'En producción', 'LISTO_PRODUCCION': 'Listo producción',
-      'CANCELADO': 'Cancelado',
-    };
-    return map[status] || status;
+    return orderStatusLabel(status);
   }
 
   statusBadgeClass(status: string): string {
-    const map: Record<string, string> = {
-      'PENDIENTE': 'bg-amber-50 text-amber-700 border-amber-200',
-      'APROBADO': 'bg-green-50 text-green-700 border-green-200',
-      'EN_PRODUCCION': 'bg-orange-50 text-orange-700 border-orange-200',
-      'LISTO_PRODUCCION': 'bg-blue-50 text-blue-700 border-blue-200',
-      'CANCELADO': 'bg-red-50 text-red-600 border-red-200',
-    };
-    return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return orderStatusClass(status);
   }
 }
