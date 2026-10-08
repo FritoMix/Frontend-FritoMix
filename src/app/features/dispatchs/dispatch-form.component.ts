@@ -43,7 +43,7 @@ export class DispatchFormComponent {
   route = inject(ActivatedRoute);
 
   editId: number | null = null;
-  tipoPedido: '' | TipoPedido = '';
+  tipoPedido: TipoPedido = 'pedido_unico';
   selectedOrderId = '';
   selectedOrderIds: string[] = [];
   numeroFactura = '';
@@ -129,17 +129,10 @@ export class DispatchFormComponent {
     }
   }
 
-  isUnico(): boolean { return this.tipoPedido === 'pedido_unico'; }
+  isUnico(): boolean { return this.tipoPedido !== 'pedido_multipedido'; }
   isMulti(): boolean { return this.tipoPedido === 'pedido_multipedido'; }
 
-  radioClass(tipo: TipoPedido): string {
-    const base = 'flex items-center px-4 py-3 border rounded-lg cursor-pointer transition-all ';
-    return base + (this.tipoPedido === tipo
-      ? 'border-[#0055FF] bg-blue-50 ring-1 ring-[#0055FF]'
-      : 'border-gray-200 hover:border-gray-300 bg-white');
-  }
-
-  onTipoPedido(tipo: TipoPedido) {
+  setModoDespacho(tipo: TipoPedido) {
     this.tipoPedido = tipo;
     this.respDetailItems.set(null);
     if (tipo === 'pedido_unico') {
@@ -150,6 +143,10 @@ export class DispatchFormComponent {
       this.selectedOrder = null;
       this.numeroFactura = '';
     }
+  }
+
+  onTipoPedido(tipo: TipoPedido) {
+    this.setModoDespacho(tipo);
   }
 
   availableOrders(): Order[] {

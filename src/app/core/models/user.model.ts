@@ -84,5 +84,5 @@ export function mapRole(role: string): UserRole {
     'DESPACHADOR2': 'despachador2',
     'DESPACHADOR3': 'despachador3',
   };
-  return map[role] || 'admin';
+  return map[role] ?? role.toLowerCase() as UserRole;
 }

@@ -38,6 +38,7 @@ export interface Order {
   dispatchDate: string;
   dispatchTime: string;
   status: OrderStatus;
+  tipoPedido?: string;
   items: OrderItem[];
   totalBultos: number;
   totalCajas: number;
@@ -65,6 +66,7 @@ export interface OrderResponse {
   approvedAt?: string;
   orderDate: string;
   status: string;
+  tipoPedido?: string;
   total: number;
   pesoTotalCargue: number | null;
   notes: string;
@@ -156,6 +158,7 @@ export function toOrderDisplay(resp: OrderResponse): Order {
     dispatchDate: resp.dispatchDate ? resp.dispatchDate.split('T')[0] : '',
     dispatchTime: resp.dispatchDate ? resp.dispatchDate.split('T')[1]?.slice(0, 5) : '',
     status: resp.status as OrderStatus,
+    tipoPedido: resp.tipoPedido || 'pedido_unico',
     items,
     totalBultos: Math.floor(resp.total),
     totalCajas: 0,

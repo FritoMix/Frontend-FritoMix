@@ -24,14 +24,6 @@ export class ClientService extends BaseCrudService<ClientResponse, Client, Creat
     this.hasError.set(true);
   }
 
-  override create(data: CreateClientRequest): Observable<ClientResponse> {
-    return super.create(data);
-  }
-
-  override update(id: number, data: UpdateClientRequest): Observable<ClientResponse> {
-    return super.update(id, data);
-  }
-
   getDepartments(): Observable<Department[]> {
     return this.http.get<Department[]>(`${this.locationsUrl}/departments`);
   }

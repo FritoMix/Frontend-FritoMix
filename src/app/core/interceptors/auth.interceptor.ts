@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpInterceptorFn, HttpRequest, HttpContextToken } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { EnvironmentInjector, inject, runInInjectionContext } from '@angular/core';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { TokenStore } from '../services/token-store.service';
 import { AuthService } from '../services/auth.service';
@@ -17,7 +17,7 @@ function cloneWithCredentials(req: HttpRequest<unknown>, token: string | null): 
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenStore = inject(TokenStore);
-  const authService = inject(AuthService);
+  const injector = inject(EnvironmentInjector);
 
   const isAuthRequest = AUTH_PATHS.some(p => req.url.includes(p));
   const token = tokenStore.accessToken();
@@ -32,6 +32,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status !== 401 || req.context.get(RETRY_ONCE)) {
         return throwError(() => error);
       }
+
+      const authService = runInInjectionContext(injector, () => inject(AuthService));
 
       return authService.refreshToken().pipe(
         switchMap((res) => {

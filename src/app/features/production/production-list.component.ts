@@ -7,6 +7,7 @@ import { SearchInputComponent } from '../../shared/components/search-input.compo
 import { PaginationComponent } from '../../shared/components/pagination.component';
 import { ConfirmDialogComponent } from '../../shared/components/confirm-dialog.component';
 import { Order } from '../../core/models/order.model';
+import { orderStatusClass, orderStatusLabel } from '../orders/order-status';
 
 @Component({
   selector: 'app-production-list',
@@ -20,18 +21,16 @@ export class ProductionListComponent implements OnInit {
   router = inject(Router);
 
   currentPage = signal(1);
-  activeView = signal<'kanban' | 'table'>('kanban');
-  statusFilter = signal<string>('ALL');
   selectedOrderForModal = signal<Order | null>(null);
-  draggedOrder = signal<Order | null>(null);
-  activeDropColumn = signal<string | null>(null);
 
   confirmDialog = signal<{ title: string; message: string; confirmLabel: string; type: 'info' | 'danger'; action: () => void } | null>(null);
 
   orders = computed(() => this.productionService.items());
   totalPages = computed(() => this.productionService.totalPages() || 1);
+  totalElements = computed(() => this.productionService.totalElements());
+  statusFilter = computed(() => this.productionService.selectedStatus());
 
-  // COMPUTED KPI METRICS
+  // COMPUTED KPI METRICS FOR CURRENT VIEW
   aprobadosOrders = computed(() => this.orders().filter(o => o.status === 'APROBADO'));
   enProduccionOrders = computed(() => this.orders().filter(o => o.status === 'EN_PRODUCCION'));
   listosOrders = computed(() => this.orders().filter(o => o.status === 'LISTO_PRODUCCION'));
@@ -50,70 +49,15 @@ export class ProductionListComponent implements OnInit {
     return this.orders().reduce((sum, o) => sum + this.getOrderWeight(o), 0);
   });
 
-  filteredOrders = computed(() => {
-    const filter = this.statusFilter();
-    const list = this.orders();
-    if (filter === 'ALL') return list;
-    return list.filter(o => o.status === filter);
-  });
+  filteredOrders = computed(() => this.orders());
 
   ngOnInit() {
     this.productionService.load();
   }
 
-  setView(view: 'kanban' | 'table') {
-    this.activeView.set(view);
-  }
-
   setStatusFilter(filter: string) {
-    this.statusFilter.set(filter);
-  }
-
-  // KANBAN DRAG & DROP HANDLERS (TRELLO STYLE)
-  onDragStart(event: DragEvent, order: Order) {
-    this.draggedOrder.set(order);
-    if (event.dataTransfer) {
-      event.dataTransfer.effectAllowed = 'move';
-      event.dataTransfer.setData('text/plain', order.id);
-    }
-  }
-
-  onDragEnd() {
-    this.draggedOrder.set(null);
-    this.activeDropColumn.set(null);
-  }
-
-  onDragOver(event: DragEvent, columnStatus: string) {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'move';
-    }
-    if (this.activeDropColumn() !== columnStatus) {
-      this.activeDropColumn.set(columnStatus);
-    }
-  }
-
-  onDragLeave(columnStatus: string) {
-    if (this.activeDropColumn() === columnStatus) {
-      this.activeDropColumn.set(null);
-    }
-  }
-
-  onDrop(event: DragEvent, targetStatus: string) {
-    event.preventDefault();
-    const order = this.draggedOrder();
-    this.activeDropColumn.set(null);
-
-    if (!order) return;
-    if (order.status === targetStatus) return;
-
-    if (targetStatus === 'EN_PRODUCCION' && order.status === 'APROBADO') {
-      this.startProduction(order.id);
-    } else if (targetStatus === 'LISTO_PRODUCCION' && (order.status === 'EN_PRODUCCION' || order.status === 'APROBADO')) {
-      this.markReady(order.id);
-    } else if (targetStatus === 'APROBADO') {
-      this.toastService.error('No se puede devolver un pedido de producción a la cola inicial.');
-    }
+    this.currentPage.set(1);
+    this.productionService.setStatusFilter(filter);
   }
 
   onPageChange(page: number) {
@@ -127,21 +71,11 @@ export class ProductionListComponent implements OnInit {
   }
 
   badgeClass(status: string): string {
-    const map: Record<string, string> = {
-      'APROBADO': 'bg-amber-50 text-amber-700 border-amber-200',
-      'EN_PRODUCCION': 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      'LISTO_PRODUCCION': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    };
-    return map[status] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return orderStatusClass(status);
   }
 
   statusLabel(status: string): string {
-    const map: Record<string, string> = {
-      'APROBADO': 'En Cola (Aprobado)',
-      'EN_PRODUCCION': 'En Producción',
-      'LISTO_PRODUCCION': 'Listo p/ Despacho',
-    };
-    return map[status] || status;
+    return orderStatusLabel(status);
   }
 
   viewOrder(id: string) {

@@ -12,20 +12,8 @@ export class UserService extends BaseCrudService<UserResponse, User, CreateUserR
     return toUserDisplay(item);
   }
 
-  override create(data: CreateUserRequest): Observable<UserResponse> {
-    return super.create(data);
-  }
-
-  override update(id: number, data: UpdateUserRequest): Observable<UserResponse> {
-    return super.update(id, data);
-  }
-
   toggleStatus(id: number): Observable<UserResponse> {
     return this.http.patch<UserResponse>(`${this.apiUrl}/${id}/toggle-status`, {});
-  }
-
-  getProfile(): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.apiUrl}/me`);
   }
 
   updateProfile(data: Record<string, unknown>): Observable<UserResponse> {
