@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, OnDestroy } from '@angular/core';
+import { Injectable, inject, signal, effect, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 import { Notification, UnreadCountResponse } from '../models/notification.model';
@@ -15,6 +15,14 @@ export class NotificationService implements OnDestroy {
   private pollingTimer: ReturnType<typeof setInterval> | null = null;
 
   unreadCount = signal(0);
+
+  constructor() {
+    effect(() => {
+      if (!this.auth.currentUser()) {
+        this.stopPolling();
+      }
+    });
+  }
 
   findAll(): Observable<Notification[]> {
     return this.http

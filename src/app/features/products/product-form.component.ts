@@ -35,6 +35,7 @@ export class ProductFormComponent implements OnInit {
     groupId: null as number | null,
     categoryId: null as number | null,
     active: true,
+    image: null as string | null,
   };
 
   pendingCategoryId: number | null = null;
@@ -68,6 +69,7 @@ export class ProductFormComponent implements OnInit {
           this.form.weightGrams = res.weightGrams;
           this.form.categoryId = res.categoryId;
           this.form.active = res.active;
+          this.form.image = res.image ?? null;
 
           if (res.categoryId != null) {
             this.pendingCategoryId = res.categoryId;
@@ -81,6 +83,25 @@ export class ProductFormComponent implements OnInit {
         },
       });
     }
+  }
+
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) {
+      this.toastService.error('Selecciona un archivo de imagen válido.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.form.image = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  removeImage() {
+    this.form.image = null;
   }
 
   groupOfCategory(categoryId: number | null): number | null {
@@ -121,6 +142,7 @@ export class ProductFormComponent implements OnInit {
       weight: this.form.weight.trim() || undefined,
       weightGrams: this.form.weightGrams || 0,
       active: this.form.active,
+      image: this.form.image,
     };
 
     const request$ = this.isEdit

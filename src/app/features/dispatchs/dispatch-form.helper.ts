@@ -90,11 +90,14 @@ export function validateDispatchForm(state: DispatchFormState): string | null {
     if (!state.selectedDriverId) return 'Debes seleccionar el despachador (conductor).';
     return null;
   }
-  if (!state.tipoPedido) return 'Debes seleccionar un tipo de pedido.';
-  if (state.tipoPedido === 'pedido_unico' && !state.selectedOrderId) {
+  if (!state.tipoPedido) {
+    return 'Debes seleccionar el tipo de pedido.';
+  }
+  const tipo = state.tipoPedido || (state.selectedOrderIds.length > 0 ? 'pedido_multipedido' : 'pedido_unico');
+  if (tipo === 'pedido_unico' && !state.selectedOrderId) {
     return 'Debes seleccionar un pedido.';
   }
-  if (state.tipoPedido === 'pedido_multipedido' && state.selectedOrderIds.length < 1) {
+  if (tipo === 'pedido_multipedido' && state.selectedOrderIds.length < 1) {
     return 'Debes agregar al menos un cliente (pedido).';
   }
   return null;
@@ -102,6 +105,7 @@ export function validateDispatchForm(state: DispatchFormState): string | null {
 
 export function buildDispatchPayload(state: DispatchFormState, items: DispatchPreviewItem[]): CreateDispatchRequest {
   const esRolDespacho = state.esDespachador1 || state.esDespachador2;
+  const effectiveTipoPedido = state.tipoPedido || (state.selectedOrderIds.length > 0 ? 'pedido_multipedido' : 'pedido_unico');
 
   const details = esRolDespacho
     ? undefined
@@ -122,7 +126,7 @@ export function buildDispatchPayload(state: DispatchFormState, items: DispatchPr
     ? `${state.form.dispatchDate}T${state.form.dispatchTime || '00:00'}:00`
     : new Date().toISOString();
 
-  const orderIds = state.tipoPedido === 'pedido_multipedido'
+  const orderIds = effectiveTipoPedido === 'pedido_multipedido'
     ? state.selectedOrderIds.map(Number)
     : [Number(state.selectedOrderId)];
 
@@ -137,14 +141,14 @@ export function buildDispatchPayload(state: DispatchFormState, items: DispatchPr
           lote: a.lote || '',
         }));
 
-  const orderFacturas = state.tipoPedido === 'pedido_multipedido'
+  const orderFacturas = effectiveTipoPedido === 'pedido_multipedido'
     ? Object.entries(state.facturasPorPedido)
         .filter((entry) => !!entry[1] && entry[1].trim() !== '')
         .map(([orderId, fact]) => ({ orderId: Number(orderId), numeroFactura: fact.trim() }))
     : undefined;
 
   return {
-    tipoPedido: state.tipoPedido,
+    tipoPedido: effectiveTipoPedido,
     orderIds: esRolDespacho ? undefined : orderIds,
     driverId: state.selectedDriverId != null ? Number(state.selectedDriverId) : null,
     vehicleId: state.selectedVehicleId != null ? Number(state.selectedVehicleId) : null,
@@ -155,7 +159,7 @@ export function buildDispatchPayload(state: DispatchFormState, items: DispatchPr
     notes: obsParts.join(' | '),
     details,
     arrumes,
-    numeroFactura: !esRolDespacho && state.tipoPedido === 'pedido_unico' && state.numeroFactura.trim()
+    numeroFactura: !esRolDespacho && effectiveTipoPedido === 'pedido_unico' && state.numeroFactura.trim()
       ? state.numeroFactura.trim()
       : undefined,
     orderFacturas: orderFacturas && orderFacturas.length > 0 ? orderFacturas : undefined,

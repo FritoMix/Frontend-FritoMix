@@ -8,6 +8,7 @@ export interface ProductResponse {
   presentation: number;
   weight: string;
   weightGrams: number;
+  image?: string | null;
   categoryId: number;
   categoryName: string;
   pesoUnidad: number | null;
@@ -26,6 +27,7 @@ export interface CreateProductRequest {
   weight?: string;
   weightGrams?: number;
   active?: boolean;
+  image?: string | null;
   pesoUnidad?: number;
   dimension?: number;
   pesoTotalCargue?: number;
@@ -43,6 +45,7 @@ export interface Product {
   presentation: number;
   weight: string;
   weightGrams: number;
+  image?: string | null;
   categoryId: number;
   categoryName: string;
   pesoUnidad: number | null;
@@ -56,6 +59,9 @@ export interface CategoryDTO {
   description: string | null;
   image?: string | null;
   parentId: number | null;
+  children?: CategoryDTO[];
+  itemCount?: number;
+  subcategoriesCount?: number;
 }
 
 export interface CategoryGroupDTO {
@@ -64,6 +70,8 @@ export interface CategoryGroupDTO {
   description: string | null;
   image?: string | null;
   children: CategoryDTO[];
+  itemCount?: number;
+  subcategoriesCount?: number;
 }
 
 export interface CategoryCreateRequest {
@@ -83,6 +91,7 @@ export function toProductDisplay(resp: ProductResponse): Product {
     presentation: resp.presentation,
     weight: resp.weight,
     weightGrams: resp.weightGrams,
+    image: resp.image ?? null,
     categoryId: resp.categoryId,
     categoryName: resp.categoryName,
     pesoUnidad: resp.pesoUnidad,

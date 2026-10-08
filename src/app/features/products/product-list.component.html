@@ -137,19 +137,24 @@
               </div>
 
               <!-- Content -->
-              <div class="mb-4 flex-1">
-                <h3 class="font-black text-[#071938] text-base group-hover:text-[#0055FF] transition-colors leading-tight mb-2">
-                  {{ p.name }}
-                </h3>
-                <div class="flex flex-wrap items-center gap-2">
-                  <span class="status-badge text-[11px]" [class]="categoryBadgeClass(p.categoryName)">
-                    {{ p.categoryName || 'Sin categoría' }}
-                  </span>
-                  @if (p.weight || p.weightGrams) {
-                    <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
-                      ⚖️ {{ p.weight || (p.weightGrams + 'g') }}
+              <div class="mb-4 flex-1 flex gap-3">
+                @if (p.image) {
+                  <img [src]="p.image" [alt]="p.name" class="w-14 h-14 rounded-xl object-cover border border-gray-200 shrink-0 shadow-xs" />
+                }
+                <div class="flex-1 min-w-0">
+                  <h3 class="font-black text-[#071938] text-base group-hover:text-[#0055FF] transition-colors leading-tight mb-2">
+                    {{ p.name }}
+                  </h3>
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="status-badge text-[11px]" [class]="categoryBadgeClass(p.categoryName)">
+                      {{ p.categoryName || 'Sin categoría' }}
                     </span>
-                  }
+                    @if (p.weight || p.weightGrams) {
+                      <span class="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                        ⚖️ {{ p.weight || (p.weightGrams + 'g') }}
+                      </span>
+                    }
+                  </div>
                 </div>
               </div>
 
