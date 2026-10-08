@@ -5,6 +5,7 @@ import { Router, RouterLink, ActivatedRoute } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { ToastService } from '../../core/services/toast.service';
 import { CategoryGroupDTO, CategoryDTO } from '../../core/models/product.model';
+import { groupOfProductCategory } from '../categories/category-tree';
 
 @Component({
   selector: 'app-product-form',
@@ -104,12 +105,13 @@ export class ProductFormComponent implements OnInit {
     this.form.image = null;
   }
 
+  /**
+   * Owning group of a category, resolved at any depth. Matching only direct children
+   * failed for categories that live one level deeper in the tree.
+   */
   groupOfCategory(categoryId: number | null): number | null {
-    if (categoryId === null) return null; 
-    const g = this.groups().find((group) =>
-      group.children.some((c) => c.id === categoryId)
-    );
-    return g ? g.id : null;
+    if (categoryId === null) return null;
+    return groupOfProductCategory(this.groups(), categoryId)?.id ?? null;
   }
 
   onGroupChange() {

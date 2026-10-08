@@ -11,6 +11,7 @@ import { Product, CategoryGroupDTO, CategoryDTO } from '../../core/models/produc
 import { ToastService } from '../../core/services/toast.service';
 import { orderStatusClass } from './order-status';
 import { categoryColor, categoryGradient, categoryIcon, categoryShadow } from '../categories/category-theme';
+import { categorySubtreeIds, groupOfProductCategory } from '../categories/category-tree';
 import { forkJoin } from 'rxjs';
 
 @Component({
@@ -70,14 +71,14 @@ export class OrderFormComponent implements OnInit {
 
     const sub = this.selectedSubcategory();
     if (sub) {
-      return all.filter(p => p.categoryId === sub.id);
+      const subtree = categorySubtreeIds(this.groups(), sub.id);
+      return all.filter(p => p.categoryId != null && subtree.has(p.categoryId));
     }
 
     const group = this.selectedGroup();
     if (group) {
-      if ((group.children?.length ?? 0) === 0) {
-        return all.filter(p => p.categoryId === group.id);
-      }
+      const subtree = categorySubtreeIds(this.groups(), group.id);
+      return all.filter(p => p.categoryId != null && subtree.has(p.categoryId));
     }
 
     return [];
@@ -117,18 +118,20 @@ export class OrderFormComponent implements OnInit {
     return this.selectedSubcategory()?.name ?? this.selectedGroup()?.name ?? '';
   }
 
+  /**
+   * Counts products in a category and all of its descendants, mirroring the backend
+   * `countProductsByCategoryIdRecursive`. Matching the id alone reported 0 for every
+   * subcategory because the products live one level deeper.
+   */
   productCount(categoryId: number): number {
-    return this.productService.items().filter(p => p.categoryId === categoryId && p.active !== false).length;
+    const subtree = categorySubtreeIds(this.groups(), categoryId);
+    return this.productService.items()
+      .filter(p => p.active !== false && p.categoryId != null && subtree.has(p.categoryId))
+      .length;
   }
 
   groupProductCount(group: CategoryGroupDTO): number {
-    let total = 0;
-    if (group.children?.length) {
-      total += group.children.reduce((acc, c) => acc + this.productCount(c.id), 0);
-    } else {
-      total += this.productCount(group.id);
-    }
-    return total;
+    return this.productCount(group.id);
   }
 
   initials(name: string): string {
@@ -151,52 +154,68 @@ export class OrderFormComponent implements OnInit {
     return categoryShadow(name);
   }
 
+  /**
+   * Owning group of a product, resolved at any depth of the category tree.
+   */
+  private groupFor(product: Product): CategoryGroupDTO | null {
+    return groupOfProductCategory(this.groups(), product.categoryId);
+  }
+
+  /**
+   * Category node a product belongs to, so its own image can be used even when the node
+   * sits deeper than the direct subcategory.
+   */
+  private categoryNodeFor(product: Product): CategoryDTO | null {
+    const categoryId = product.categoryId;
+    if (categoryId == null) return null;
+    const group = this.groupFor(product);
+    if (!group) return null;
+
+    const find = (nodes: CategoryDTO[]): CategoryDTO | null => {
+      for (const node of nodes) {
+        if (node.id === categoryId) return node;
+        const hit = find(node.children ?? []);
+        if (hit) return hit;
+      }
+      return null;
+    };
+
+    return find(group.children ?? []);
+  }
+
   productGroupColor(product: Product): string {
-    if (this.selectedGroup()) {
-      return this.groupColor(this.selectedGroup()!.name);
+    const selected = this.selectedGroup();
+    if (selected) {
+      return this.groupColor(selected.name);
     }
-    const group = this.groups().find(g =>
-      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
-    );
-    return this.groupColor(group?.name || product.categoryName || '');
+    return this.groupColor(this.groupFor(product)?.name || product.categoryName || '');
   }
 
   productGradient(product: Product): string {
-    if (this.selectedGroup()) {
-      return this.groupGradient(this.selectedGroup()!.name);
+    const selected = this.selectedGroup();
+    if (selected) {
+      return this.groupGradient(selected.name);
     }
-    const group = this.groups().find(g =>
-      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
-    );
-    return this.groupGradient(group?.name || product.categoryName || '');
+    return this.groupGradient(this.groupFor(product)?.name || product.categoryName || '');
   }
 
   productShadow(product: Product): string {
-    if (this.selectedGroup()) {
-      return this.groupShadow(this.selectedGroup()!.name);
+    const selected = this.selectedGroup();
+    if (selected) {
+      return this.groupShadow(selected.name);
     }
-    const group = this.groups().find(g =>
-      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
-    );
-    return this.groupShadow(group?.name || product.categoryName || '');
+    return this.groupShadow(this.groupFor(product)?.name || product.categoryName || '');
   }
 
   productCategoryIcon(product: Product): string {
-    const group = this.groups().find(g =>
-      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
-    );
-    return this.groupIcon(group?.name || product.categoryName || '');
+    return this.groupIcon(this.groupFor(product)?.name || product.categoryName || '');
   }
 
   productCategoryImage(product: Product): string | null {
     if (product.image) return product.image;
-    const group = this.groups().find(g =>
-      g.id === product.categoryId || g.children?.some(c => c.id === product.categoryId)
-    );
-    if (group?.image) return group.image;
-    const child = group?.children?.find(c => c.id === product.categoryId);
-    if (child?.image) return child.image;
-    return null;
+    const nodeImage = this.categoryNodeFor(product)?.image;
+    if (nodeImage) return nodeImage;
+    return this.groupFor(product)?.image ?? null;
   }
 
   previewProduct = signal<{
