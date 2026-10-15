@@ -49,6 +49,8 @@ export const ROUTE_ROLES: Readonly<Record<string, readonly UserRole[]>> = {
   'vehiculos/nuevo': ['admin', 'despachador', 'despachador1'],
   'vehiculos/:id': ['admin', 'despachador', 'despachador1'],
   'reportes': ['admin', 'cartera', 'coordinador'],
+  'camaras': ['admin', 'camara', 'coordinador', 'despachador'],
+  'camaras/:id': ['admin', 'camara', 'coordinador', 'despachador'],
   'mi-perfil': ALL_ROLES,
   'configuracion': ['admin'],
 };
@@ -59,7 +61,7 @@ export const roleHomeRoute: Readonly<Record<UserRole, string>> = {
   coordinador: '/dashboard',
   despachador: '/despachos',
   produccion: '/produccion',
-  camara: '/mi-perfil',
+  camara: '/camaras',
   facturacion: '/mi-perfil',
   despachador1: '/despacho1',
   despachador2: '/despacho2',
