@@ -185,6 +185,16 @@ export const routes: Routes = [
         canActivate: [roleGuard(roles('reportes'))]
       },
       {
+        path: 'camaras',
+        loadComponent: () => import('./features/camaras/camara-list.component').then(m => m.CamaraListComponent),
+        canActivate: [roleGuard(roles('camaras'))]
+      },
+      {
+        path: 'camaras/:id',
+        loadComponent: () => import('./features/camaras/camara-detail.component').then(m => m.CamaraDetailComponent),
+        canActivate: [roleGuard(roles('camaras/:id'))]
+      },
+      {
         path: 'mi-perfil',
         loadComponent: () => import('./features/profile/profile.component').then(m => m.ProfileComponent),
         canActivate: [roleGuard(roles('mi-perfil'))]
